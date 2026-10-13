@@ -3,6 +3,8 @@ import { festivalNow } from './season.js';
 const DEX_IDS = new Set(DEX.flatMap(g => g.ids));
 
 const KEY = 'chinchilla-ranch-v2';
+export const ECO_KEY = 'chinchilla-ranch-eco';
+export const ECO = (() => { try { return localStorage.getItem(ECO_KEY) === '1'; } catch { return false; } })();   // 省エネモード(30fps・かげなし・くさ すくなめ)
 
 const fresh = () => ({
   coins: 0,
@@ -83,16 +85,19 @@ export function load() {
 }
 
 export const SAVE_KEY = KEY;
-let saveFailed = false;
+let saveFailed = false, lastOk = true;
+export const lastSaveOk = () => lastOk;
 export function save() {
+  const prevAt = state.savedAt;
   try {
     state.savedAt = Date.now();
     const txt = JSON.stringify(state), old = localStorage.getItem(KEY);
     if (old && old !== txt) { try { localStorage.setItem(KEY + '-prev', old); } catch { /* ひとつまえは ほぞんできなくても いい */ } }
     localStorage.setItem(KEY, txt);
-    if (saveFailed) { saveFailed = false; bus.emit('saveOk'); }
+    lastOk = true; if (saveFailed) { saveFailed = false; bus.emit('saveOk'); }
     return true;
   } catch {
+    lastOk = false; state.savedAt = prevAt;
     if (!saveFailed) { saveFailed = true; bus.emit('saveFail'); }   // ほぞんできない(ようりょう/プライベート)
     return false;
   }

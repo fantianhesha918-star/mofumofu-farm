@@ -1,6 +1,6 @@
 import { seasonOf } from './season.js';
 import { BUCKET, APPEAR, FIELD_NAMES, HOLD, EVO_STONES, MON_GROUPS, ALL_MONS, CRAFT_RECIPES, MDEX_REWARDS, ELEMENT_REWARD, ABILITIES, BADGES, MON_HEAL, ITEMS, SHOP_SEEDS, CROPS, QUESTS, RECIPES, HEAL, DECOR, SHOP_GOODS, FURNI, DECO, DEX, FIELD_MONS } from './data.js';
-import { SAVE_KEY, state, bus, save, addItem, count, addStat, activeQuests, villageLevel, villagePoints, villageBoost, sellOf, hasBadge } from './state.js';
+import { SAVE_KEY, ECO, ECO_KEY, lastSaveOk, state, bus, save, addItem, count, addStat, activeQuests, villageLevel, villagePoints, villageBoost, sellOf, hasBadge } from './state.js';
 import { sfx } from './audio.js';
 
 const $ = (s) => document.querySelector(s);
@@ -245,7 +245,7 @@ function renderPanel() {
       <div class="row menurow" data-m="settings"><div class="grow">せってい<small>おと・バトルの はやさ・くさの りょう・ひかり</small></div><span class="chev">›</span></div>
       <div class="row menurow" data-m="village"><div class="grow">むらの ようす<small>むらレベル・うりあげ・どうぶつ</small></div><span class="chev">›</span></div>
       <div class="row menurow" data-m="badge"><div class="grow">バッジ<small>ぬしを たおすと もらえる・おんけい</small></div><span class="chev">›</span></div>
-      <div class="row menurow" data-m="save"><div class="grow">セーブ<small>いまの ようすを きろくする</small></div><span class="chev">›</span></div>
+      <div class="row menurow" data-m="save"><div class="grow">${saveRowText()}</div><span class="chev">›</span></div>
       <div class="row menurow" data-m="title"><div class="grow">タイトルへ もどる<small>セーブして ゲームを おわる</small></div><span class="chev">›</span></div>`;
     body.querySelectorAll('.menurow').forEach(r => r.onclick = () => {
       const m = r.dataset.m;
@@ -264,7 +264,7 @@ function renderPanel() {
       else if (m === 'look') openPanel('look');
       else if (m === 'yard') { closePanel(); bus.emit('yardStart'); }
       else if (m === 'furni') { closePanel(); bus.emit('furniStart'); }
-      else if (m === 'save') { bus.emit('saveNow'); renderPanel(); }
+      else if (m === 'save') { bus.emit('saveNow'); manualSave = { t: Date.now(), ok: lastSaveOk() }; sfx(manualSave.ok ? 'coin' : 'no'); renderPanel(); }
       else if (m === 'title') { r.innerHTML = '<div class="grow">ほんとうに もどる?<small>セーブしてから タイトルに もどるよ。もう一度 タップで けってい</small></div><span class="chev">!</span>'; r.dataset.m = 'title2'; sfx('ui'); }
       else if (m === 'title2') bus.emit('toTitle');
     });
@@ -437,6 +437,7 @@ function renderPanel() {
         <div class="row"><div class="grow">バトルの はやさ<small>メッセージや えんしゅつの スピード</small></div>${sbtn(1, 'ふつう')}${sbtn(1.6, 'はやい')}${sbtn(2.5, 'さいそく')}</div>
         <div class="row"><div class="grow">オートセーブの おしらせ<small>セーブした とき 画面の すみに ちいさく ひょうじ</small></div><button class="pill ${asv ? 'sel' : ''}" data-as="${asv ? 0 : 1}">${asv ? 'ひょうじする' : 'ひょうじしない'}</button></div>
         <div class="row"><div class="grow">2ひきで たたかう<small>ぬし・トレーナーせんで 2ひきめが サポートする</small></div><button class="pill ${asist ? 'sel' : ''}" data-as2="${asist ? 0 : 1}">${asist ? 'する' : 'しない'}</button></div>
+        <div class="row"><div class="grow">しょうエネモード<small>30フレーム・かげなし・くさ すくなめで バッテリーを ながもちさせる(きりかえると ゲームを よみこみなおすよ)</small></div><button class="pill ${ECO ? 'sel' : ''}" data-eco="${ECO ? 0 : 1}">${ECO ? 'ON' : 'OFF'}</button></div>
         <div class="row"><div class="grow">データを かきだす<small>セーブを ファイルに ほぞん(バックアップ)</small></div><button class="pill" id="sbEx">かきだす</button></div>
         <div class="row"><div class="grow">データを よみこむ<small>かきだした ファイルから もどす(いまの データは きえるよ)</small></div><button class="pill" id="sbIm">よみこむ</button><input type="file" id="sbFile" accept=".json,application/json" hidden></div>
         <div class="row"><div class="grow">ひとつまえに もどす<small>きのうまでの じどうバックアップから もどす</small></div><button class="pill" id="sbBak">もどす</button></div>
@@ -455,6 +456,7 @@ function renderPanel() {
       body.querySelector('#sbIm').onclick = () => body.querySelector('#sbFile').click();
       body.querySelector('#sbFile').onchange = (ev) => { const f = ev.target.files && ev.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => loadTxt(String(r.result)); r.readAsText(f); };
       body.querySelector('#sbBak').onclick = () => { let b = null; try { b = localStorage.getItem(SAVE_KEY + '-bak'); } catch {} if (!b) return toast('もどせない', 'バックアップが まだ ないよ', '', 2200); loadTxt(b); };
+      body.querySelectorAll('[data-eco]').forEach(b => b.onclick = () => { try { localStorage.setItem(ECO_KEY, b.dataset.eco); } catch {} try { save(); } catch {} sfx('ui'); toast('しょうエネモード', b.dataset.eco === '1' ? 'ONに したよ。よみこみなおすね' : 'OFFに したよ。よみこみなおすね', '', 1500); setTimeout(() => { location.href = /field\.html/.test(location.pathname) ? location.href : 'index.html?resume=1'; }, 900); });
       body.querySelectorAll('[data-an]').forEach(b => b.onclick = () => { try { localStorage.setItem('chinchilla-ranch-asknick', b.dataset.an); } catch {} sfx('ui'); renderPanel(); });
       body.querySelectorAll('[data-as2]').forEach(b => b.onclick = () => { try { localStorage.setItem('chinchilla-ranch-assist', b.dataset.as2); } catch {} sfx('ui'); renderPanel(); });
       body.querySelectorAll('[data-as]').forEach(b => b.onclick = () => { ui.setAutosaveMsg(b.dataset.as === '1'); sfx('ui'); renderPanel(); });
@@ -592,6 +594,13 @@ const ASV_KEY = 'chinchilla-ranch-asvmsg';
 export const autosaveMsg = () => { try { return localStorage.getItem(ASV_KEY) !== '0'; } catch { return true; } };
 export const setAutosaveMsg = (on) => { try { localStorage.setItem(ASV_KEY, on ? '1' : '0'); } catch {} };
 let asvT = 0;
+let manualSave = null;
+function saveRowText() {
+  const fresh = manualSave && Date.now() - manualSave.t < 600000;
+  if (!fresh) return 'セーブ<small>いまの ようすを きろくする</small>';
+  const d = new Date(manualSave.t), hm = `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+  return manualSave.ok ? `<b style="color:#9be8a0">セーブしました!</b><small>${hm} に きろくしたよ(もういちど タップで もういちど セーブ)</small>` : `<b style="color:#ff9a8a">セーブできませんでした</b><small>ブラウザの ほぞんスペースが つかえないみたい。「せってい」の「かきだす」で バックアップしてね</small>`;
+}
 export function showSaved() {
   if (!autosaveMsg()) return; let el = document.getElementById('savemark');
   if (!el) { el = document.createElement('div'); el.id = 'savemark'; el.textContent = 'セーブしました'; document.body.appendChild(el); }

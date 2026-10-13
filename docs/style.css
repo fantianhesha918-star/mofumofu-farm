@@ -434,3 +434,5 @@ body:not(.touch) #hotbar .tog span { display: none; }
 #evoov img { width: min(70vmin, 420px); height: min(70vmin, 420px); object-fit: contain; }
 #evoStop { position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 95; padding: 12px 28px; font-size: 15px; }
 #evoov .evotel { position: absolute; left: 0; right: 0; bottom: 18%; text-align: center; padding: 0 16px; color: #fff; font-size: clamp(16px, 4.2vw, 22px); text-shadow: 0 2px 6px #000; min-height: 1.6em; }
+
+#toasts { z-index: 40; }   /* メニューを ひらいていても トーストが ようしゃなく みえる */

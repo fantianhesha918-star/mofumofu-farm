@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { input, pollInput, setupInput } from './input.js';
 import { ui } from './ui.js';
-import { state, load, save, bus, count, addItem } from './state.js';
+import { ECO, state, load, save, bus, count, addItem } from './state.js';
 import { sfx, unlockAudio } from './audio.js';
 import { lawnKit } from './world.js';
 import { BADGES, DAY_SECONDS, DROP_BY_ELEMENT, ITEMS, HEAL, EVO_STONES } from './data.js';
@@ -144,8 +144,8 @@ const FIELDS = {
 const FID = ['lake', 'volcano', 'ghost', 'sky', 'sun', 'cosmos', 'grove', 'castle', 'temple', 'dragon', 'end'].includes(params.get('f')) ? params.get('f') : 'forest', F = FIELDS[FID], LC = F.lake || null, WATER_Y = -0.9;
 document.title = F.name;
 const canvas = $('#c');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, isTouch ? 1.25 : 2));
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'default' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, ECO ? 1 : isTouch ? 1.25 : 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 const scene = new THREE.Scene(); scene.background = new THREE.Color(F.sky); scene.fog = new THREE.Fog(F.sky, F.fogN || 28, F.fogF || 150);
 const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 400);
@@ -532,7 +532,7 @@ function updateTarget() {
 
 // ---- 起動 ----
 bus.on('coins', () => ui.setCoins());
-bus.on('saveNow', () => { save(); sfx('coin'); ui.toast('セーブ', 'セーブしました', '', 1800); });
+bus.on('saveNow', () => { if (save()) { sfx('coin'); ui.toast('セーブ', 'セーブしました!', '', 2200); } else ui.toast('セーブ', 'セーブできませんでした', 'ブラウザの ほぞんスペースを かくにんしてね', 4000); });
 bus.on('toTitle', () => { save(); location.href = 'index.html'; });
 // ---- ふうけいの つぶ(F.fx: 火の粉・雪・ほたる・星など) ----
 const dotTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 32; const g = c.getContext('2d'), gr = g.createRadialGradient(16, 16, 0, 16, 16, 16); gr.addColorStop(0, '#fff'); gr.addColorStop(0.5, '#fffc'); gr.addColorStop(1, '#fff0'); g.fillStyle = gr; g.fillRect(0, 0, 32, 32); return new THREE.CanvasTexture(c); })();
@@ -679,9 +679,10 @@ function updateChests(dt) {
     if (c.open > 0 && c.open < 1) c.open = Math.min(1, c.open + dt * 2.2); c.m.userData.lid.rotation.x = ready ? 0 : -1.9 * (c.open > 0 ? c.open : 1);
   }
 }
-const clock = new THREE.Clock(); let T = 0;
+const clock = new THREE.Clock(); let T = 0, lastFrame = 0;
 function frame() {
-  requestAnimationFrame(frame); const dt = Math.min(clock.getDelta(), 0.05); T += dt; pollInput();
+  requestAnimationFrame(frame); if (ECO) { const now = performance.now(); if (now - lastFrame < 30) return; lastFrame = now; }   // 省エネ: 30fps
+  const dt = Math.min(clock.getDelta(), 0.05); T += dt; pollInput();
   if (chin) {
     if (input.menu) { input.menu = false; if (!busy) ui.togglePanel('menu'); }
     updatePlayer(dt); updateCamera(dt); updateTarget();

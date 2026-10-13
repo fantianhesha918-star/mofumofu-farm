@@ -9,7 +9,7 @@ import { budgetReport, disposeObject, BUDGET } from './mapmgr.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { initSwimFish, updateSwimFish } from './swimfish.js';
 import { buildWorld, heightAt, WORLD_R, mulberry32, SEA_A, SEA_Y, seaMask, RIVER, riverDist } from './world.js';
-import { state, bus, save, load, reset, hasSave, addItem, count, addStat, activeQuests, checkQuests, sellOf } from './state.js';
+import { ECO, state, bus, save, load, reset, hasSave, addItem, count, addStat, activeQuests, checkQuests, sellOf } from './state.js';
 import { ITEMS, CROPS, QUESTS, DAY_SECONDS, BUCKET } from './data.js';
 import { ui, itemIcon } from './ui.js';
 import { input, pollInput, setupInput } from './input.js';
@@ -24,9 +24,9 @@ document.body.classList.toggle('touch', isTouch);
 
 // ---------- レンダラ ----------
 const canvas = $('#c');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, isTouch ? 1.25 : 2));
-renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'default' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, ECO ? 1 : isTouch ? 1.25 : 2));
+renderer.shadowMap.enabled = !ECO; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 700);
@@ -1427,7 +1427,7 @@ const rewardText = (r) => [r.coins ? `${r.coins}コイン` : '', ...Object.entri
 bus.on('questDone', (q) => { sfx('quest'); ui.toast('QUEST CLEAR', q.title, 'ほうしゅう: ' + rewardText(q.reward), 4400); ui.setGoal(); ui.setCoins(); });
 bus.on('questNew', (q) => { setTimeout(() => { ui.toast('NEW QUEST', q.title, '', 4200); ui.setGoal(); }, 2600); });
 bus.on('coins', () => ui.setCoins());
-bus.on('saveNow', () => { doSave(); sfx('coin'); ui.toast('セーブ', 'セーブしました', '', 1800); });
+bus.on('saveNow', () => { if (doSave()) ui.toast('セーブ', 'セーブしました!', '', 2200); else ui.toast('セーブ', 'セーブできませんでした', 'ブラウザの ほぞんスペースを かくにんしてね', 4000); });
 bus.on('toTitle', () => { doSave(); location.reload(); });
 bus.on('eat', (heal, id) => { P.stam = Math.min(100, P.stam + heal); if (P.stam >= 28) P.lock = false; P.regen = 0; sfx('feed'); ui.toast('ごちそうさま', `${ITEMS[id].name}を たべたよ`, `たいりょく +${heal}`, 2400); burst('heart', P.pos.clone().setY(P.pos.y + 1.1), 5, { size: 0.35, life: 1.2 }); });
 bus.on('decor', () => applyDecor());
@@ -1506,7 +1506,7 @@ function startGame(isNew) {
 }
 let bakDay = -1;
 function dailyBackup() { try { if (bakDay === state.day) return; const cur = localStorage.getItem('chinchilla-ranch-v2'); const last = +localStorage.getItem('chinchilla-ranch-v2-bakday') || 0; if (cur && last !== state.day) { localStorage.setItem('chinchilla-ranch-v2-bak', cur); localStorage.setItem('chinchilla-ranch-v2-bakday', String(state.day)); } bakDay = state.day; } catch {} }
-function doSave() { if (!started) return; dailyBackup(); state.pos = { x: P.pos.x, z: P.pos.z }; save(); ui.showSaved(); }
+function doSave() { if (!started) return false; dailyBackup(); state.pos = { x: P.pos.x, z: P.pos.z }; const ok = save(); if (ok) ui.showSaved(); return ok; }
 addEventListener('pagehide', doSave); document.addEventListener('visibilitychange', () => { if (document.hidden) doSave(); });
 bus.on('saveFail', () => ui.toast('セーブできないよ!', 'ブラウザの ほぞんスペースが つかえないみたい', '「せってい」の「かきだす」で バックアップしてね', 9000));
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch {}   // ブラウザに じどうで けされにくく してもらう
@@ -1536,9 +1536,10 @@ $('#btnNew').onclick = async () => { if (hasSave() && !confirm('いまのセー�
 $('#btnContinue').onclick = () => startGame(false);
 
 // ---------- メインループ ----------
-const clock = new THREE.Clock(); let T = 0, mmT = 0;
+const clock = new THREE.Clock(); let T = 0, mmT = 0, lastFrame = 0;
 function frame() {
   requestAnimationFrame(frame);
+  if (ECO) { const now = performance.now(); if (now - lastFrame < 30) return; lastFrame = now; }   // 省エネ: 30fps
   const dt = Math.min(clock.getDelta(), 0.05); T += dt; pollInput();
   world.update(dt, T);
   if (titleMode) {

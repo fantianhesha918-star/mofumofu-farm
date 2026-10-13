@@ -10,7 +10,7 @@ export function mulberry32(a) {
 }
 const MOBILE0 = ((typeof matchMedia === 'function' && matchMedia('(pointer:coarse)').matches) || /[?&]touch/.test(location.search)) && !/[?&]hq/.test(location.search);
 export const GFX_KEY = 'chinchilla-ranch-gfx';
-const GFX = (() => { let v = null; try { v = localStorage.getItem(GFX_KEY); } catch {} { const q = /[?&]gfx=(low|mid|high)/.exec(location.search); if (q) return q[1]; } if (/[?&]hq/.test(location.search)) return 'high'; if (v === 'low' || v === 'mid' || v === 'high') return v; return MOBILE0 ? 'mid' : 'high'; })();   // くさの りょう(せってい)
+const GFX = (() => { let v = null; try { if (localStorage.getItem('chinchilla-ranch-eco') === '1') return 'low'; } catch {} try { v = localStorage.getItem(GFX_KEY); } catch {} { const q = /[?&]gfx=(low|mid|high)/.exec(location.search); if (q) return q[1]; } if (/[?&]hq/.test(location.search)) return 'high'; if (v === 'low' || v === 'mid' || v === 'high') return v; return MOBILE0 ? 'mid' : 'high'; })();   // くさの りょう(せってい)
 const GRASS = { low: { n: 7500, dist: 46, acc: 16 }, mid: { n: 12000, dist: 56, acc: 13 }, high: { n: 20000, dist: 72, acc: 11 } }[GFX];
 const MOBILE = ((typeof matchMedia === 'function' && matchMedia('(pointer:coarse)').matches) || /[?&]touch/.test(location.search)) && !/[?&]hq/.test(location.search);   // スマホは草を減らして軽くする
 const rnd = mulberry32(20261006);
