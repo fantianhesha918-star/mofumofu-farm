@@ -79,3 +79,10 @@ cd docs && python -m http.server 8123   # http://localhost:8123/
 - 画像・素材は**ジャンル別のフォルダ**に置く。ルート直下に画像を散らかさない
 - 新しい素材は「入稿待ち」→ アプリに組み込んだら「処理済み」(または `docs/assets/…` のジャンル別フォルダ)へ仕分ける
 - `docs/` のJS・CSSを変えたら公開前に `python stamp.py`(スマホのキャッシュ対策)
+
+## 公開(GitHub Pages)
+- 公開URL: https://fantianhesha918-star.github.io/mofumofu-farm/ (リポジトリ: fantianhesha918-star/mofumofu-farm、公開元は master の /docs)
+- 更新手順: `python stamp.py` → `git add -A` → `git commit -m "..."` → `git push`(反映まで1〜2分)。
+- 公開しないもの(.gitignore): 素材/・素材原本/・資料/・引き継ぎメモ.md・shot.py など作業用。公開されるのは docs/・README.md・stamp.py のみ。
+- コミットのメールはGitHubのnoreplyアドレスを使う(個人メールを出さない)。
+- スマホ: iPhoneはSafariのタブだと落ちるので、URLを開いて「ホーム画面に追加」して遊ぶ。セーブはブラウザ内(URLごと)に保存。

@@ -62,13 +62,19 @@ export const bus = {
   emit(e, ...a) { (listeners[e] || []).forEach(f => f(...a)); },
 };
 
-export function hasSave() { try { return !!localStorage.getItem(KEY); } catch { return false; } }
+export function hasSave() { try { return !!(localStorage.getItem(KEY) || localStorage.getItem(KEY + '-prev') || localStorage.getItem(KEY + '-bak')); } catch { return false; } }
 
+// セーブは「いま」→「ひとつまえ(-prev)」→「きのうまでの じどうバックアップ(-bak)」の じゅんで よみこむ(こわれても のこりから ふっかつ)
+function readSave() {
+  for (const k of [KEY, KEY + '-prev', KEY + '-bak']) {
+    try { const raw = localStorage.getItem(k); if (!raw) continue; const d = JSON.parse(raw); if (d && typeof d === 'object') { if (k !== KEY) console.warn('save restored from', k); return d; } } catch { /* つぎへ */ }
+  }
+  return null;
+}
 export function load() {
   try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return false;
-    const d = JSON.parse(raw);
+    const d = readSave();
+    if (!d) return false;
     const base = fresh(); Object.assign(state, d); if (!d.barns) state.barns = d.barn ? [d.barn] : []; if (!d.coops) state.coops = d.coop ? [d.coop] : []; delete state.barn; delete state.coop; for (const k of ['cows', 'chickens', 'eggs', 'ship', 'decor', 'nori', 'furni', 'furniOwn', 'deco', 'decoOwn', 'look', 'dex', 'party', 'mdex', 'boss', 'wells', 'cleared', 'fences', 'hayCut']) if (!d[k]) state[k] = base[k]; state.stats = Object.assign(base.stats, d.stats); state.eggs = (state.eggs || []).filter(e => e.nest !== undefined); state.daily = state.daily || {}; state.prevDaily = state.prevDaily || {};
     state.bucketLv = state.bucketLv || 0; state.pasture = state.pasture || []; state.villagers = state.villagers || {}; state.tips = state.tips || {}; state.names = state.names || {}; state.chests = state.chests || {}; state.bossRe = state.bossRe || {}; state.mdexClaimed = state.mdexClaimed || {}; state.trainers = state.trainers || {};
     if (state.inv && state.inv.friend_ball) { state.inv.nakama_ball = (state.inv.nakama_ball || 0) + state.inv.friend_ball; delete state.inv.friend_ball; }
@@ -77,14 +83,22 @@ export function load() {
 }
 
 export const SAVE_KEY = KEY;
+let saveFailed = false;
 export function save() {
   try {
     state.savedAt = Date.now();
-    localStorage.setItem(KEY, JSON.stringify(state));
-  } catch { /* 保存できない環境では何もしない */ }
+    const txt = JSON.stringify(state), old = localStorage.getItem(KEY);
+    if (old && old !== txt) { try { localStorage.setItem(KEY + '-prev', old); } catch { /* ひとつまえは ほぞんできなくても いい */ } }
+    localStorage.setItem(KEY, txt);
+    if (saveFailed) { saveFailed = false; bus.emit('saveOk'); }
+    return true;
+  } catch {
+    if (!saveFailed) { saveFailed = true; bus.emit('saveFail'); }   // ほぞんできない(ようりょう/プライベート)
+    return false;
+  }
 }
 
-export function resetSave() { try { localStorage.removeItem(KEY); } catch {} }
+export function resetSave() { try { localStorage.removeItem(KEY); localStorage.removeItem(KEY + '-prev'); } catch {} }
 
 export function addItem(id, n = 1) {
   if (n > 0 && DEX_IDS.has(id)) { const first = !state.dex[id]; state.dex[id] = (state.dex[id] || 0) + n; if (first) bus.emit('dexNew', id); }

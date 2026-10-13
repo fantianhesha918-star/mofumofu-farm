@@ -1508,6 +1508,8 @@ let bakDay = -1;
 function dailyBackup() { try { if (bakDay === state.day) return; const cur = localStorage.getItem('chinchilla-ranch-v2'); const last = +localStorage.getItem('chinchilla-ranch-v2-bakday') || 0; if (cur && last !== state.day) { localStorage.setItem('chinchilla-ranch-v2-bak', cur); localStorage.setItem('chinchilla-ranch-v2-bakday', String(state.day)); } bakDay = state.day; } catch {} }
 function doSave() { if (!started) return; dailyBackup(); state.pos = { x: P.pos.x, z: P.pos.z }; save(); ui.showSaved(); }
 addEventListener('pagehide', doSave); document.addEventListener('visibilitychange', () => { if (document.hidden) doSave(); });
+bus.on('saveFail', () => ui.toast('セーブできないよ!', 'ブラウザの ほぞんスペースが つかえないみたい', '「せってい」の「かきだす」で バックアップしてね', 9000));
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch {}   // ブラウザに じどうで けされにくく してもらう
 // ---- プレイヤーの なまえ(はじめるとき きめる。あとから「なまえ」の がめんで かえられる) ----
 const playerName = () => nm('player', 'Chino');
 const applyPlayerName = () => { const el = document.querySelector('#bars .nm'); if (el) el.textContent = playerName(); };

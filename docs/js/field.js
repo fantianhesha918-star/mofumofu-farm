@@ -714,3 +714,7 @@ async function boot() {
 }
 unlockAudio(); frame(); boot();
 addEventListener('pagehide', () => { try { save(); } catch {} });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { try { save(); } catch {} } });
+setInterval(() => { if (!busy) { try { save(); } catch {} } }, 15000);   // もりでも じどうセーブ
+bus.on('saveFail', () => ui.toast('セーブできないよ!', 'ブラウザの ほぞんスペースが つかえないみたい', 'むらで「せってい」から かきだしてね', 9000));
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch {}
