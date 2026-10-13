@@ -1,0 +1,9 @@
+# 公開しないもの(元素材・作業用・メモ)
+素材/
+素材原本/
+資料/
+引き継ぎメモ.md
+preview_models.html
+shot.py
+shot.sh
+__pycache__/
