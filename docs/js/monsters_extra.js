@@ -2,6 +2,8 @@
 // きそんモンスターの おなじレベルの へいきんに あわせる ほせい(ひくめだったので ふやす)
 const up = (v, k) => Math.round(v * k);
 const M = (id, name, element, level, hp0, atk0, def0, spd0, exp, money, evo) => ({ id, name, element, level, hp: up(hp0, 1.3), atk: up(atk0, 1.2), def: up(def0, 1.3), spd: up(spd0, 1.1), exp, money, skillIds: ['tackle'], image: `assets/monsters/${id}.webp`, ...(evo ? (typeof evo[0] === 'string' ? { evolveStone: { el: evo[0], level: evo[2] || 1, id: evo[1] } } : { evolvesTo: { level: evo[0], id: evo[1] } }) : {}) });
+// でんせつ: M()の ほせい(HP×1.3 など)を うちけして、かいた かずが そのまま さいしゅうの かずに なるように わる
+const LEG = (id, name, el, lv, hp, atk, def, spd) => M(id, name, el, lv, Math.round(hp / 1.3), Math.round(atk / 1.2), Math.round(def / 1.3), Math.round(spd / 1.1), lv * 10, lv * 12);
 export const EXTRA_MONS = [
   // かみなり
   M('raimushi', 'ひかりホタル', 'thunder', 3, 24, 8, 4, 9, 15, 10, [11, 'raimushi_2']),
@@ -98,9 +100,28 @@ export const EXTRA_MONS = [
   M('mori_shika', 'もりのしか', 'grass', 20, 100, 28, 17, 18, 60, 40, [38, 'shinju_taiboku']),
   M('shinju_taiboku', 'しんじゅのたいぼく', 'grass', 38, 160, 44, 30, 24, 130, 80),
   M('nari_kami', 'なりかみこぞう', 'thunder', 12, 62, 18, 12, 12, 33, 24),
+  // でんせつ(ほこらで であう。ステータスは 「ほせい ごの かず」を わたして M の ほせいを もどす)
+  LEG('yume_no_ko', 'ゆめのこ', 'heaven', 30, 200, 36, 26, 36),
+  LEG('toki_no_yousei', 'ときのようせい', 'grass', 45, 300, 48, 36, 34),
+  LEG('raigeki_chou', 'らいげきちょう', 'thunder', 45, 400, 58, 40, 38),
+  LEG('kaen_chou', 'かえんちょう', 'fire', 50, 450, 64, 44, 36),
+  LEG('homura_shishi', 'ほむらのしし', 'fire', 52, 500, 68, 48, 32),
+  LEG('hyosetsu_chou', 'ひょうせつちょう', 'water', 55, 520, 66, 54, 32),
+  LEG('mizu_kirin', 'みずのきりん', 'water', 55, 540, 66, 52, 34),
+  LEG('watatsumi', 'おおうみのかみ ワダツミ', 'water', 60, 680, 78, 62, 28),
+  LEG('kaminari_tora', 'かみなりのとら', 'thunder', 60, 580, 80, 52, 40),
+  LEG('magna_kaiju', 'かざんのだいじゅう マグナ', 'earth', 65, 720, 88, 70, 24),
+  LEG('futago_stella', 'ふたごのりゅうせい ステラ', 'heaven', 65, 600, 82, 56, 46),
+  LEG('futago_comet', 'ふたごのりゅうせい コメット', 'magic', 65, 600, 82, 56, 46),
+  LEG('ginyoku', 'ぎんよくのうみのかみ', 'wind', 70, 700, 90, 64, 44),
+  LEG('souryu_ten', 'そうくうのりゅうじん', 'wind', 70, 680, 92, 60, 48),
+  LEG('niji_ootori', 'にじのおおとり', 'heaven', 75, 760, 98, 68, 50),
+  LEG('maryoku_ou', 'まりょくのおう', 'magic', 80, 840, 112, 74, 54),
 ];
 // あらわれる フィールド(ずかんの「でる ばしょ」と フィールドの でやすさ)
 export const EXTRA_APPEAR = {
+  yume_no_ko: { lake: 1, sun: 1 }, toki_no_yousei: { grove: 1, forest: 1 }, raigeki_chou: { sky: 1 }, kaen_chou: { sun: 1 }, homura_shishi: { sun: 1 }, hyosetsu_chou: { cosmos: 1 }, mizu_kirin: { cosmos: 1 }, watatsumi: { cosmos: 1 },
+  kaminari_tora: { grove: 1 }, magna_kaiju: { castle: 1 }, futago_stella: { temple: 1 }, futago_comet: { temple: 1 }, ginyoku: { temple: 1 }, souryu_ten: { dragon: 1 }, niji_ootori: { dragon: 1 }, maryoku_ou: { end: 1 },
   nebosuke_kyo: { grove: 1, castle: 1 }, goro_kyojuu: { castle: 1, temple: 1 }, daichi_madoromi: { temple: 1, cosmos: 1 }, umihebi_ko: { lake: 2, cosmos: 1 }, namino_kairyu: { lake: 1, cosmos: 1 }, shinkai_ryujin: { cosmos: 1, dragon: 1 }, kora_rakko: { lake: 2 },
   hikari_kishi: { sun: 1, temple: 1 }, sei_kishi: { sun: 1, temple: 1 }, tenkuu_shugoshin: { temple: 1, cosmos: 1 }, wakagi_shika: { forest: 1, grove: 1 }, mori_shika: { grove: 1, forest: 1 }, shinju_taiboku: { grove: 1 }, maboroshi_yomi: { ghost: 1, temple: 1 }, nari_kami: { sky: 1, grove: 1 },
   chibi_ryu: { sky: 1, sun: 1 }, sora_ryu: { sky: 1, dragon: 1 }, seikuu_ryuou: { dragon: 1 }, iwagoro: { volcano: 1, grove: 1 }, gankou_goro: { volcano: 1, castle: 1 }, daichi_taishou: { castle: 1 },

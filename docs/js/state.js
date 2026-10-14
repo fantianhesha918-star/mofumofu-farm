@@ -34,6 +34,7 @@ const fresh = () => ({
   names: {},   // じぶんで きめた なまえ {'pet:0':..., 'cow:1':..., 'vil:3':..., 'npc:man':...}
   tips: {},   // いちどだけ でる ヒント {key:1}
   villagers: {},   // むらを おとずれる どうぶつたち {id: {last:日, n:はなした日かず}}
+  legends: {},   // であった でんせつの モンスター {id: 1}(つかまえた/たおした)
   chests: {},   // あけた たからばこ {キー: あけた日}
   bossRe: {},   // ぬしの さいせん {key: 日}   // たおした トレーナー
   pasture: [],   // ぼくじょうに あずけている なかま {id,lv,exp,bond}
@@ -78,7 +79,7 @@ export function load() {
     const d = readSave();
     if (!d) return false;
     const base = fresh(); Object.assign(state, d); if (!d.barns) state.barns = d.barn ? [d.barn] : []; if (!d.coops) state.coops = d.coop ? [d.coop] : []; delete state.barn; delete state.coop; for (const k of ['cows', 'chickens', 'eggs', 'ship', 'decor', 'nori', 'furni', 'furniOwn', 'deco', 'decoOwn', 'look', 'dex', 'party', 'mdex', 'boss', 'wells', 'cleared', 'fences', 'hayCut']) if (!d[k]) state[k] = base[k]; state.stats = Object.assign(base.stats, d.stats); state.eggs = (state.eggs || []).filter(e => e.nest !== undefined); state.daily = state.daily || {}; state.prevDaily = state.prevDaily || {};
-    state.bucketLv = state.bucketLv || 0; state.pasture = state.pasture || []; state.villagers = state.villagers || {}; state.tips = state.tips || {}; state.names = state.names || {}; state.chests = state.chests || {}; state.bossRe = state.bossRe || {}; state.mdexClaimed = state.mdexClaimed || {}; state.trainers = state.trainers || {};
+    state.bucketLv = state.bucketLv || 0; state.pasture = state.pasture || []; state.villagers = state.villagers || {}; state.tips = state.tips || {}; state.names = state.names || {}; state.chests = state.chests || {}; state.legends = state.legends || {}; state.bossRe = state.bossRe || {}; state.mdexClaimed = state.mdexClaimed || {}; state.trainers = state.trainers || {};
     if (state.inv && state.inv.friend_ball) { state.inv.nakama_ball = (state.inv.nakama_ball || 0) + state.inv.friend_ball; delete state.inv.friend_ball; }
     return true;
   } catch { return false; }

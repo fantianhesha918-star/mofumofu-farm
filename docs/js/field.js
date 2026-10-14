@@ -37,7 +37,7 @@ const FIELDS = {
     lava: [[-22, -18, 9], [26, -14, 7], [-30, 22, 8]], fx: { color: '#ff9a3a', n: 240, size: 0.5, dir: 1, speed: [0.8, 2.2], sway: 0.4 },
     zones: [[10, -6, 8], [22, -32, 9], [-8, -42, 8], [30, 10, 7], [-34, 0, 7], [2, 26, 7]],
     trees: [['deco_lava_rock', 40, 64, [1.7, 3.4], 12, 74], ['deco_lava_rock', 20, 30, [3.6, 5.4], 26, 76]],
-    wild: [['hinotama_2', 3], ['mogura_2', 3], ['hone_kenshi_2', 2], ['komori_2', 2], ['koyurei_2', 2], ['hinotama_3', 1], ['iwa_golem', 1], ['raimushi_2', 1], ['raimushi_3', 1], ['hono_tanuki', 1], ['ringo_ko', 2], ['dango_mushi', 1], ['kitsune_ko', 1], ['denki_neko', 1], ['fuusen_ko', 1], ['hono_tanuki', 2], ['hono_tanuki_2', 2], ['hono_tanuki_3', 1], ['dango_mushi_2', 1], ['mike_hi', 1], ['mike_hi_2', 1], ['houki_ko', 1], ['denchi_risu', 1], ['furin_ko', 1], ['tako_ko', 1], ['donguri_robo', 1], ['suna_kai', 1], ['donguri_robo', 1], ['donguri_robo_2', 1], ['iwagoro', 1], ['gankou_goro', 1], ['wakagi_shika', 1], ['mori_shika', 1]], scale: { lv: 5, hp: 1.5, atk: 1.4, def: 1.4, spd: 1.2, exp: 1.5, money: 1.5 },
+    wild: [['hinotama_2', 3], ['mogura_2', 3], ['hone_kenshi_2', 2], ['komori_2', 2], ['koyurei_2', 2], ['hinotama_3', 1], ['iwa_golem', 1], ['raimushi_2', 1], ['raimushi_3', 1], ['hono_tanuki', 1], ['ringo_ko', 2], ['dango_mushi', 1], ['kitsune_ko', 1], ['denki_neko', 1], ['fuusen_ko', 1], ['hono_tanuki', 2], ['hono_tanuki_2', 2], ['hono_tanuki_3', 1], ['dango_mushi_2', 1], ['mike_hi', 1], ['mike_hi_2', 1], ['houki_ko', 1], ['denchi_risu', 1], ['furin_ko', 1], ['tako_ko', 1], ['donguri_robo', 1], ['suna_kai', 1], ['donguri_robo', 1], ['donguri_robo_2', 1], ['iwagoro', 1], ['gankou_goro', 1], ['wakagi_shika', 1], ['mori_shika', 1], ['toki_no_yousei', 1]], scale: { lv: 5, hp: 1.5, atk: 1.4, def: 1.4, spd: 1.2, exp: 1.5, money: 1.5 },
     boss: { key: 'volcano', x: 0, z: -58, id: 'yougan_golem', name: 'ようがんの ぬし', deco: { model: 'deco_lava_rock', n: 9, r: 7.8, w: 4.2 }, over: { name: 'ようがんの ぬし', level: 24, hp: 270, atk: 48, def: 30, spd: 14, exp: 340, money: 420 }, model: 'boss_volcano', h: 6.6, lines: ['グゴゴゴ……だれだ、わしの ねむりを さまたげるのは。', 'ここは ようがんが ふきだす やま。よわい ものは すぐに やけてしまうぞ。', 'おまえたちの ちからを みせてみろ!', ], coins: 800, win: 'ようがんの ぬしが みとめてくれた! なかまボール×5 と 800コインを もらった!', after: 'ようがんやまに へいわが もどったよ' },
   },
   ghost: {
@@ -67,7 +67,7 @@ const FIELDS = {
     light: { hemi: [0xffe0a0, 0x8a5a30, 1.5], sun: [0xffc070, 2.4] }, zd: ['#e8b040cc', '#d8a040aa', '#d8a04000'], tint: [[1.3, 1.6], [1.0, 1.25], [0.5, 0.7]],
     zones: [[10, -6, 8], [22, -32, 9], [-8, -42, 8], [30, 10, 7], [-34, 0, 7], [2, 26, 7]],
     trees: [['deco_lava_rock', 24, 36, [1.6, 3.0], 12, 74], ['birch', 14, 20, [3.0, 4.4], 20, 76, '#3a2418']],
-    wild: [['hinotama_3', 3], ['saboten_3', 2], ['kodai_kyubi', 1], ['kodai_oni', 2], ['kodai_kitsunemen', 2], ['shinju_reishishi', 1], ['aodori_3', 2], ['kumo_hitsuji', 1], ['kumo_hitsuji_2', 1], ['tenshi_chin', 1], ['kitsune_ko', 1], ['kitsune_ko_2', 1], ['hikari_kame', 1], ['hoshi_usagi', 1], ['hoshi_usagi_2', 1], ['niji_hato', 1], ['chibi_ryu', 1], ['hikari_kishi', 1], ['sei_kishi', 1]], scale: { lv: 4, hp: 1.4, atk: 1.4, def: 1.4, spd: 1.2, exp: 2, money: 2 },
+    wild: [['hinotama_3', 3], ['saboten_3', 2], ['kodai_kyubi', 1], ['kodai_oni', 2], ['kodai_kitsunemen', 2], ['shinju_reishishi', 1], ['aodori_3', 2], ['kumo_hitsuji', 1], ['kumo_hitsuji_2', 1], ['tenshi_chin', 1], ['kitsune_ko', 1], ['kitsune_ko_2', 1], ['hikari_kame', 1], ['hoshi_usagi', 1], ['hoshi_usagi_2', 1], ['niji_hato', 1], ['chibi_ryu', 1], ['hikari_kishi', 1], ['sei_kishi', 1], ['yume_no_ko', 1]], scale: { lv: 4, hp: 1.4, atk: 1.4, def: 1.4, spd: 1.2, exp: 2, money: 2 },
     boss: { key: 'sun', x: 0, z: -58, id: 'legend_houou', name: 'たいようの ぬし', deco: { model: 'deco_lava_rock', n: 9, r: 7.8, w: 3.6 }, over: { name: 'たいようの ぬし', level: 45, hp: 540, atk: 84, def: 52, spd: 26, exp: 800, money: 900 }, model: 'boss_phoenix_b', h: 6.6, lines: ['……あたたかい ひかりに ひかれて きたのですね。', 'わたしは たいようの ひを まもる もの。', 'ほのおの ちからを うけとめられるか、みせてください!'], coins: 3000, win: 'たいようの ぬしが みとめてくれた! なかまボール×5 と 3000コインを もらった!', after: 'たいようの はらに あたたかさが もどったよ' },
   },
   cosmos: {
@@ -87,7 +87,7 @@ const FIELDS = {
     light: { hemi: [0xf0ffe0, 0x7a9a60, 1.5], sun: [0xf4ffd0, 2.3] }, zd: ['#5a9a3acc', '#4a8a36aa', '#4a8a3600'], tint: [[0.8, 1.0], [1.0, 1.15], [0.8, 1.0]],
     zones: [[10, -6, 8], [22, -32, 9], [-8, -42, 8], [30, 10, 7], [-34, 0, 7], [2, 26, 7]],
     trees: [['deco_pillar_vine', 22, 32, [1.8, 3.2], 12, 74], ['birch', 40, 60, [3.2, 4.8], 16, 74]],
-    wild: [['dokukinoko_3', 2], ['saboten_3', 2], ['shokujinsou_2', 2], ['legend_kyoshin', 1], ['mame_chin_grass', 2], ['shinju_hakurou', 1], ['kodai_tengu', 2], ['biriunagi_2', 1], ['watage_2', 1], ['kaze_chou', 1], ['raimushi_2', 1], ['ringo_ko', 1], ['ringo_ko_2', 2], ['dango_mushi', 1], ['dango_mushi_2', 1], ['denki_neko_2', 1], ['mame_chin', 1], ['chin_kusa', 1], ['chin_kusa_2', 1], ['denchi_risu_2', 1], ['donguri_robo_2', 1], ['suna_kai', 1], ['iwagoro', 1], ['mitsugo_hebi', 1], ['nebosuke_kyo', 1], ['wakagi_shika', 1], ['mori_shika', 1], ['shinju_taiboku', 1], ['nari_kami', 1]], scale: { lv: 4, hp: 1.4, atk: 1.4, def: 1.4, spd: 1.2, exp: 2, money: 2 },
+    wild: [['dokukinoko_3', 2], ['saboten_3', 2], ['shokujinsou_2', 2], ['legend_kyoshin', 1], ['mame_chin_grass', 2], ['shinju_hakurou', 1], ['kodai_tengu', 2], ['biriunagi_2', 1], ['watage_2', 1], ['kaze_chou', 1], ['raimushi_2', 1], ['ringo_ko', 1], ['ringo_ko_2', 2], ['dango_mushi', 1], ['dango_mushi_2', 1], ['denki_neko_2', 1], ['mame_chin', 1], ['chin_kusa', 1], ['chin_kusa_2', 1], ['denchi_risu_2', 1], ['donguri_robo_2', 1], ['suna_kai', 1], ['iwagoro', 1], ['mitsugo_hebi', 1], ['nebosuke_kyo', 1], ['wakagi_shika', 1], ['mori_shika', 1], ['shinju_taiboku', 1], ['nari_kami', 1], ['toki_no_yousei', 1]], scale: { lv: 4, hp: 1.4, atk: 1.4, def: 1.4, spd: 1.2, exp: 2, money: 2 },
     boss: { key: 'grove', x: 0, z: -58, id: 'kami_ryokuya', name: 'しんじゅの ぬし', deco: { model: 'deco_pillar_vine', n: 9, r: 7.8, w: 3.6 }, over: { name: 'しんじゅの ぬし', level: 58, hp: 780, atk: 112, def: 68, spd: 33, exp: 1300, money: 1500 }, model: 'boss_goddess', h: 6.4, lines: ['……ようこそ、ちいさき ものよ。', 'この いせきは もりの いのちを みまもる ばしょ。', 'きずなの つよさを、みせてもらいましょう。'], coins: 5000, win: 'しんじゅの ぬしが みとめてくれた! なかまボール×5 と 5000コインを もらった!', after: 'いせきに みどりの ひかりが もどったよ' },
   },
   castle: {
@@ -137,7 +137,7 @@ const FIELDS = {
     sky: '#a6d6ee', g0: '#6aa04a', g1: ['#5a9444', '#86b858', '#74a84e', '#a0c868'], bg: 'battle_water.webp', lake: { x: -26, z: -16, r: 17 },
     zones: [[12, -8, 8], [22, -32, 9], [-6, -42, 8], [28, 10, 7], [-32, 14, 8], [4, 24, 7]],
     trees: [['birch', 40, 70, [3.0, 4.6], 14, 70], ['pine_far', 50, 80, [4.4, 6.6], 20, 78]],
-    wild: [['slime_2', 3], ['aodori_2', 3], ['kujira_ko', 3], ['slime', 2], ['aodori', 2], ['fukurou_ko', 2], ['mitsubachi', 1], ['slime_3', 1], ['biriunagi', 2], ['biriunagi_2', 1], ['hikari_kame', 1], ['furebu_mizu', 1], ['furebu_mizu_2', 1], ['kurage_ko', 2], ['kurage_ko_2', 1], ['mitsugo_hebi', 1], ['mitsugo_hydra', 1], ['umihebi_ko', 2], ['namino_kairyu', 1], ['kora_rakko', 2]], scale: { lv: 6, hp: 1.5, atk: 1.4, def: 1.4, spd: 1.2, exp: 1.5, money: 1.5 },
+    wild: [['slime_2', 3], ['aodori_2', 3], ['kujira_ko', 3], ['slime', 2], ['aodori', 2], ['fukurou_ko', 2], ['mitsubachi', 1], ['slime_3', 1], ['biriunagi', 2], ['biriunagi_2', 1], ['hikari_kame', 1], ['furebu_mizu', 1], ['furebu_mizu_2', 1], ['kurage_ko', 2], ['kurage_ko_2', 1], ['mitsugo_hebi', 1], ['mitsugo_hydra', 1], ['umihebi_ko', 2], ['namino_kairyu', 1], ['kora_rakko', 2], ['yume_no_ko', 1]], scale: { lv: 6, hp: 1.5, atk: 1.4, def: 1.4, spd: 1.2, exp: 1.5, money: 1.5 },
     boss: { key: 'lake', x: 16, z: -58, deco: { model: 'deco_ice_crystal', n: 9, r: 7.5, w: 3.4 }, id: 'yeti', name: 'みずうみの ぬし', over: { name: 'みずうみの ぬし', level: 17, hp: 170, atk: 31, def: 18, spd: 13, exp: 220, money: 260 }, model: 'boss_lake', h: 5.8, lines: ['……さむい かぜが ふいてきたな。', 'このみずうみは わたしの すみか。ふみあらす ものは かえさん。', 'こおりのように つめたい わたしを、おまえの なかまは とかせるか?'], coins: 500, win: 'みずうみの ぬしが みとめてくれた! なかまボール×5 と 500コインを もらった!', after: 'みずうみに へいわが もどったよ' },
   },
 };
@@ -346,9 +346,27 @@ async function talkBoss() {
   const k = await dlgShow(bossBeaten() ? ['……また きたのか。', 'いちど みとめた あいてだ。もう いちど ちからを みせてもらおう!', '(さいせん: 1日1回。かつと ごほうびが もらえるよ。ぬしは つよくなっているよ)'] : (BOSS.lines || ['……']), ['たたかう', 'まだ やめておく']);
   busy = false; if (k === 0) challengeBoss();
 }
+// ---- ジムリーダーふう: ぬしの まえに してんのう(てした)が なんたいか れんせんで たたかう ----
+async function gymTeam() {
+  const GD = await questData(), k = F.scale || { lv: 0, hp: 1, atk: 1, def: 1, spd: 1, exp: 1, money: 1 }, n = FI < 4 ? 2 : 3;
+  const ids = [...new Set((F.wild || []).map(([id]) => id))].filter(id => !['yume_no_ko', 'toki_no_yousei'].includes(id) && GD.MONSTERS[id]);
+  const pool = ids.map(id => GD.MONSTERS[id]).sort((a, b) => b.level - a.level).slice(0, Math.max(n + 2, 5));
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  return pool.slice(0, n).sort((a, b) => a.level - b.level).map((b) => ({ id: b.id, name: b.name, over: { level: b.level + k.lv + 3, hp: Math.round(b.hp * k.hp * 1.15), atk: Math.round(b.atk * k.atk * 1.05), def: Math.round(b.def * k.def * 1.05), spd: Math.round(b.spd * k.spd), exp: Math.round(b.exp * k.exp), money: Math.round(b.money * k.money) } }));
+}
 async function challengeBoss() {
   if (busy) return; busy = true; sfx('quest'); fade(true); await new Promise(r => setTimeout(r, 700));
   const re = bossBeaten(), o = BOSS.over;
+  if (!re) {   // はじめての ちょうせんは てしたを たおしてから ぬしと たたかう(まけたら さいしょから)
+    const team = await gymTeam();
+    for (let i = 0; i < team.length; i++) {
+      const u = team[i];
+      ui.toast(BOSS.name, `てした ${i + 1}/${team.length}`, `${u.name} が たちはだかった!`, 2200);
+      const r = await runBattle(u.id, { boss: u.over, trainer: `${BOSS.name}の てした`, bg: F.bg, wx: WX, hour: hourNow() }); save();
+      if (r === 'lose') { fade(false); grace = 6; encDist = 0; ui.setCoins(); goVillage(true); return; }
+    }
+    ui.toast(BOSS.name, 'てしたを ぜんいん たおした!', 'つぎは ぬしが あいてだよ', 2600);
+  }
   const over = re ? { ...o, level: o.level + 3, hp: Math.round(o.hp * 1.2), atk: Math.round(o.atk * 1.1), def: Math.round(o.def * 1.1), exp: Math.round(o.exp * 0.8), money: Math.round(o.money * 0.5) } : o;
   const res = await runBattle(BOSS.id, { boss: over, bg: F.bg, wx: WX, hour: hourNow(), onBossWin: async (msg, sleep) => {
     if (re) { state.bossRe = state.bossRe || {}; state.bossRe[BOSS.key] = state.day || 1; const bn = FI < 3 ? 'nakama_ball' : FI < 7 ? 'super_ball' : 'hyper_ball'; addItem(bn, 2); const bonus = Math.round(BOSS.coins * 0.25); state.coins += bonus; msg(`${BOSS.name} に また かった! ${bonus}コインと ${ITEMS[bn].name}×2 を もらった!`); sfx('quest'); await sleep(2200); }
@@ -525,6 +543,7 @@ function updateTarget() {
   target = d < 5 && !busy ? { label: 'むらへ かえる', sub: 'ぼくじょうの むらに もどるよ', short: 'かえる', can: true, act: () => goVillage(false) } : null;
   if (!target && gate2 && !busy && Math.hypot(P.pos.x - NX, P.pos.z - GZ) < 5) target = { label: FIELDS[NEXT].name + 'へ すすむ', sub: 'ぬしを たおしたので ひらいたよ。むらの ゲートからも えらべるよ', short: 'すすむ', can: true, act: goNext };
   if (!target && bossSprite && !busy && Math.hypot(P.pos.x - BOSS.x, P.pos.z - BOSS.z) < 6.5) target = { label: bossBeaten() ? BOSS.name + 'に さいせんする' : BOSS.name + 'に はなしかける', sub: 'つよい あいてだよ。HPと かいふくの たべものを じゅんびしてね(たたかいが はじまると にげられないよ)', short: 'はなしかける', can: true, act: talkBoss };
+  if (!target && !busy) { const sh = shrines.find(s => !(state.legends && state.legends[s.id]) && Math.hypot(P.pos.x - s.x, P.pos.z - s.z) < 4.2); if (sh) target = { label: 'でんせつの ほこら', sub: 'ふしぎな けはいが する…。つよい あいてだよ', short: 'ちかづく', can: true, act: () => challengeLegend(sh) }; }
   if (!target && !busy) { const c = chests.find(c => Math.hypot(P.pos.x - c.x, P.pos.z - c.z) < 3.2); if (c) { const rd = chestReady(c); target = { label: 'たからばこ', sub: rd ? 'ひらいてみよう!' : 'からっぽ(3日で ふっかつ)', short: rd ? 'あける' : 'からっぽ', can: true, act: () => openChest(c) }; } }
   if (!target && !busy) { const t = trainers.find(t => Math.hypot(P.pos.x - t.x, P.pos.z - t.z) < 4.5); if (t) target = { label: t.name + 'に はなしかける', sub: state.trainers[t.key] ? 'しょうぶは おわったよ' : 'トレーナーだよ。しょうぶを もちかけてくるよ', short: 'はなす', can: true, act: () => talkTrainer(t) }; }
   ui.setPrompt(ui.panelOpen() ? null : target);
@@ -679,6 +698,48 @@ function updateChests(dt) {
     if (c.open > 0 && c.open < 1) c.open = Math.min(1, c.open + dt * 2.2); c.m.userData.lid.rotation.x = ready ? 0 : -1.9 * (c.open > 0 ? c.open : 1);
   }
 }
+
+// ---- でんせつの ほこら(フィールドの おくに ひとつずつ。ちかづくと でんせつの モンスターに であえる。つかまえるか たおすと しずかになる) ----
+const LEGENDS = {
+  sky: [['raigeki_chou', 45]], sun: [['kaen_chou', 50], ['homura_shishi', 52]], cosmos: [['hyosetsu_chou', 55], ['mizu_kirin', 55], ['watatsumi', 60]],
+  grove: [['kaminari_tora', 60]], castle: [['magna_kaiju', 65]], temple: [['futago_stella', 65], ['futago_comet', 65], ['ginyoku', 70]],
+  dragon: [['souryu_ten', 70], ['niji_ootori', 75]], end: [['maryoku_ou', 80]],
+};
+const SHRINE_SPOTS = [[34, 8], [-36, -6], [12, -40], [-14, 40], [38, -26], [-40, 22], [6, 26], [-30, -34], [30, 36], [-46, 4]];
+const shrines = [], shrineTex = new THREE.TextureLoader();
+const shrineMat = { stone: new THREE.MeshLambertMaterial({ color: '#8a8a94' }), gold: new THREE.MeshLambertMaterial({ color: '#d9b25a' }) };
+function buildShrine() {
+  const g = new THREE.Group(), base = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.8, 0.35, 10), shrineMat.stone); base.position.y = 0.18; g.add(base);
+  for (const sx of [-1, 1]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 2.6, 8), shrineMat.stone); p.position.set(sx * 1.0, 1.6, 0); g.add(p); }
+  const lintel = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.28, 0.4), shrineMat.gold); lintel.position.y = 2.95; g.add(lintel);
+  const lintel2 = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.2, 0.3), shrineMat.stone); lintel2.position.y = 2.55; g.add(lintel2);
+  return g;
+}
+async function makeShrines() {
+  const list = (LEGENDS[FID] || []).filter(([id]) => !(state.legends && state.legends[id])); if (!list.length) return;
+  const spots = SHRINE_SPOTS.filter(([x, z]) => !inZone(x, z) && !ZONES.some(([cx, cz, r]) => Math.hypot(x - cx, z - cz) < r + 3) && !isWater(x, z) && !(LC && hAt(x, z) < WATER_Y + 1) && !LAVA.some(([cx, cz, r]) => Math.hypot(x - cx, z - cz) < r + 4) && Math.hypot(x - BOSS.x, z - BOSS.z) > 16 && !circles.some(c => Math.hypot(c.x - x, c.z - z) < 4) && Math.hypot(x, z - 46) > 18);
+  list.forEach(([id, lv], i) => {
+    const s = spots[i]; if (!s) return; const [x, z] = s, g = buildShrine(); g.position.set(x, hAt(x, z), z); g.rotation.y = Math.atan2(-x, -z); scene.add(g); circles.push({ x, z, r: 1.7 });
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: shrineTex.load(`quest/assets/monsters/${id}.webp`), transparent: true, opacity: 0.0, depthWrite: false, fog: false }));
+    sp.scale.set(2.6, 2.6, 1); sp.position.set(x, hAt(x, z) + 1.6, z); scene.add(sp);
+    shrines.push({ id, lv, x, z, g, sp });
+  });
+}
+function updateShrines(dt) {
+  for (const s of shrines) {
+    if (state.legends && state.legends[s.id]) { s.g.visible = false; s.sp.visible = false; continue; }
+    const d = Math.hypot(P.pos.x - s.x, P.pos.z - s.z), want = d < 16 ? Math.min(0.85, (16 - d) / 8) : 0;   // ちかづくと ぼんやり すがたが うかぶ
+    s.sp.material.opacity += (want - s.sp.material.opacity) * Math.min(1, dt * 2); s.sp.position.y = hAt(s.x, s.z) + 1.7 + Math.sin(T * 1.6 + s.x) * 0.15;
+  }
+}
+async function challengeLegend(s) {
+  if (busy) return; busy = true; sfx('quest'); fade(true); await new Promise(r => setTimeout(r, 700));
+  const res = await runBattle(s.id, { bg: F.bg, wx: WX, hour: hourNow(), legend: true }); save();
+  if (res === 'caught' || res === 'win') { state.legends = state.legends || {}; state.legends[s.id] = 1; save(); }
+  fade(false); grace = 6; encDist = 0;
+  if (res === 'lose') { goVillage(true); return; }
+  busy = false;
+}
 const clock = new THREE.Clock(); let T = 0, lastFrame = 0;
 function frame() {
   requestAnimationFrame(frame); if (ECO) { const now = performance.now(); if (now - lastFrame < 30) return; lastFrame = now; }   // 省エネ: 30fps
@@ -693,7 +754,7 @@ function frame() {
     if (bossSprite) bossSprite.userData.ring.material.opacity = 0.4 + Math.sin(T * 3) * 0.2;
     gate.userData.portal.material.opacity = 0.4 + Math.sin(T * 2.2) * 0.12;
     if (gate2) gate2.userData.portal.material.opacity = 0.4 + Math.sin(T * 2.2 + 1) * 0.12;
-    updateEmbers(dt); updateWeather(dt); updateSky(dt); updateChests(dt); updatePet(dt, T); if ((wxT += dt) > 1) { wxT = 0; updateWxLabel(); }
+    updateEmbers(dt); updateWeather(dt); updateSky(dt); updateChests(dt); updateShrines(dt); updatePet(dt, T); if ((wxT += dt) > 1) { wxT = 0; updateWxLabel(); }
     updateTrainers(dt, T);
     lavaMeshes.forEach((m, i) => m.material.color.setHSL((PL ? PL.h : 0.045) + Math.sin(T * 1.7 + i) * 0.01, PL ? PL.s : 1, (PL ? PL.l : 0.36) + Math.sin(T * 2.3 + i * 2) * 0.04));
     if (waterMesh) { waterMesh.material.color.setHSL(0.575, 0.7, 0.3 + Math.sin(T * 0.9) * 0.03); waterMesh.position.y = WATER_Y + Math.sin(T * 0.7) * 0.03; }
@@ -702,7 +763,7 @@ function frame() {
 }
 async function boot() {
   load(); initWeather(); buildGate2(); chinGL = await loader.loadAsync('./assets/chin_storybook_lite.glb'); chinGL.scene.traverse(o => { if (o.isMesh && !o.geometry.attributes.normal) o.geometry.computeVertexNormals(); });
-  chin = makeChin(0.95); scene.add(chin.outer); makePet(); makeBoss(); await makeTrainers(); await makeChests();
+  chin = makeChin(0.95); scene.add(chin.outer); makePet(); makeBoss(); await makeTrainers(); await makeChests(); await makeShrines();
   for (const [nm, nT, nP, sc, r0, r1, tn] of [...F.trees, ...(F.props || [])]) await plant(nm, isTouch ? nT : nP, sc, r0, r1, tn);
   await questData(); const first = giveStarter(); save();
   ui.setCoins(); ui.setClock && ui.setClock(); ui.setLevel && ui.setLevel();
@@ -711,7 +772,7 @@ async function boot() {
   { const h = hourNow(), hints = [WX_HINT[WX], nightK(h) > 0.9 ? 'よるは やみや まほうの モンスターが でやすいよ' : (h >= 7 && h < 17 ? 'ひるまは てんや くさの モンスターが でやすいよ' : '')].filter(Boolean); if (WX !== 'clear' || hints.length) setTimeout(() => ui.toast(`てんき: ${WX_NAME[WX]} / ${timeName(h)}`, hints.join(' / ') || 'おだやかな ひだよ', '', 4200), 1500); } busy = false; fade(false); document.title = 'ready';
   if (first) ui.toast('なかまが できた!', 'まめちんちらが ついてきたよ', 'くさむらを あるくと モンスターが でてくるよ', 5200);
   else ui.toast(F.name, 'くさむらを あるくと モンスターが でてくるよ', FID === 'lake' ? 'ここの モンスターは すこし つよいよ' : '', 3600);
-  window.__f = { trainers, talkTrainer, talkBoss, cam, hAt, isWater, P, state, startEncounter, runBattle, scene, camera, renderer, goVillage, ZONES, count, addItem };
+  window.__f = { gymTeam, challengeBoss, shrines, challengeLegend, trainers, talkTrainer, talkBoss, cam, hAt, isWater, P, state, startEncounter, runBattle, scene, camera, renderer, goVillage, ZONES, count, addItem };
 }
 unlockAudio(); frame(); boot();
 addEventListener('pagehide', () => { try { save(); } catch {} });
