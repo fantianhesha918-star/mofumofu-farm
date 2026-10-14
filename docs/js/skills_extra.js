@@ -20,7 +20,7 @@ const NAMES = {
   water: { barrage: 'バブルショット', bite: 'アクアファング', claw: 'アクアクロー', cross: 'ウォーターカッター', sweep: 'なみがえし', vortex: 'アクアトルネード', beam: 'ウォータービーム', rain: 'むらさめ', pillar: 'みずばしら', quake: 'タイダルノヴァ' },
   grass: { barrage: 'リーフバレット', bite: 'ウッドファング', claw: 'ブランチクロー', cross: 'リーフカッター', vortex: 'リーフトルネード', sweep: 'このはふぶき', beam: 'ソーラーレーザー', rain: 'シードレイン', pillar: 'ウッドピラー', quake: 'フォレストノヴァ' },
   wind: { barrage: 'ウィンドショット', claw: 'ウィンドクロー', cross: 'ウィンドスラッシュ', sweep: 'エアウェーブ', vortex: 'おおつむじ', bite: 'ウィンドファング', beam: 'ウィンドレーザー', pillar: 'ウィンドピラー', rain: 'ストームレイン', quake: 'ハリケーンノヴァ' },
-  earth: { barrage: 'ロックショット', bite: 'ロックファング', claw: 'アースクロー', cross: 'ロックブレード', ram: 'ロックチャージ', sweep: 'サンドウェーブ', vortex: 'サンドトルネード', rain: 'いわなだれ', pillar: 'アースピラー', quake: 'グランドノヴァ' },
+  earth: { barrage: 'ロックショット', bite: 'ロックファング', claw: 'アースクロー', cross: 'ロックブレード', ram: 'ロックチャージ', sweep: 'サンドウェーブ', vortex: 'サンドトルネード', rain: 'つちおとし', pillar: 'アースピラー', quake: 'グランドノヴァ' },
   thunder: { barrage: 'ボルトショット', bite: 'サンダーファング', claw: 'ボルトクロー', cross: 'サンダーブレード', sweep: 'ボルトウェーブ', vortex: 'ライトニングストーム', beam: 'サンダーレーザー', pillar: 'かみなりおとし', rain: 'ライトニングレイン', quake: 'サンダーノヴァ' },
   heaven: { barrage: 'スターショット', claw: 'ヘブンクロー', cross: 'ヘブンブレード', sweep: 'ほしふぶき', vortex: 'ヘブンストーム', beam: 'ヘブンレーザー', pillar: 'ヘブンピラー', rain: 'スターレイン', bite: 'エンジェルファング', quake: 'ヘブンノヴァ' },
   dark: { barrage: 'シャドウバレット', bite: 'シャドウファング', claw: 'かげづめ', cross: 'シャドウブレード', sweep: 'ダークウェーブ', vortex: 'ダークストーム', beam: 'ダークレーザー', pillar: 'ダークピラー', rain: 'やみしぐれ', quake: 'ダークノヴァ' },
