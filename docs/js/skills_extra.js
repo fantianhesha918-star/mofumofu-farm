@@ -14,11 +14,21 @@ const LIST = {
   beast: [['barrage', 'ビーストショット', 7], ['bite', 'ビッグファング', 18], ['claw', 'ひっかきラッシュ', 10], ['cross', 'ワイルドカッター', 22], ['ram', 'ぼうそうとっしん', 26], ['sweep', 'とどろくウェーブ', 30], ['beam', 'ビーストレーザー', 38], ['pillar', 'もうじゅうのはしら', 46], ['rain', 'あれくるうレイン', 50], ['quake', 'ビーストノヴァ', 60]],
   kami: [['barrage', 'きらめきのつぶて', 4], ['claw', 'しんじゅうのクロー', 10], ['cross', 'しんぎのブレード', 16], ['sweep', 'しんせいのウェーブ', 22], ['vortex', 'かみのうず', 28], ['beam', 'しんぱんのレーザー', 34], ['bite', 'かみのファング', 38], ['pillar', 'かみのはしら', 42], ['rain', 'ほしぼしのレイン', 50], ['quake', 'しんせいのノヴァ', 62]],
 };
-// なまえは「ぞくせい + うごき」で そろえる(わかりやすさ ゆうせん)
-const PRE = { fire: 'ほのお', water: 'みず', grass: 'くさ', wind: 'かぜ', earth: 'いわ', thunder: 'でんき', heaven: 'てん', dark: 'やみ', magic: 'まほう', beast: 'けもの', kami: 'しん' };
-const SUF = { barrage: 'のれんぞく', bite: 'のかみつき', claw: 'のひっかき', cross: 'のきりさき', sweep: 'のウェーブ', vortex: 'のたつまき', beam: 'のビーム', pillar: 'のはしら', rain: 'のあめ', ram: 'のたいあたり', quake: 'のばくはつ' };
-const EXC = { 'wind:sweep': 'かまいたち', 'earth:vortex': 'すなのたつまき', 'earth:barrage': 'いしのれんぞく', 'earth:rain': 'いしのあめ', 'earth:quake': 'だいじしん', 'fire:barrage': 'ひのたまれんぞく', 'grass:barrage': 'はっぱれんぞく', 'grass:rain': 'はっぱのあめ', 'water:barrage': 'あわれんぞく', 'thunder:barrage': 'でんげきれんぞく' };
-for (const [el, list] of Object.entries(LIST)) for (const r of list) r[1] = EXC[el + ':' + r[0]] || PRE[el] + SUF[r[0]];
+// なまえ: かっこよく、でも なにを する わざか すぐ わかる(カタカナ英語 + にほんご)
+const NAMES = {
+  fire: { barrage: 'フレイムショット', bite: 'フレイムファング', claw: 'フレイムクロー', sweep: 'ヒートウェーブ', cross: 'フレイムスラッシュ', vortex: 'ファイアストーム', beam: 'フレイムレーザー', pillar: 'フレイムピラー', rain: 'メテオレイン', quake: 'ブレイズノヴァ' },
+  water: { barrage: 'バブルショット', bite: 'アクアファング', claw: 'アクアクロー', cross: 'ウォーターカッター', sweep: 'ビッグウェーブ', vortex: 'アクアトルネード', beam: 'ウォータービーム', rain: 'スコールレイン', pillar: 'アクアピラー', quake: 'タイダルノヴァ' },
+  grass: { barrage: 'リーフバレット', bite: 'ウッドファング', claw: 'ブランチクロー', cross: 'リーフカッター', vortex: 'リーフトルネード', sweep: 'グリーンウェーブ', beam: 'ソーラーレーザー', rain: 'シードレイン', pillar: 'ウッドピラー', quake: 'フォレストノヴァ' },
+  wind: { barrage: 'ウィンドショット', claw: 'ウィンドクロー', cross: 'ウィンドスラッシュ', sweep: 'エアウェーブ', vortex: 'サイクロン', bite: 'ウィンドファング', beam: 'ウィンドレーザー', pillar: 'ウィンドピラー', rain: 'ストームレイン', quake: 'ハリケーンノヴァ' },
+  earth: { barrage: 'ロックショット', bite: 'ロックファング', claw: 'アースクロー', cross: 'ロックブレード', ram: 'ロックチャージ', sweep: 'サンドウェーブ', vortex: 'サンドトルネード', rain: 'ロックレイン', pillar: 'アースピラー', quake: 'グランドノヴァ' },
+  thunder: { barrage: 'ボルトショット', bite: 'サンダーファング', claw: 'ボルトクロー', cross: 'サンダーブレード', sweep: 'ボルトウェーブ', vortex: 'ライトニングストーム', beam: 'サンダーレーザー', pillar: 'サンダーピラー', rain: 'ライトニングレイン', quake: 'サンダーノヴァ' },
+  heaven: { barrage: 'スターショット', claw: 'ヘブンクロー', cross: 'ヘブンブレード', sweep: 'ヘブンウェーブ', vortex: 'ヘブンストーム', beam: 'ヘブンレーザー', pillar: 'ヘブンピラー', rain: 'スターレイン', bite: 'エンジェルファング', quake: 'ヘブンノヴァ' },
+  dark: { barrage: 'シャドウバレット', bite: 'シャドウファング', claw: 'シャドウクロー', cross: 'シャドウブレード', sweep: 'ダークウェーブ', vortex: 'ダークストーム', beam: 'ダークレーザー', pillar: 'ダークピラー', rain: 'ダークレイン', quake: 'ダークノヴァ' },
+  magic: { barrage: 'マジックショット', cross: 'マジックブレード', sweep: 'ミスティックウェーブ', vortex: 'マジックストーム', bite: 'マジックファング', beam: 'マジカルレーザー', pillar: 'マジックピラー', rain: 'スターダストレイン', quake: 'マジックノヴァ' },
+  beast: { barrage: 'ビーストショット', bite: 'ワイルドファング', claw: 'ワイルドクロー', cross: 'ワイルドカッター', ram: 'ビーストチャージ', sweep: 'ビーストウェーブ', beam: 'ビーストレーザー', pillar: 'ビーストピラー', rain: 'ビーストレイン', quake: 'ビーストノヴァ' },
+  kami: { barrage: 'ディバインショット', claw: 'ディバインクロー', cross: 'ディバインブレード', sweep: 'ディバインウェーブ', vortex: 'ディバインストーム', beam: 'ディバインレーザー', bite: 'ディバインファング', pillar: 'ディバインピラー', rain: 'ディバインレイン', quake: 'ディバインノヴァ' },
+};
+for (const [el, list] of Object.entries(LIST)) for (const r of list) r[1] = NAMES[el][r[0]] || r[1];
 const DESC = { barrage: 'なんども たたみかけて こうげきする', bite: 'するどい きばで かみつく', claw: 'つめで ひっかく', cross: 'するどく きりさく', pillar: 'そらから はしらを おとす', rain: 'そらから たくさん ふらせる', beam: 'ひかりの すじを はなつ', ram: 'いきおいよく ぶつかる', vortex: 'うずを まいて まきこむ', sweep: 'ひろがる なみで おしながす', quake: 'ちからを はなって あたりを ゆらす' };
 // レベル→いりょく(既存のわざの きょくせんに あわせる)
 const powerAt = (L) => Math.round(L <= 9 ? 18 + (L - 1) * 1.5 : L <= 13 ? 30 + (L - 9) : L <= 25 ? 34 + (L - 13) * 1.25 : L <= 32 ? 49 + (L - 25) : L <= 44 ? 56 + (L - 32) * 1.5 : L <= 52 ? 74 + (L - 44) : L <= 64 ? 82 + (L - 52) * 1.75 : 103 + (L - 64) * 1.75);
