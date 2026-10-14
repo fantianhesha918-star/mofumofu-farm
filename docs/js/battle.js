@@ -589,10 +589,10 @@ export async function runBattle(enemyId, opts = {}) {
       else { await enemyAttack(); if (e.hp <= 0) { result = 'win'; break; } if (!(await afterAllyFaint())) { result = 'lose'; break; } await allyAttack(v); if (e.hp <= 0) { result = 'win'; break; } }
       acted = true;
     } else if (top === 'item') {
-      const foods = Object.keys(MON_HEAL).filter(id => count(id) > 0), rows = foods.map(id => ({ html: `${itemIcon(id)}${ITEMS[id].name}<small>HP +${Math.round(MON_HEAL[id] * (hasBadge('grove') ? 1.5 : 1))}${BUFFS[id] ? ' / ' + buffText(BUFFS[id]) : ''} / ×${count(id)}</small>`, v: id }));
+      const capOut = !!(opts.cap && opts.cap.left <= 0), foods = capOut ? [] : Object.keys(MON_HEAL).filter(id => count(id) > 0), rows = foods.map(id => ({ html: `${itemIcon(id)}${ITEMS[id].name}<small>HP +${Math.round(MON_HEAL[id] * (hasBadge('grove') ? 1.5 : 1))}${BUFFS[id] ? ' / ' + buffText(BUFFS[id]) : ''} / ×${count(id)}${opts.cap ? ' / あと' + opts.cap.left + 'かい' : ''}</small>`, v: id }));
       if (!opts.trainer) BALL_IDS.filter(id => count(id) > 0).reverse().forEach(id => rows.unshift({ html: `${itemIcon(id)}${ITEMS[id].name}<small>${ITEMS[id].ball.mult === Infinity ? 'かならず なかまに なる' : 'せいこうりつ ×' + ITEMS[id].ball.mult} / ×${count(id)}</small>`, v: id }));
       Object.keys(ITEMS).filter(id => ITEMS[id].battle && count(id) > 0).forEach(id => rows.push({ html: `${itemIcon(id)}${ITEMS[id].name}<small>${ITEMS[id].desc || ''} / ×${count(id)}</small>`, v: id }));
-      if (!rows.length) { msg('つかえる どうぐが ない… (牧場の やさいや りょうりで かいふくできるよ)'); await sleep(1400); continue; }
+      if (!rows.length) { msg(capOut ? 'ここでは もう かいふくの たべものは つかえない!' : 'つかえる どうぐが ない… (牧場の やさいや りょうりで かいふくできるよ)'); await sleep(1400); continue; }
       const v = await menu(rows, true); if (v === '__back') continue; cmd.innerHTML = '';
       if (ITEMS[v] && ITEMS[v].ball) {
         const bl = ITEMS[v].ball; addItem(v, -1); msg(`${ITEMS[v].name}を なげた!`); sfx('pick');
@@ -611,7 +611,7 @@ export async function runBattle(enemyId, opts = {}) {
         if (bu.stg) for (const [k, n] of Object.entries(bu.stg)) await changeStage('a', k, n);
         if (bu.pp) { a.pp = a.pp || {}; for (const sk of movesOf(a)) a.pp[sk.id] = Math.min(ppMax(sk), ppOf(a, sk) + bu.pp); msg(`${monName(a)} の わざの PPが かいふくした!`); await sleep(900); }
       } else {
-        const a = state.party[ai], st = monStats(a), before = hpOf(a); a.hp = Math.min(st.maxHp, before + Math.round(MON_HEAL[v] * (hasBadge('grove') ? 1.5 : 1))); addItem(v, -1); sfx('feed'); sd('a').ail = null; if (BUFFS[v]) buff = { ...BUFFS[v] }; draw(); pop('a', '+' + (a.hp - before), 'heal'); msg(`${ITEMS[v].name}を たべて げんきに なった!`); await sleep(1000);
+        const a = state.party[ai], st = monStats(a), before = hpOf(a); a.hp = Math.min(st.maxHp, before + Math.round(MON_HEAL[v] * (hasBadge('grove') ? 1.5 : 1))); addItem(v, -1); if (opts.cap) opts.cap.left--; sfx('feed'); sd('a').ail = null; if (BUFFS[v]) buff = { ...BUFFS[v] }; draw(); pop('a', '+' + (a.hp - before), 'heal'); msg(`${ITEMS[v].name}を たべて げんきに なった!`); await sleep(1000);
       }
       await enemyAttack(); if (e.hp <= 0) { result = 'win'; break; } if (!(await afterAllyFaint())) { result = 'lose'; break; } acted = true;
     } else if (top === 'swap') {

@@ -142,6 +142,14 @@ const FIELDS = {
   },
 };
 const FID = ['lake', 'volcano', 'ghost', 'sky', 'sun', 'cosmos', 'grove', 'castle', 'temple', 'dragon', 'end'].includes(params.get('f')) ? params.get('f') : 'forest', F = FIELDS[FID], LC = F.lake || null, WATER_Y = -0.9;
+// ---- してんのうの フィールド: せまくて くらい・くさむらなし。バッジ8つで ひらく ----
+const GYM8 = ['forest', 'lake', 'volcano', 'ghost', 'sky', 'sun', 'cosmos', 'grove'], gymClear = () => GYM8.every(k => state.boss[k]);
+const ELITE = ['castle', 'temple', 'dragon', 'end'].includes(FID), SPZ = ELITE ? 20 : 46;
+if (ELITE) {
+  F.zones = []; F.lava = []; F.pool = null; F.fogN = 8; F.fogF = 62; F.boss.x = 0; F.boss.z = -16;
+  F.trees = F.trees.map(([nm, nT, nP, sc, , , tn]) => [nm, nT * 2, nP * 2, sc, 31, 48, tn]);
+  F.props = (F.props || []).map(([nm, nT, nP, sc, r0, r1, tn]) => [nm, Math.ceil(nT / 2), Math.ceil(nP / 2), sc, r0, Math.min(r1, 25), tn]);
+}
 document.title = F.name;
 const canvas = $('#c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'default' });
@@ -202,7 +210,7 @@ for (const [pc, pa, glow, pn, r0, r1] of (F.patch || [])) {
   let k = 0, tries = 0;
   while (k < pn && tries++ < pn * 20) {
     const x = R(-95, 95), z = R(-95, 95), r = R(r0, r1);
-    if (Math.hypot(x - 0, z - 46) < 5 || LAVA.some(([cx, cz, rr]) => Math.hypot(x - cx, z - cz) < rr + r * 0.6) || (LC && hAt(x, z) < WATER_Y + 1.2)) continue;
+    if (Math.hypot(x - 0, z - SPZ) < 5 || LAVA.some(([cx, cz, rr]) => Math.hypot(x - cx, z - cz) < rr + r * 0.6) || (LC && hAt(x, z) < WATER_Y + 1.2)) continue;
     const m = new THREE.Mesh(geo.clone(), mat); const q = m.geometry.attributes.position;
     for (let i = 0; i < q.count; i++) { const vx = x + q.getX(i) * r * 2, vz = z + q.getZ(i) * r * 2; q.setXYZ(i, vx, hAt(vx, vz) + 0.05 + k * 0.0006, vz); }
     m.frustumCulled = false; scene.add(m); k++;
@@ -233,7 +241,7 @@ async function plant(name, n, scaleR, rMin, rMax, tint) {
   const bb = new THREE.Box3().setFromBufferAttribute(m.geometry.attributes.position), im = new THREE.InstancedMesh(m.geometry, m.material, n), mt = new THREE.Matrix4(); let k = 0, tries = 0;
   while (k < n && tries++ < n * 40) {
     const a = R(0, 6.28), r = R(rMin, rMax), x = Math.cos(a) * r, z = Math.sin(a) * r;
-    if (Math.hypot(x - BOSS.x, z - BOSS.z) < 11 || inZone(x, z) || ZONES.some(([cx, cz, rz]) => Math.hypot(x - cx, z - cz) < rz + 2.5) || Math.hypot(x, z - 52) < 9 || (LC && hAt(x, z) < WATER_Y + 0.9) || LAVA.some(([cx, cz, r]) => Math.hypot(x - cx, z - cz) < r + 3) || circles.some(c => Math.hypot(c.x - x, c.z - z) < 3.4)) continue;
+    if (Math.hypot(x - BOSS.x, z - BOSS.z) < 11 || inZone(x, z) || ZONES.some(([cx, cz, rz]) => Math.hypot(x - cx, z - cz) < rz + 2.5) || Math.hypot(x, z - (GZ - 4)) < 9 || (LC && hAt(x, z) < WATER_Y + 0.9) || LAVA.some(([cx, cz, r]) => Math.hypot(x - cx, z - cz) < r + 3) || circles.some(c => Math.hypot(c.x - x, c.z - z) < 3.4)) continue;
     const s = R(scaleR[0], scaleR[1]); mt.compose(new V3(x, hAt(x, z) - bb.min.y * s - 0.1, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, R(0, 6.28), 0)), new V3(s, s * R(0.92, 1.12), s)); im.setMatrixAt(k++, mt);
     if (r < 64) circles.push({ x, z, r: 0.6 * s * 0.22 + 0.45 });
   }
@@ -249,7 +257,7 @@ function makeChin(h) {
   const inner = new THREE.Group(); inner.add(root); const outer = new THREE.Group(); outer.add(inner); return { outer, inner, h };
 }
 function hop(c, speed, t) { const w = Math.sin(t * 11); c.inner.position.y = Math.abs(w) * 0.13 * c.h * speed; c.inner.rotation.x = w * 0.09 * speed; c.inner.rotation.z = Math.sin(t * 5.5) * 0.05 * speed; }
-const P = { pos: new V3(0, 0, 46), face: Math.PI, sp: 0, t: 0 };
+const P = { pos: new V3(0, 0, SPZ), face: Math.PI, sp: 0, t: 0 };
 const cam = { yaw: 0, pitch: 0.36, dist: 6.4, pos: new V3(), look: new V3() };
 
 // ---- ペットの ちんちらが ついてくる(ときどき ひろいものを みつけてくる) ----
@@ -348,33 +356,45 @@ async function talkBoss() {
 }
 // ---- ジムリーダーふう: ぬしの まえに してんのう(てした)が なんたいか れんせんで たたかう ----
 async function gymTeam() {
-  const GD = await questData(), k = F.scale || { lv: 0, hp: 1, atk: 1, def: 1, spd: 1, exp: 1, money: 1 }, n = FI < 4 ? 2 : 3;
+  const GD = await questData(), k = F.scale || { lv: 0, hp: 1, atk: 1, def: 1, spd: 1, exp: 1, money: 1 }, n = FI < 4 ? 2 : FI === 11 ? 4 : 3;
   const ids = [...new Set((F.wild || []).map(([id]) => id))].filter(id => !['yume_no_ko', 'toki_no_yousei'].includes(id) && GD.MONSTERS[id]);
   const pool = ids.map(id => GD.MONSTERS[id]).sort((a, b) => b.level - a.level).slice(0, Math.max(n + 2, 5));
   for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
   return pool.slice(0, n).sort((a, b) => a.level - b.level).map((b) => ({ id: b.id, name: b.name, over: { level: b.level + k.lv + 3, hp: Math.round(b.hp * k.hp * 1.15), atk: Math.round(b.atk * k.atk * 1.05), def: Math.round(b.def * k.def * 1.05), spd: Math.round(b.spd * k.spd), exp: Math.round(b.exp * k.exp), money: Math.round(b.money * k.money) } }));
 }
+async function hallOfFame() {
+  const GD = await questData(); state.hof = state.hof || { day: state.day || 1, party: state.party.map(m => m.id) }; save();
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;z-index:60;background:radial-gradient(#3a2a70,#0a0618);color:#ffe9a0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px;text-align:center;font-family:inherit';
+  ov.innerHTML = `<div style="font-size:30px;font-weight:bold;letter-spacing:4px">でんどういり!</div><div style="font-size:14px;color:#fff">してんのうを ぜんいん たおした! このなかまが でんせつに のこる</div><div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:520px">${state.party.map(m => { const b = GD.MONSTERS[m.id] || {}; return `<div style="width:30%;min-width:96px"><img src="quest/assets/monsters/${m.id}.webp" style="width:100%;aspect-ratio:1;object-fit:contain"><div style="font-size:13px;color:#fff">${m.nick || b.name || m.id}</div><div style="font-size:12px">Lv${m.lv}</div></div>`; }).join('')}</div><button id="hofOk" style="font-size:16px;padding:10px 26px;border-radius:12px;border:2px solid #ffe9a0;background:#2a1a50;color:#ffe9a0">むらへ かえる</button>`;
+  document.body.appendChild(ov); sfx('quest');
+  await new Promise(r => { ov.querySelector('#hofOk').onclick = r; });
+  ov.remove(); goVillage(false);
+}
 async function challengeBoss() {
   if (busy) return; busy = true; sfx('quest'); fade(true); await new Promise(r => setTimeout(r, 700));
-  const re = bossBeaten(), o = BOSS.over;
+  const re = bossBeaten(), o = BOSS.over, cap = ELITE ? { left: 3 } : null;   // してんのうは かいふくの たべものが 3かいまで
+  if (cap) { ui.toast('してんのうの たたかい', 'かいふくの たべものは 3かいまで!', 'てしたも ぬしも れんせん。とちゅうで かいふくは できないよ', 3600); await new Promise(r => setTimeout(r, 1200)); }
   if (!re) {   // はじめての ちょうせんは てしたを たおしてから ぬしと たたかう(まけたら さいしょから)
     const team = await gymTeam();
     for (let i = 0; i < team.length; i++) {
       const u = team[i];
       ui.toast(BOSS.name, `てした ${i + 1}/${team.length}`, `${u.name} が たちはだかった!`, 2200);
-      const r = await runBattle(u.id, { boss: u.over, trainer: `${BOSS.name}の てした`, bg: F.bg, wx: WX, hour: hourNow() }); save();
+      const r = await runBattle(u.id, { boss: u.over, trainer: `${BOSS.name}の てした`, bg: F.bg, wx: WX, hour: hourNow(), cap }); save();
       if (r === 'lose') { fade(false); grace = 6; encDist = 0; ui.setCoins(); goVillage(true); return; }
     }
     ui.toast(BOSS.name, 'てしたを ぜんいん たおした!', 'つぎは ぬしが あいてだよ', 2600);
   }
   const over = re ? { ...o, level: o.level + 3, hp: Math.round(o.hp * 1.2), atk: Math.round(o.atk * 1.1), def: Math.round(o.def * 1.1), exp: Math.round(o.exp * 0.8), money: Math.round(o.money * 0.5) } : o;
-  const res = await runBattle(BOSS.id, { boss: over, bg: F.bg, wx: WX, hour: hourNow(), onBossWin: async (msg, sleep) => {
+  const res = await runBattle(BOSS.id, { boss: over, bg: F.bg, wx: WX, hour: hourNow(), cap, onBossWin: async (msg, sleep) => {
     if (re) { state.bossRe = state.bossRe || {}; state.bossRe[BOSS.key] = state.day || 1; const bn = FI < 3 ? 'nakama_ball' : FI < 7 ? 'super_ball' : 'hyper_ball'; addItem(bn, 2); const bonus = Math.round(BOSS.coins * 0.25); state.coins += bonus; msg(`${BOSS.name} に また かった! ${bonus}コインと ${ITEMS[bn].name}×2 を もらった!`); sfx('quest'); await sleep(2200); }
     else { state.boss[BOSS.key] = 1; addItem('nakama_ball', 5); if (FID === 'forest' && !state.gotMame) { state.gotMame = 1; const gm = giveMon('mame_chin', 5); if (gm) msg(gm === 'party' ? 'もりの ぬしから まめちんちらを あずかった! なかまに なったよ!' : 'もりの ぬしから まめちんちらを あずかった! ぼくじょうで まっているよ!'); } if (FID === 'end') addItem('evo_kami', 1); state.coins += BOSS.coins; msg(BOSS.win + (FID === 'end' ? ' かみの しんかいしを てにいれた!' : '')); sfx('quest'); await sleep(2200); } } });
   save(); fade(false); grace = 6; encDist = 0; ui.setCoins();
   if (res === 'lose') { goVillage(true); return; }
   if (re && state.bossRe[BOSS.key] === (state.day || 1) && bossSprite) { scene.remove(bossSprite); scene.remove(bossSprite.userData.ring); bossSprite = null; if (bossModel) { scene.remove(bossModel); bossModel = null; } ui.toast(BOSS.name, 'さいせんに しょうり!', 'あした また たたかえるよ', 4200); }
   else if (!re && state.boss[BOSS.key] && bossSprite) { makeShrines(); scene.remove(bossSprite); scene.remove(bossSprite.userData.ring); bossSprite = null; if (bossModel) { scene.remove(bossModel); bossModel = null; } if (bossPatch) { scene.remove(bossPatch); bossPatch = null; } if (bossDeco) { scene.remove(bossDeco); bossDeco = null; } { const bd = BADGES.find(b => b.id === BOSS.key); if (bd) setTimeout(() => { sfx('quest'); ui.toast('BADGE GET!', bd.name, bd.bonus, 6000); }, 2600); }
+    if (GYM8.includes(BOSS.key) && gymClear()) setTimeout(() => { sfx('quest'); ui.toast('バッジが 8つ そろった!', 'でんせつの ほこらが あらわれた', 'ほこらの でんせつモンスターを なかまにして、やみの しろ(してんのう)に ちょうせんしよう!', 8000); }, 9500);
+    if (FID === 'end') { await hallOfFame(); return; }
     ui.toast(BOSS.name, 'ぬしを たおした!', BOSS.after + ({ forest: '(むらの ゲートから みずうみへ いけるよ)', lake: '(むらの ゲートから ようがんやまへ いけるよ)' }[BOSS.key] || ''), 5200); }
   busy = false;
 }
@@ -462,7 +482,7 @@ async function challengeTrainer(t) {
 }
 
 // ---- むらへのゲート ----
-const gate = new THREE.Group(); const GZ = 56;
+const gate = new THREE.Group(); const GZ = ELITE ? 25 : 56;
 {
   const wood = new THREE.MeshLambertMaterial({ color: '#7a5230' }), glow = new THREE.MeshBasicMaterial({ color: '#ffe9a0', transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
   for (const s of [-1, 1]) { const p = new THREE.Mesh(new THREE.BoxGeometry(0.5, 4.4, 0.5), wood); p.position.set(s * 2.2, 2.2, 0); gate.add(p); }
@@ -487,7 +507,7 @@ function goNext() {
 
 // ---- 入力・移動 ----
 let busy = true, fading = false, encDist = 0, grace = 8;
-const WR = 66;
+const WR = ELITE ? 28 : 66;
 function updatePlayer(dt) {
   const blocked = busy || ui.panelOpen();
   const mx = blocked ? 0 : input.mx, mz = blocked ? 0 : input.mz, sy = Math.sin(cam.yaw), cy = Math.cos(cam.yaw);
@@ -540,7 +560,7 @@ function goVillage(lost) {
 let target = null;
 function updateTarget() {
   const d = Math.hypot(P.pos.x, P.pos.z - GZ);
-  target = d < 5 && !busy ? { label: 'むらへ かえる', sub: 'ぼくじょうの むらに もどるよ', short: 'かえる', can: true, act: () => goVillage(false) } : null;
+  target = d < 5 && !busy ? (ELITE && FID !== 'castle' && !bossBeaten() ? { label: 'ひきかえせない', sub: 'してんのうとの たたかいの とちゅうだ。ぬしを たおすまで もどれないよ', short: 'ひきかえせない', can: false, act: () => {} } : { label: 'むらへ かえる', sub: 'ぼくじょうの むらに もどるよ', short: 'かえる', can: true, act: () => goVillage(false) }) : null;
   if (!target && gate2 && !busy && Math.hypot(P.pos.x - NX, P.pos.z - GZ) < 5) target = { label: FIELDS[NEXT].name + 'へ すすむ', sub: 'ぬしを たおしたので ひらいたよ。むらの ゲートからも えらべるよ', short: 'すすむ', can: true, act: goNext };
   if (!target && bossSprite && !busy && Math.hypot(P.pos.x - BOSS.x, P.pos.z - BOSS.z) < 6.5) target = { label: bossBeaten() ? BOSS.name + 'に さいせんする' : BOSS.name + 'に はなしかける', sub: 'つよい あいてだよ。HPと かいふくの たべものを じゅんびしてね(たたかいが はじまると にげられないよ)', short: 'はなしかける', can: true, act: talkBoss };
   if (!target && !busy) { const sh = shrines.find(s => !(state.legends && state.legends[s.id]) && Math.hypot(P.pos.x - s.x, P.pos.z - s.z) < 4.2); if (sh) target = { label: 'でんせつの ほこら', sub: 'ふしぎな けはいが する…。つよい あいてだよ', short: 'ちかづく', can: true, act: () => challengeLegend(sh) }; }
@@ -700,10 +720,10 @@ function updateChests(dt) {
 }
 
 // ---- でんせつの ほこら(フィールドの おくに ひとつずつ。ちかづくと でんせつの モンスターに であえる。つかまえるか たおすと しずかになる) ----
-const LEGENDS = {
-  sky: [['raigeki_chou', 45]], sun: [['kaen_chou', 50], ['homura_shishi', 52]], cosmos: [['hyosetsu_chou', 55], ['mizu_kirin', 55], ['watatsumi', 60]],
-  grove: [['kaminari_tora', 60]], castle: [['magna_kaiju', 65]], temple: [['futago_stella', 65], ['futago_comet', 65], ['ginyoku', 70]],
-  dragon: [['souryu_ten', 70], ['niji_ootori', 75]], end: [['maryoku_ou', 80]],
+const LEGENDS = {   // バッジ8つで あらわれる。してんのうの フィールドには おかない
+  forest: [['souryu_ten', 70]], lake: [['ginyoku', 70]], volcano: [['magna_kaiju', 65]], ghost: [['maryoku_ou', 80]],
+  sky: [['raigeki_chou', 45], ['futago_stella', 65], ['futago_comet', 65]], sun: [['kaen_chou', 50], ['homura_shishi', 52]],
+  cosmos: [['hyosetsu_chou', 55], ['mizu_kirin', 55], ['watatsumi', 60]], grove: [['kaminari_tora', 60], ['niji_ootori', 75]],
 };
 const SHRINE_SPOTS = [[34, 8], [-36, -6], [12, -40], [-14, 40], [38, -26], [-40, 22], [6, 26], [-30, -34], [30, 36], [-46, 4]];
 const shrines = [], shrineTex = new THREE.TextureLoader();
@@ -716,7 +736,7 @@ function buildShrine() {
   return g;
 }
 async function makeShrines() {
-  if (!bossBeaten() || shrines.length) return;   // ぬしを たおしてから ほこらが あらわれる
+  if (!gymClear() || shrines.length) return;   // バッジ8つで ほこらが あらわれる
   const list = (LEGENDS[FID] || []).filter(([id]) => !(state.legends && state.legends[id])); if (!list.length) return;
   const spots = SHRINE_SPOTS.filter(([x, z]) => !inZone(x, z) && !ZONES.some(([cx, cz, r]) => Math.hypot(x - cx, z - cz) < r + 3) && !isWater(x, z) && !(LC && hAt(x, z) < WATER_Y + 1) && !LAVA.some(([cx, cz, r]) => Math.hypot(x - cx, z - cz) < r + 4) && Math.hypot(x - BOSS.x, z - BOSS.z) > 16 && !circles.some(c => Math.hypot(c.x - x, c.z - z) < 4) && Math.hypot(x, z - 46) > 18);
   list.forEach(([id, lv], i) => {
@@ -764,11 +784,11 @@ function frame() {
 }
 async function boot() {
   load(); initWeather(); buildGate2(); chinGL = await loader.loadAsync('./assets/chin_storybook_lite.glb'); chinGL.scene.traverse(o => { if (o.isMesh && !o.geometry.attributes.normal) o.geometry.computeVertexNormals(); });
-  chin = makeChin(0.95); scene.add(chin.outer); makePet(); makeBoss(); await makeTrainers(); await makeChests(); await makeShrines();
+  chin = makeChin(0.95); scene.add(chin.outer); makePet(); makeBoss(); if (!ELITE) { await makeTrainers(); await makeChests(); } await makeShrines();
   for (const [nm, nT, nP, sc, r0, r1, tn] of [...F.trees, ...(F.props || [])]) await plant(nm, isTouch ? nT : nP, sc, r0, r1, tn);
   await questData(); const first = giveStarter(); save();
   ui.setCoins(); ui.setClock && ui.setClock(); ui.setLevel && ui.setLevel();
-  P.pos.set(0, hAt(0, 46), 46); cam.yaw = 0; cam.pitch = 0.36; updateCamera(0, true);
+  P.pos.set(0, hAt(0, SPZ), SPZ); cam.yaw = 0; cam.pitch = 0.36; updateCamera(0, true);
   playBgm('field'); $('#loading2').classList.add('done'); updateWxLabel();
   { const h = hourNow(), hints = [WX_HINT[WX], nightK(h) > 0.9 ? 'よるは やみや まほうの モンスターが でやすいよ' : (h >= 7 && h < 17 ? 'ひるまは てんや くさの モンスターが でやすいよ' : '')].filter(Boolean); if (WX !== 'clear' || hints.length) setTimeout(() => ui.toast(`てんき: ${WX_NAME[WX]} / ${timeName(h)}`, hints.join(' / ') || 'おだやかな ひだよ', '', 4200), 1500); } busy = false; fade(false); document.title = 'ready';
   if (first) ui.toast('なかまが できた!', 'まめちんちらが ついてきたよ', 'くさむらを あるくと モンスターが でてくるよ', 5200);

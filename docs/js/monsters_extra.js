@@ -121,7 +121,7 @@ export const EXTRA_MONS = [
 // あらわれる フィールド(ずかんの「でる ばしょ」と フィールドの でやすさ)
 export const EXTRA_APPEAR = {
   yume_no_ko: { lake: 1, sun: 1 }, toki_no_yousei: { grove: 1, forest: 1 }, raigeki_chou: { sky: 1 }, kaen_chou: { sun: 1 }, homura_shishi: { sun: 1 }, hyosetsu_chou: { cosmos: 1 }, mizu_kirin: { cosmos: 1 }, watatsumi: { cosmos: 1 },
-  kaminari_tora: { grove: 1 }, magna_kaiju: { castle: 1 }, futago_stella: { temple: 1 }, futago_comet: { temple: 1 }, ginyoku: { temple: 1 }, souryu_ten: { dragon: 1 }, niji_ootori: { dragon: 1 }, maryoku_ou: { end: 1 },
+  kaminari_tora: { grove: 1 }, magna_kaiju: { volcano: 1 }, futago_stella: { sky: 1 }, futago_comet: { sky: 1 }, ginyoku: { lake: 1 }, souryu_ten: { forest: 1 }, niji_ootori: { grove: 1 }, maryoku_ou: { ghost: 1 },
   nebosuke_kyo: { grove: 1, castle: 1 }, goro_kyojuu: { castle: 1, temple: 1 }, daichi_madoromi: { temple: 1, cosmos: 1 }, umihebi_ko: { lake: 2, cosmos: 1 }, namino_kairyu: { lake: 1, cosmos: 1 }, shinkai_ryujin: { cosmos: 1, dragon: 1 }, kora_rakko: { lake: 2 },
   hikari_kishi: { sun: 1, temple: 1 }, sei_kishi: { sun: 1, temple: 1 }, tenkuu_shugoshin: { temple: 1, cosmos: 1 }, wakagi_shika: { forest: 1, grove: 1 }, mori_shika: { grove: 1, forest: 1 }, shinju_taiboku: { grove: 1 }, maboroshi_yomi: { ghost: 1, temple: 1 }, nari_kami: { sky: 1, grove: 1 },
   chibi_ryu: { sky: 1, sun: 1 }, sora_ryu: { sky: 1, dragon: 1 }, seikuu_ryuou: { dragon: 1 }, iwagoro: { volcano: 1, grove: 1 }, gankou_goro: { volcano: 1, castle: 1 }, daichi_taishou: { castle: 1 },
