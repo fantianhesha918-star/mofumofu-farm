@@ -1,0 +1,38 @@
+// わざの かくちょう: エフェクト(うごき)に あわせた わざを ぞくせいごとに ふやす。
+// [うごき, なまえ, おぼえる めやすレベル]。なまえに うごきの ことば(ファング/クロー/ブレード/レーザー/はしら/レイン/れんぞく/うず/ウェーブ/ノヴァ…)を ふくめて、エフェクトと そろえる。
+// いりょくは 既存の わざと おなじ レベル→いりょく の きょくせんで じどうで きめる(バランスは かわらない)。
+const LIST = {
+  fire: [['barrage', 'ひのこのれんぞく', 7], ['bite', 'ほのおのファング', 11], ['claw', 'ほのおのクロー', 15], ['sweep', 'ほのおのウェーブ', 19], ['cross', 'ほのおのブレード', 23], ['vortex', 'ひのたつまき', 27], ['beam', 'フレイムレーザー', 34], ['pillar', 'ほのおのはしら', 42], ['rain', 'メテオレイン', 48], ['quake', 'ごくえんのばくはつ', 58]],
+  water: [['barrage', 'あわのれんぞく', 7], ['bite', 'みずのファング', 11], ['claw', 'みずのクロー', 15], ['cross', 'ウォーターカッター', 21], ['sweep', 'ビッグウェーブ', 26], ['vortex', 'みずのたつまき', 29], ['beam', 'ハイドロレーザー', 34], ['rain', 'スコールレイン', 40], ['pillar', 'みずのはしら', 46], ['quake', 'みずのノヴァ', 60]],
+  grass: [['barrage', 'はっぱのれんぞく', 7], ['bite', 'くさのファング', 11], ['claw', 'つるのクロー', 15], ['cross', 'リーフカッター', 20], ['vortex', 'はっぱのたつまき', 27], ['sweep', 'ねのウェーブ', 31], ['beam', 'ソーラーレーザー', 36], ['rain', 'たねのレイン', 42], ['pillar', 'だいじゅのはしら', 50], ['quake', 'しんりんのノヴァ', 60]],
+  wind: [['barrage', 'かぜのれんぞく', 7], ['claw', 'かぜのクロー', 13], ['cross', 'かまいたちカッター', 19], ['sweep', 'ブーメランウェーブ', 23], ['vortex', 'だいたつまき', 28], ['bite', 'かぜのファング', 32], ['beam', 'ウィンドレーザー', 38], ['pillar', 'かぜのはしら', 45], ['rain', 'ぼうふうレイン', 50], ['quake', 'ハリケーンノヴァ', 62]],
+  earth: [['barrage', 'いしのれんぞく', 7], ['bite', 'いわのファング', 12], ['claw', 'だいちのクロー', 16], ['cross', 'ロックブレード', 22], ['ram', 'いわのたいあたり', 26], ['sweep', 'すなのウェーブ', 28], ['vortex', 'すなのたつまき', 33], ['rain', 'がんせきレイン', 40], ['pillar', 'だいちのはしら', 46], ['quake', 'だいちのクエイク', 56]],
+  thunder: [['barrage', 'でんきのれんぞく', 7], ['bite', 'かみなりファング', 12], ['claw', 'いなずまクロー', 15], ['cross', 'サンダーブレード', 22], ['sweep', 'でんげきウェーブ', 26], ['vortex', 'いかづちのたつまき', 30], ['beam', 'サンダーレーザー', 36], ['pillar', 'らいめいのはしら', 44], ['rain', 'ライトニングレイン', 50], ['quake', 'サンダーノヴァ', 62]],
+  heaven: [['barrage', 'きらめきのれんぞく', 7], ['claw', 'ひかりのクロー', 14], ['cross', 'ホーリーブレード', 20], ['sweep', 'あまつのウェーブ', 25], ['vortex', 'きらめきのうず', 29], ['beam', 'きよめのビーム', 34], ['pillar', 'てんしのはしら', 40], ['rain', 'ほしくずレイン', 46], ['bite', 'てんのファング', 52], ['quake', 'てんのノヴァ', 60]],
+  dark: [['barrage', 'やみのれんぞく', 7], ['bite', 'やみのファング', 11], ['claw', 'かげのクロー', 14], ['cross', 'シャドウブレード', 21], ['sweep', 'くらやみのウェーブ', 27], ['vortex', 'やみのうず', 30], ['beam', 'ダークレーザー', 36], ['pillar', 'やみのはしら', 44], ['rain', 'くろいレイン', 50], ['quake', 'ダークノヴァ', 62]],
+  magic: [['barrage', 'まほうのれんぞく', 7], ['cross', 'マジックブレード', 20], ['sweep', 'ほしくずのウェーブ', 24], ['vortex', 'まほうのうず', 28], ['bite', 'マジックファング', 33], ['beam', 'マジカルレーザー', 35], ['pillar', 'まほうのはしら', 43], ['rain', 'ほしのレイン', 48], ['quake', 'マジカルノヴァ', 60]],
+  beast: [['barrage', 'ビーストショット', 7], ['bite', 'ビッグファング', 18], ['claw', 'ひっかきラッシュ', 10], ['cross', 'ワイルドカッター', 22], ['ram', 'ぼうそうとっしん', 26], ['sweep', 'とどろくウェーブ', 30], ['beam', 'ビーストレーザー', 38], ['pillar', 'もうじゅうのはしら', 46], ['rain', 'あれくるうレイン', 50], ['quake', 'ビーストノヴァ', 60]],
+  kami: [['barrage', 'きらめきのつぶて', 4], ['claw', 'しんじゅうのクロー', 10], ['cross', 'しんぎのブレード', 16], ['sweep', 'しんせいのウェーブ', 22], ['vortex', 'かみのうず', 28], ['beam', 'しんぱんのレーザー', 34], ['bite', 'かみのファング', 38], ['pillar', 'かみのはしら', 42], ['rain', 'ほしぼしのレイン', 50], ['quake', 'しんせいのノヴァ', 62]],
+};
+// なまえは「ぞくせい + うごき」で そろえる(わかりやすさ ゆうせん)
+const PRE = { fire: 'ほのお', water: 'みず', grass: 'くさ', wind: 'かぜ', earth: 'いわ', thunder: 'でんき', heaven: 'てん', dark: 'やみ', magic: 'まほう', beast: 'けもの', kami: 'しん' };
+const SUF = { barrage: 'のれんぞく', bite: 'のかみつき', claw: 'のひっかき', cross: 'のきりさき', sweep: 'のウェーブ', vortex: 'のたつまき', beam: 'のビーム', pillar: 'のはしら', rain: 'のあめ', ram: 'のたいあたり', quake: 'のばくはつ' };
+const EXC = { 'wind:sweep': 'かまいたち', 'earth:vortex': 'すなのたつまき', 'earth:barrage': 'いしのれんぞく', 'earth:rain': 'いしのあめ', 'earth:quake': 'だいじしん', 'fire:barrage': 'ひのたまれんぞく', 'grass:barrage': 'はっぱれんぞく', 'grass:rain': 'はっぱのあめ', 'water:barrage': 'あわれんぞく', 'thunder:barrage': 'でんげきれんぞく' };
+for (const [el, list] of Object.entries(LIST)) for (const r of list) r[1] = EXC[el + ':' + r[0]] || PRE[el] + SUF[r[0]];
+const DESC = { barrage: 'なんども たたみかけて こうげきする', bite: 'するどい きばで かみつく', claw: 'つめで ひっかく', cross: 'するどく きりさく', pillar: 'そらから はしらを おとす', rain: 'そらから たくさん ふらせる', beam: 'ひかりの すじを はなつ', ram: 'いきおいよく ぶつかる', vortex: 'うずを まいて まきこむ', sweep: 'ひろがる なみで おしながす', quake: 'ちからを はなって あたりを ゆらす' };
+// レベル→いりょく(既存のわざの きょくせんに あわせる)
+const powerAt = (L) => Math.round(L <= 9 ? 18 + (L - 1) * 1.5 : L <= 13 ? 30 + (L - 9) : L <= 25 ? 34 + (L - 13) * 1.25 : L <= 32 ? 49 + (L - 25) : L <= 44 ? 56 + (L - 32) * 1.5 : L <= 52 ? 74 + (L - 44) : L <= 64 ? 82 + (L - 52) * 1.75 : 103 + (L - 64) * 1.75);
+export function installExtraSkills(GD) {
+  if (GD._extraSkills) return; GD._extraSkills = true;
+  if (GD.SKILLS.kami_judgement) GD.SKILLS.kami_judgement.learnLevel = 66;   // しんの ひっさつわざは こうはんで おぼえる
+  for (const [el, list] of Object.entries(LIST)) {
+    const tr = GD.COMPANION_SKILL_TRACKS[el]; if (!tr) continue;
+    for (const [mo, name, L] of list) {
+      const id = `n_${el}_${mo}`, power = powerAt(L);
+      GD.SKILLS[id] = { id, name, power, uses: power >= 80 ? 5 : power >= 40 ? 10 : 20, learnLevel: L, desc: DESC[mo], element: el };
+      let at = tr.length; for (let i = 0; i < tr.length; i++) { const t = GD.SKILLS[tr[i]]; if (t && (t.learnLevel || 1) > L) { at = i; break; } }
+      tr.splice(at, 0, id);
+    }
+  }
+}
+export const EXTRA_SKILL_LIST = LIST;
