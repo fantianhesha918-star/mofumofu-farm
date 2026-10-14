@@ -256,6 +256,13 @@ body:not(.touch) #prompt { bottom: calc(26px + var(--sab)); }
 
 #bt.nt .hp i, #bt.nt .xp i { transition: none !important; }
 .bt-fx { position: absolute; transform: translate(-50%, -50%); pointer-events: none; z-index: 6; }
+.bt-pt { position: absolute; border-radius: 50%; pointer-events: none; z-index: 7; transform: translate(-50%, -50%); mix-blend-mode: screen; }
+.bt-sl, .bt-bm { position: absolute; pointer-events: none; z-index: 7; mix-blend-mode: screen; }
+.bt-bm { transform-origin: 0 50%; border-radius: 40px; }
+.bt-sw { position: absolute; border-radius: 50%; border: 5px solid transparent; box-sizing: border-box; pointer-events: none; z-index: 7; filter: drop-shadow(0 0 6px #fff); }
+.bt-rg { position: absolute; border-radius: 50%; pointer-events: none; z-index: 7; transform: translate(-50%, -50%); mix-blend-mode: screen; box-sizing: border-box; }
+.bt-tn { position: absolute; inset: 0; pointer-events: none; z-index: 5; mix-blend-mode: screen; }
+.bt-fl { position: absolute; border-radius: 50%; pointer-events: none; z-index: 7; transform: translate(-50%, -50%); mix-blend-mode: screen; }
 .bt-img.evolving { animation: btEvo 1.8s ease-in-out; }
 @keyframes btEvo { 0% { filter: brightness(1); } 30% { filter: brightness(8) saturate(0); transform: scaleX(-1) scale(1.08); } 60% { filter: brightness(14) saturate(0); transform: scaleX(-1) scale(.9); } 100% { filter: brightness(10) saturate(0); } }
 .bt-img.evolved { animation: btEvoDone .9s ease-out; }

@@ -10,10 +10,12 @@ import { sfx } from './audio.js';
 import { playBgm, jingle } from './bgm.js';
 
 let GD = null;
+const fxSeen = new Set();
+const preloadFx = (G) => { try { const L = [...Object.values(G.ELEMENT_EFFECTS || {}), ...Object.values(G.ELEMENT_EFFECT_ANIM || {}).flat(2)]; for (const u of L) if (!fxSeen.has(u)) { fxSeen.add(u); const i = new Image(); i.src = 'quest/' + u; } } catch (e) {} };   // わざの えを さきに よみこむ(こうかいばんで おくれて でないように)
 export function questData() {
   return new Promise((res, rej) => {
-    if (window.GAME_DATA) { GD = window.GAME_DATA; installStatus(GD); installExtraMons(GD); return res(GD); }
-    const s = document.createElement('script'); s.src = 'quest/data.js?v=' + (new URL(import.meta.url).searchParams.get('v') || ''); s.onload = () => { GD = window.GAME_DATA; installStatus(GD); installExtraMons(GD); res(GD); }; s.onerror = rej; document.head.appendChild(s);
+    if (window.GAME_DATA) { GD = window.GAME_DATA; installStatus(GD); installExtraMons(GD); preloadFx(GD); return res(GD); }
+    const s = document.createElement('script'); s.src = 'quest/data.js?v=' + (new URL(import.meta.url).searchParams.get('v') || ''); s.onload = () => { GD = window.GAME_DATA; installStatus(GD); installExtraMons(GD); preloadFx(GD); res(GD); }; s.onerror = rej; document.head.appendChild(s);
   });
 }
 const img = (p) => 'quest/' + p;
@@ -256,14 +258,51 @@ export async function runBattle(enemyId, opts = {}) {
   const fieldEl = $('.bt-field', root);
   const rectOf = (el) => { const f = fieldEl.getBoundingClientRect(), r = el.getBoundingClientRect(); return { x: r.left - f.left + r.width / 2, y: r.top - f.top + r.height / 2, w: r.width, h: r.height }; };
   const fxImg = (src, r, w) => { const i = document.createElement('img'); i.className = 'bt-fx'; i.src = img(src); i.style.cssText = `left:${r.x}px;top:${r.y}px;width:${w}px`; fieldEl.appendChild(i); return i; };
-  const fxFrame = async (src, el, ms) => { const r = rectOf(el), i = fxImg(src, r, Math.max(r.w, r.h) * 1.15); await sleep(ms); i.remove(); };
+  const ELC = { fire: '#ff7a30', water: '#4aa8ff', grass: '#58c458', wind: '#7adcc8', earth: '#c89a54', thunder: '#ffd830', heaven: '#fff0a0', dark: '#9a5ae0', magic: '#d080ff', beast: '#ffb060', kami: '#fff6c0' };
+  const wa = (el, kf, o) => { try { return el.animate(kf, { fill: 'both', ...o, duration: o.duration / battleSpeed(), delay: (o.delay || 0) / battleSpeed() }).finished.catch(() => {}); } catch (e) { return Promise.resolve(); } };
+  const ready = (i) => i.complete ? Promise.resolve() : new Promise(r => { i.onload = i.onerror = r; setTimeout(r, 900); });
+  const fxFrame = async (src, el, ms, pop) => { const r = rectOf(el), i = fxImg(src, r, Math.max(r.w, r.h) * 1.15); await ready(i); if (pop) wa(i, [{ transform: 'translate(-50%,-50%) scale(.7)', opacity: .6 }, { transform: 'translate(-50%,-50%) scale(1.08)', opacity: 1 }], { duration: ms, easing: 'ease-out' }); await sleep(ms); i.remove(); };
+  const burst = (r, col, n, pw) => { for (let k = 0; k < n; k++) { const d = document.createElement('i'), sz = 5 + Math.random() * 9, a = Math.random() * 6.283, dist = (40 + Math.random() * 80) * pw; d.className = 'bt-pt'; d.style.cssText = `left:${r.x}px;top:${r.y}px;width:${sz}px;height:${sz}px;background:${col};box-shadow:0 0 ${sz * 1.6}px ${col}`; fieldEl.appendChild(d); wa(d, [{ transform: 'translate(-50%,-50%) scale(1)', opacity: 1 }, { transform: `translate(calc(-50% + ${Math.cos(a) * dist}px),calc(-50% + ${Math.sin(a) * dist}px)) scale(.2)`, opacity: 0 }], { duration: 420 + Math.random() * 280, easing: 'cubic-bezier(.1,.7,.3,1)' }).then(() => d.remove()); } };
+  const flash = (r, col, sz) => { const d = document.createElement('div'); d.className = 'bt-fl'; d.style.cssText = `left:${r.x}px;top:${r.y}px;width:${sz}px;height:${sz}px;background:radial-gradient(circle,#fff 0%,${col} 30%,transparent 68%)`; fieldEl.appendChild(d); wa(d, [{ opacity: .95, transform: 'translate(-50%,-50%) scale(.35)' }, { opacity: 0, transform: 'translate(-50%,-50%) scale(1.5)' }], { duration: 380, easing: 'ease-out' }).then(() => d.remove()); };
+  const shake = (amp) => wa(fieldEl, [{ transform: 'translate(0,0)' }, { transform: `translate(${-amp}px,${amp * .5}px)` }, { transform: `translate(${amp}px,${-amp * .6}px)` }, { transform: `translate(${-amp * .6}px,${amp * .3}px)` }, { transform: 'translate(0,0)' }], { duration: 280, fill: 'none' });
+  const MOTIONS = [['slash', /スラッシュ|ひっかき|クロー|つめ|ブレード|つるぎ|けん|カッター|ファング|かみつ|きば|ギリ|きりさ|ひきさ/], ['beam', /ビーム|ほうしゃ|ブレス|レーザー|ブラスト|いぶき|ほえ|ハウリング|ふきつけ/], ['ram', /たいあたり|タックル|ずつき|とっしん|つっこ|ぶつか|ラッシュ|チャージ|てっけん|プレス|クラッシュ|つので|つらぬ|ランス|スピア|おしつぶ|たたきつ/], ['rain', /メテオ|いん石|ふらせ|レイン|あめ|ながれぼし|さばき|いかずち|らいめい/], ['quake', /ウェーブ|なみ|ばくはつ|ノヴァ|クエイク|だいちわり|かいてん|ストーム|うず|フィールド|オーラ|げんかい|ぜったい|プロミネンス|サンバースト|フレア|じしん|ゆらす|ふるわせ/]];
+  const motionOf = (sk) => { for (const t of [sk.name || '', (sk.desc || '').replace(/つめたい/g, '')]) for (const [k, re] of MOTIONS) if (re.test(t)) return k; return 'orb'; };   // わざの なまえ・せつめいから うごきを きめる
+  const streak = (r, col, rot, len, delay) => { const d = document.createElement('div'); d.className = 'bt-sl'; d.style.cssText = `left:${r.x}px;top:${r.y}px;width:${len}px;height:10px;transform:translate(-50%,-50%) rotate(${rot}deg);background:linear-gradient(90deg,transparent,#fff 35%,${col} 70%,transparent);box-shadow:0 0 14px ${col}`; fieldEl.appendChild(d); wa(d, [{ opacity: 0, clipPath: 'inset(0 100% 0 0)' }, { opacity: 1, clipPath: 'inset(0 0 0 0)', offset: .35 }, { opacity: 0, clipPath: 'inset(0 0 0 0)' }], { duration: 340, delay, easing: 'ease-out' }).then(() => d.remove()); };
+  const ring = (r, col, sz, delay) => { const d = document.createElement('div'); d.className = 'bt-rg'; d.style.cssText = `left:${r.x}px;top:${r.y}px;width:${sz}px;height:${sz}px;border:6px solid ${col};box-shadow:0 0 18px ${col},inset 0 0 18px ${col}`; fieldEl.appendChild(d); wa(d, [{ opacity: .9, transform: 'translate(-50%,-50%) scale(.2)' }, { opacity: 0, transform: 'translate(-50%,-50%) scale(1.5)' }], { duration: 520, delay, easing: 'ease-out' }).then(() => d.remove()); };
+  const beamFx = (a, b, col, th) => { const dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy), ang = Math.atan2(dy, dx) * 180 / Math.PI, d = document.createElement('div'); d.className = 'bt-bm'; d.style.cssText = `left:${a.x}px;top:${a.y}px;width:${L}px;height:${th}px;background:linear-gradient(180deg,transparent,${col} 25%,#fff 50%,${col} 75%,transparent);box-shadow:0 0 22px ${col}`; fieldEl.appendChild(d); const T = (sx) => `translate(0,-50%) rotate(${ang}deg) scaleX(${sx})`; return wa(d, [{ opacity: 0, transform: T(0) }, { opacity: 1, transform: T(1), offset: .3 }, { opacity: 1, transform: T(1), offset: .75 }, { opacity: 0, transform: T(1) }], { duration: 560, easing: 'ease-out' }).then(() => d.remove()); };
+  const tint = (col) => { const d = document.createElement('div'); d.className = 'bt-tn'; d.style.background = col; fieldEl.appendChild(d); wa(d, [{ opacity: .38 }, { opacity: 0 }], { duration: 420 }).then(() => d.remove()); };
   const playFx = async (fromEl, toEl, sk, elem) => {
-    const frames = GD.pickEffectFrames(elem, sk.id);
-    if (!frames) { const one = GD.ELEMENT_EFFECTS[elem]; if (one) await fxFrame(one, toEl, 520); return; }
+    const col = ELC[elem] || '#fff', pw = Math.min(1.8, 0.8 + (sk.power || 40) / 90), b = rectOf(toEl), a = rectOf(fromEl), hitSz = Math.max(b.w, b.h) * 1.1 * pw, mo = motionOf(sk), big = (sk.power || 0) >= 80;
+    const impact = (sh = 1) => { flash(b, col, hitSz); burst(b, col, Math.round(8 + pw * 8), pw); shake((2 + pw * 3) * sh); if (big) tint(col); };
+    if (sk.id === 'x_tail') {   // しっぽをふる: からだを ふりふり ゆらす
+      wa(fromEl, [{ rotate: '0deg', translate: '0 0' }, { rotate: '-9deg', translate: '-7px 0' }, { rotate: '9deg', translate: '7px 0' }, { rotate: '-9deg', translate: '-7px 0' }, { rotate: '9deg', translate: '7px 0' }, { rotate: '-6deg', translate: '-4px 0' }, { rotate: '0deg', translate: '0 0' }], { duration: 760, fill: 'none', easing: 'ease-in-out' });
+      for (let k = 0; k < 3; k++) { await sleep(180); burst({ x: a.x + (k - 1) * a.w * .3, y: a.y - a.h * .35 }, '#ffe9a0', 3, .5); }
+      await sleep(300); return;
+    }
+    if (sk.id === 'x_growl') {   // なきごえ: おとが ひろがる ようすで あらわす
+      const ang = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI, dist = Math.hypot(b.x - a.x, b.y - a.y) * .6;
+      wa(fromEl, [{ scale: '1' }, { scale: '1.1' }, { scale: '1' }], { duration: 200, iterations: 3, fill: 'none' });
+      for (let k = 0; k < 4; k++) { const d = document.createElement('div'); d.className = 'bt-sw'; d.style.cssText = `left:${a.x}px;top:${a.y - a.h * .1}px;width:${44 + k * 8}px;height:${44 + k * 8}px;border-right-color:#fff`; fieldEl.appendChild(d); wa(d, [{ opacity: 0, transform: `translate(-50%,-50%) rotate(${ang}deg) translateX(0) scale(.6)` }, { opacity: 1, offset: .2 }, { opacity: 0, transform: `translate(-50%,-50%) rotate(${ang}deg) translateX(${dist}px) scale(1.9)` }], { duration: 640, delay: k * 150, easing: 'ease-out' }).then(() => d.remove()); }
+      await sleep(520); wa(toEl, [{ translate: '0 0' }, { translate: `${Math.sign(b.x - a.x) * 12}px 0` }, { translate: '0 0' }], { duration: 300, fill: 'none' }); shake(2.5); await sleep(520); return;
+    }
+    const fe = elem === 'kami' && !(GD.ELEMENT_EFFECT_ANIM || {}).kami ? 'heaven' : elem, frames = GD.pickEffectFrames(fe, sk.id);
+    if (!frames) { const one = GD.ELEMENT_EFFECTS[fe]; if (one) { const i = fxImg(one, b, Math.max(b.w, b.h) * 1.15); await ready(i); wa(i, [{ transform: 'translate(-50%,-50%) scale(.5)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1.1)', opacity: 1, offset: .35 }, { transform: 'translate(-50%,-50%) scale(1.25)', opacity: 0 }], { duration: 560, easing: 'ease-out' }); impact(); await sleep(520); i.remove(); } return; }
     const ti = Math.max(0, frames.length - 3), charge = frames.slice(0, ti), travel = frames[ti], onHit = frames.slice(ti + 1);
-    for (const f of charge) await fxFrame(f, fromEl, 100);
-    const a = rectOf(fromEl), b = rectOf(toEl), p = fxImg(travel, a, Math.max(a.w, a.h) * 0.8); p.style.transition = 'left .3s linear, top .3s linear'; void p.offsetWidth; p.style.left = b.x + 'px'; p.style.top = b.y + 'px'; await sleep(320); p.remove();
-    for (const f of onHit) await fxFrame(f, toEl, 100);
+    const dx = Math.sign(b.x - a.x) * 14, dy = Math.sign(b.y - a.y) * 8;
+    if (mo !== 'ram') try { wa(fromEl, [{ translate: '0 0' }, { translate: `${-dx}px ${-dy}px`, offset: .4 }, { translate: `${dx * 1.6}px ${dy * 1.6}px`, offset: .7 }, { translate: '0 0' }], { duration: 420, fill: 'none', easing: 'ease-in-out' }); } catch (e) {}   // 技を出す側の ため→ふみこみ
+    for (const f of charge) await fxFrame(f, fromEl, 100, true);
+    if (mo === 'slash') { const L = Math.max(b.w, b.h) * 1.3, n = pw > 1.3 ? 3 : 2; for (let k = 0; k < n; k++) streak({ x: b.x + (k - (n - 1) / 2) * 16, y: b.y + (k - (n - 1) / 2) * 10 }, col, -38 + k * 14, L, k * 90); await sleep(170); impact(); }
+    else if (mo === 'beam') { const bp = beamFx(a, b, col, Math.round(30 * pw)); await sleep(190); impact(1.3); await bp; }
+    else if (mo === 'ram') { try { wa(fromEl, [{ translate: '0 0' }, { translate: `${-dx * 1.5}px ${-dy * 1.5}px`, offset: .25 }, { translate: `${(b.x - a.x) * .72}px ${(b.y - a.y) * .72}px`, offset: .55 }, { translate: '0 0' }], { duration: 480, fill: 'none', easing: 'ease-in-out' }); } catch (e) {} await sleep(260); impact(1.2); await sleep(150); }
+    else if (mo === 'rain') { const w = Math.max(a.w, a.h) * 0.7; for (let k = 0; k < 4; k++) { const x = b.x + (k - 1.5) * 34, p = fxImg(travel, { x, y: b.y - 230 }, w); wa(p, [{ top: (b.y - 230) + 'px', opacity: 0 }, { opacity: 1, offset: .15 }, { top: (b.y + (k % 2 ? 10 : -14)) + 'px', opacity: 1 }], { duration: 300, delay: k * 110, easing: 'cubic-bezier(.5,0,.9,.6)' }).then(() => { burst({ x, y: b.y }, col, 5, pw * .7); p.remove(); }); } await sleep(300 + 3 * 110); impact(1.2); }
+    else if (mo === 'quake') { for (let k = 0; k < 3; k++) ring(b, col, hitSz * 1.2, k * 130); await sleep(150); impact(1.8); await sleep(300); }
+    else {
+      const w = Math.max(a.w, a.h) * 0.8, p = fxImg(travel, a, w), arc = -Math.min(60, Math.abs(b.x - a.x) * 0.18); await ready(p);
+      const tp = wa(p, [{ left: a.x + 'px', top: a.y + 'px', transform: 'translate(-50%,-50%) scale(.8)' }, { left: (a.x + b.x) / 2 + 'px', top: (a.y + b.y) / 2 + arc + 'px', transform: 'translate(-50%,-50%) scale(1.15)', offset: .55 }, { left: b.x + 'px', top: b.y + 'px', transform: 'translate(-50%,-50%) scale(1.3)' }], { duration: 340, easing: 'cubic-bezier(.45,0,.85,.55)' });
+      for (let k = 0; k < 6; k++) { await sleep(52); const r = rectOf(p), g = fxImg(travel, r, w * 0.8); g.style.opacity = .45; wa(g, [{ opacity: .45, transform: 'translate(-50%,-50%) scale(.9)' }, { opacity: 0, transform: 'translate(-50%,-50%) scale(.4)' }], { duration: 260 }).then(() => g.remove()); }
+      await tp; p.remove(); impact();
+    }
+    for (const f of onHit) await fxFrame(f, toEl, 110, true);
   };
   const hit = async (img_, big) => { img_.classList.add('hit'); await sleep(big ? 420 : 320); img_.classList.remove('hit'); };
   const calc = (atk, power, dfn, ae, de, critP = GD.CRIT_CHANCE) => {
