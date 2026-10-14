@@ -374,7 +374,7 @@ async function challengeBoss() {
   save(); fade(false); grace = 6; encDist = 0; ui.setCoins();
   if (res === 'lose') { goVillage(true); return; }
   if (re && state.bossRe[BOSS.key] === (state.day || 1) && bossSprite) { scene.remove(bossSprite); scene.remove(bossSprite.userData.ring); bossSprite = null; if (bossModel) { scene.remove(bossModel); bossModel = null; } ui.toast(BOSS.name, 'さいせんに しょうり!', 'あした また たたかえるよ', 4200); }
-  else if (!re && state.boss[BOSS.key] && bossSprite) { scene.remove(bossSprite); scene.remove(bossSprite.userData.ring); bossSprite = null; if (bossModel) { scene.remove(bossModel); bossModel = null; } if (bossPatch) { scene.remove(bossPatch); bossPatch = null; } if (bossDeco) { scene.remove(bossDeco); bossDeco = null; } { const bd = BADGES.find(b => b.id === BOSS.key); if (bd) setTimeout(() => { sfx('quest'); ui.toast('BADGE GET!', bd.name, bd.bonus, 6000); }, 2600); }
+  else if (!re && state.boss[BOSS.key] && bossSprite) { makeShrines(); scene.remove(bossSprite); scene.remove(bossSprite.userData.ring); bossSprite = null; if (bossModel) { scene.remove(bossModel); bossModel = null; } if (bossPatch) { scene.remove(bossPatch); bossPatch = null; } if (bossDeco) { scene.remove(bossDeco); bossDeco = null; } { const bd = BADGES.find(b => b.id === BOSS.key); if (bd) setTimeout(() => { sfx('quest'); ui.toast('BADGE GET!', bd.name, bd.bonus, 6000); }, 2600); }
     ui.toast(BOSS.name, 'ぬしを たおした!', BOSS.after + ({ forest: '(むらの ゲートから みずうみへ いけるよ)', lake: '(むらの ゲートから ようがんやまへ いけるよ)' }[BOSS.key] || ''), 5200); }
   busy = false;
 }
@@ -716,6 +716,7 @@ function buildShrine() {
   return g;
 }
 async function makeShrines() {
+  if (!bossBeaten() || shrines.length) return;   // ぬしを たおしてから ほこらが あらわれる
   const list = (LEGENDS[FID] || []).filter(([id]) => !(state.legends && state.legends[id])); if (!list.length) return;
   const spots = SHRINE_SPOTS.filter(([x, z]) => !inZone(x, z) && !ZONES.some(([cx, cz, r]) => Math.hypot(x - cx, z - cz) < r + 3) && !isWater(x, z) && !(LC && hAt(x, z) < WATER_Y + 1) && !LAVA.some(([cx, cz, r]) => Math.hypot(x - cx, z - cz) < r + 4) && Math.hypot(x - BOSS.x, z - BOSS.z) > 16 && !circles.some(c => Math.hypot(c.x - x, c.z - z) < 4) && Math.hypot(x, z - 46) > 18);
   list.forEach(([id, lv], i) => {
