@@ -16,14 +16,14 @@ const LIST = {
 };
 // なまえ: かっこよく、でも なにを する わざか すぐ わかる(カタカナ英語 + にほんご)
 const NAMES = {
-  fire: { barrage: 'フレイムショット', bite: 'フレイムファング', claw: 'フレイムクロー', sweep: 'ヒートウェーブ', cross: 'フレイムスラッシュ', vortex: 'ファイアストーム', beam: 'フレイムレーザー', pillar: 'フレイムピラー', rain: 'メテオレイン', quake: 'ブレイズノヴァ' },
-  water: { barrage: 'バブルショット', bite: 'アクアファング', claw: 'アクアクロー', cross: 'ウォーターカッター', sweep: 'ビッグウェーブ', vortex: 'アクアトルネード', beam: 'ウォータービーム', rain: 'スコールレイン', pillar: 'アクアピラー', quake: 'タイダルノヴァ' },
-  grass: { barrage: 'リーフバレット', bite: 'ウッドファング', claw: 'ブランチクロー', cross: 'リーフカッター', vortex: 'リーフトルネード', sweep: 'グリーンウェーブ', beam: 'ソーラーレーザー', rain: 'シードレイン', pillar: 'ウッドピラー', quake: 'フォレストノヴァ' },
-  wind: { barrage: 'ウィンドショット', claw: 'ウィンドクロー', cross: 'ウィンドスラッシュ', sweep: 'エアウェーブ', vortex: 'サイクロン', bite: 'ウィンドファング', beam: 'ウィンドレーザー', pillar: 'ウィンドピラー', rain: 'ストームレイン', quake: 'ハリケーンノヴァ' },
-  earth: { barrage: 'ロックショット', bite: 'ロックファング', claw: 'アースクロー', cross: 'ロックブレード', ram: 'ロックチャージ', sweep: 'サンドウェーブ', vortex: 'サンドトルネード', rain: 'ロックレイン', pillar: 'アースピラー', quake: 'グランドノヴァ' },
-  thunder: { barrage: 'ボルトショット', bite: 'サンダーファング', claw: 'ボルトクロー', cross: 'サンダーブレード', sweep: 'ボルトウェーブ', vortex: 'ライトニングストーム', beam: 'サンダーレーザー', pillar: 'サンダーピラー', rain: 'ライトニングレイン', quake: 'サンダーノヴァ' },
-  heaven: { barrage: 'スターショット', claw: 'ヘブンクロー', cross: 'ヘブンブレード', sweep: 'ヘブンウェーブ', vortex: 'ヘブンストーム', beam: 'ヘブンレーザー', pillar: 'ヘブンピラー', rain: 'スターレイン', bite: 'エンジェルファング', quake: 'ヘブンノヴァ' },
-  dark: { barrage: 'シャドウバレット', bite: 'シャドウファング', claw: 'シャドウクロー', cross: 'シャドウブレード', sweep: 'ダークウェーブ', vortex: 'ダークストーム', beam: 'ダークレーザー', pillar: 'ダークピラー', rain: 'ダークレイン', quake: 'ダークノヴァ' },
+  fire: { barrage: 'フレイムショット', bite: 'フレイムファング', claw: 'ほむらづめ', sweep: 'ヒートウェーブ', cross: 'ほむらぎり', vortex: 'ファイアストーム', beam: 'フレイムレーザー', pillar: 'ひばしら', rain: 'メテオレイン', quake: 'ブレイズノヴァ' },
+  water: { barrage: 'バブルショット', bite: 'アクアファング', claw: 'アクアクロー', cross: 'ウォーターカッター', sweep: 'なみがえし', vortex: 'アクアトルネード', beam: 'ウォータービーム', rain: 'むらさめ', pillar: 'みずばしら', quake: 'タイダルノヴァ' },
+  grass: { barrage: 'リーフバレット', bite: 'ウッドファング', claw: 'ブランチクロー', cross: 'リーフカッター', vortex: 'リーフトルネード', sweep: 'このはふぶき', beam: 'ソーラーレーザー', rain: 'シードレイン', pillar: 'ウッドピラー', quake: 'フォレストノヴァ' },
+  wind: { barrage: 'ウィンドショット', claw: 'ウィンドクロー', cross: 'ウィンドスラッシュ', sweep: 'エアウェーブ', vortex: 'おおつむじ', bite: 'ウィンドファング', beam: 'ウィンドレーザー', pillar: 'ウィンドピラー', rain: 'ストームレイン', quake: 'ハリケーンノヴァ' },
+  earth: { barrage: 'ロックショット', bite: 'ロックファング', claw: 'アースクロー', cross: 'ロックブレード', ram: 'ロックチャージ', sweep: 'サンドウェーブ', vortex: 'サンドトルネード', rain: 'いわなだれ', pillar: 'アースピラー', quake: 'グランドノヴァ' },
+  thunder: { barrage: 'ボルトショット', bite: 'サンダーファング', claw: 'ボルトクロー', cross: 'サンダーブレード', sweep: 'ボルトウェーブ', vortex: 'ライトニングストーム', beam: 'サンダーレーザー', pillar: 'かみなりおとし', rain: 'ライトニングレイン', quake: 'サンダーノヴァ' },
+  heaven: { barrage: 'スターショット', claw: 'ヘブンクロー', cross: 'ヘブンブレード', sweep: 'ほしふぶき', vortex: 'ヘブンストーム', beam: 'ヘブンレーザー', pillar: 'ヘブンピラー', rain: 'スターレイン', bite: 'エンジェルファング', quake: 'ヘブンノヴァ' },
+  dark: { barrage: 'シャドウバレット', bite: 'シャドウファング', claw: 'かげづめ', cross: 'シャドウブレード', sweep: 'ダークウェーブ', vortex: 'ダークストーム', beam: 'ダークレーザー', pillar: 'ダークピラー', rain: 'やみしぐれ', quake: 'ダークノヴァ' },
   magic: { barrage: 'マジックショット', cross: 'マジックブレード', sweep: 'ミスティックウェーブ', vortex: 'マジックストーム', bite: 'マジックファング', beam: 'マジカルレーザー', pillar: 'マジックピラー', rain: 'スターダストレイン', quake: 'マジックノヴァ' },
   beast: { barrage: 'ビーストショット', bite: 'ワイルドファング', claw: 'ワイルドクロー', cross: 'ワイルドカッター', ram: 'ビーストチャージ', sweep: 'ビーストウェーブ', beam: 'ビーストレーザー', pillar: 'ビーストピラー', rain: 'ビーストレイン', quake: 'ビーストノヴァ' },
   kami: { barrage: 'ディバインショット', claw: 'ディバインクロー', cross: 'ディバインブレード', sweep: 'ディバインウェーブ', vortex: 'ディバインストーム', beam: 'ディバインレーザー', bite: 'ディバインファング', pillar: 'ディバインピラー', rain: 'ディバインレイン', quake: 'ディバインノヴァ' },
