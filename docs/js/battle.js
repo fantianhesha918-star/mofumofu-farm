@@ -11,6 +11,9 @@ import { sfx } from './audio.js';
 import { playBgm, jingle } from './bgm.js';
 
 let GD = null;
+// さいしゅうボス「うちゅうの かみ」の とくべつな わざ(たいよう / ブラックホール / ふたつを あわせた さいきょうの わざ)
+const BM = (id, name, element) => ({ id, name, element, power: 26, uses: 99, desc: '', _fx: null });
+const BOSS_MOVES = { sun: BM('boss_sun', 'ソーラーコロナ', 'fire'), hole: BM('boss_hole', 'ブラックホール', 'dark'), eclipse: BM('boss_eclipse', 'エクリプスノヴァ', 'kami') };
 const fxSeen = new Set();
 const preloadFx = (G) => { try { const L = [...Object.values(G.ELEMENT_EFFECTS || {}), ...Object.values(G.ELEMENT_EFFECT_ANIM || {}).flat(2)]; for (const u of L) if (!fxSeen.has(u)) { fxSeen.add(u); const i = new Image(); i.src = 'quest/' + u; } } catch (e) {} };   // わざの えを さきに よみこむ(こうかいばんで おくれて でないように)
 export function questData() {
@@ -122,7 +125,9 @@ const BASIC_SKILLS = ['tackle', 'x_tail', 'x_growl'];
 export function learnLv(sk) { if (!sk) return 99; if (BASIC_SKILLS.includes(sk.id)) return 1; const b = sk.learnLevel || 1; return b <= 1 ? 4 : b + 3; }
 export function knownOf(m) {
   const def = GD.MONSTERS[m.id], tr = GD.COMPANION_SKILL_TRACKS[def.element] || GD.COMPANION_SKILL_TRACKS.none, seen = new Set();
-  return tr.filter(s => GD.SKILLS[s] && learnLv(GD.SKILLS[s]) <= m.lv && !seen.has(s) && seen.add(s));
+  const out = tr.filter(s => GD.SKILLS[s] && learnLv(GD.SKILLS[s]) <= m.lv && !seen.has(s) && seen.add(s));
+  for (const g of (GD.SIG_BY_FORM && GD.SIG_BY_FORM[m.id]) || []) if (m.lv >= g.lv && !out.includes(g.id)) out.push(g.id);   // オリジナルわざ(御三家・でんせつ)は さいごに くわえる = じどうで えらばれやすい
+  return out;
 }
 export function nextSkillText(m) {   // つぎに おぼえる わざ
   const def = GD.MONSTERS[m.id], tr = GD.COMPANION_SKILL_TRACKS[def.element] || GD.COMPANION_SKILL_TRACKS.none, nx = tr.map(x => GD.SKILLS[x]).filter(x => x && learnLv(x) > m.lv).sort((p, q) => learnLv(p) - learnLv(q))[0];
@@ -313,6 +318,83 @@ export async function runBattle(enemyId, opts = {}) {
     if (el === 'wind') crescent({ x: b.x - 60, y: b.y }, { x: b.x + 60, y: b.y }, col, 70, 0);
   };
   const impactAt = (el, b, col, pw, hitSz, big, sh = 1) => { flash(b, col, hitSz); burst(b, col, Math.round(5 + pw * 5), pw); scatter(el, b, col, pw); shake((2 + pw * 3) * sh); if (big) tint(col); };
+  // ---- オリジナルわざの えんしゅつ(御三家・でんせつ・さいしゅうボス専用) ----
+  Object.assign(SHAPE, { diamond: 'width:12px;height:19px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)', petal: 'width:12px;height:17px;border-radius:50% 0 50% 50%' });
+  const sh = (kind, col, r, extra = '') => mk('bt-pt', r, `${SHAPE[kind]};background:${kind === 'feather' ? '#fffbe8' : col};box-shadow:0 0 8px ${col};mix-blend-mode:normal;${extra}`);
+  const gone = (d) => () => d.remove();
+  // しっぽを ひく ように ながれる(カーブしながら とんでいく)
+  const stream = (p, q, col, kind, n, amp, dur = 460, gap = 55, size = 1) => {
+    const dx = q.x - p.x, dy = q.y - p.y, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
+    for (let k = 0; k < n; k++) {
+      const d = sh(kind, col, p), kf = [0, .25, .5, .75, 1].map(t => ({ offset: t, opacity: t === 0 ? 0 : 1, transform: `translate(calc(-50% + ${dx * t + nx * amp * Math.sin(t * 6.283)}px),calc(-50% + ${dy * t + ny * amp * Math.sin(t * 6.283)}px)) rotate(${t * 540}deg) scale(${size})` }));
+      wa(d, kf, { duration: dur, delay: k * gap, easing: 'ease-in' }).then(gone(d));
+    }
+  };
+  // まわりから あつまる
+  const converge = (b, col, kind, n, rad, dur = 620, spin = 540) => {
+    for (let k = 0; k < n; k++) {
+      const an = k / n * 6.283, d = sh(kind, col, b);
+      wa(d, [{ opacity: 0, transform: `translate(calc(-50% + ${Math.cos(an) * rad}px),calc(-50% + ${Math.sin(an) * rad * .7}px)) rotate(0deg)` }, { opacity: 1, offset: .2 }, { opacity: 1, transform: `translate(-50%,-50%) rotate(${spin}deg) scale(.8)` }], { duration: dur, delay: k * 20, easing: 'ease-in' }).then(gone(d));
+    }
+  };
+  const paw = (col, size) => `width:${size}px;height:${size}px;mix-blend-mode:normal;background:radial-gradient(circle at 50% 64%,${col} 0 36%,transparent 38%),radial-gradient(circle at 18% 34%,${col} 0 13%,transparent 15%),radial-gradient(circle at 40% 16%,${col} 0 13%,transparent 15%),radial-gradient(circle at 62% 16%,${col} 0 13%,transparent 15%),radial-gradient(circle at 84% 34%,${col} 0 13%,transparent 15%);filter:drop-shadow(0 0 8px ${col})`;
+  const prints = (p, q, col, n, size = 28) => { for (let k = 0; k < n; k++) { const t = (k + 1) / n, d = mk('bt-pt', { x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t + (k % 2 ? 12 : -12) }, paw(col, size)); wa(d, [{ opacity: 0, transform: 'translate(-50%,-50%) scale(.3)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.1)', offset: .3 }, { opacity: 1, offset: .7 }, { opacity: 0, transform: 'translate(-50%,-50%) scale(1.2)' }], { duration: 520, delay: k * 150 }).then(gone(d)); } };
+  const rays = (b, col, sz, dur = 700) => { const d = mk('bt-pt', b, `width:${sz}px;height:${sz}px;border-radius:50%;mix-blend-mode:screen;background:repeating-conic-gradient(${col} 0 6deg,transparent 6deg 24deg);-webkit-mask:radial-gradient(circle,#000 0,transparent 70%);mask:radial-gradient(circle,#000 0,transparent 70%)`); wa(d, [{ opacity: 0, transform: 'translate(-50%,-50%) rotate(0deg) scale(.3)' }, { opacity: .9, offset: .3, transform: 'translate(-50%,-50%) rotate(60deg) scale(1)' }, { opacity: 0, transform: 'translate(-50%,-50%) rotate(140deg) scale(1.4)' }], { duration: dur, easing: 'ease-out' }).then(gone(d)); };
+  const clockFx = (b, col, sz) => {
+    const d = mk('bt-rg', b, `width:${sz}px;height:${sz}px;border:5px solid ${col};box-shadow:0 0 20px ${col},inset 0 0 20px ${col}`);
+    for (const [len, turn] of [[sz * .36, 900], [sz * .24, 120]]) { const h = document.createElement('i'); h.style.cssText = `position:absolute;left:calc(50% - 2px);top:calc(50% - ${len}px);width:4px;height:${len}px;background:${col};border-radius:2px;transform-origin:50% 100%;box-shadow:0 0 8px ${col}`; d.appendChild(h); wa(h, [{ transform: 'rotate(0deg)' }, { transform: `rotate(${turn}deg)` }], { duration: 760, easing: 'ease-in-out' }); }
+    wa(d, [{ opacity: 0, transform: 'translate(-50%,-50%) scale(.4)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: .25 }, { opacity: 1, offset: .8 }, { opacity: 0, transform: 'translate(-50%,-50%) scale(1.2)' }], { duration: 820 }).then(gone(d));
+  };
+  const pillarFx = (b, col, w, h = 380, ms = 640) => { const d = mk('bt-sl', { x: b.x, y: b.y - h / 2 + b.h * .3 }, `width:${w}px;height:${h}px;background:linear-gradient(90deg,transparent,${col},#fff,${col},transparent);box-shadow:0 0 28px ${col}`); wa(d, [{ opacity: 0, transform: 'translate(-50%,-50%) scaleX(.2)' }, { opacity: 1, transform: 'translate(-50%,-50%) scaleX(.6)', offset: .25 }, { opacity: 1, transform: 'translate(-50%,-50%) scaleX(1.3)', offset: .6 }, { opacity: 0, transform: 'translate(-50%,-50%) scaleX(.2)' }], { duration: ms, easing: 'ease-out' }).then(gone(d)); };
+  const jawFx = (b, col) => { const jaw = (top) => `width:${Math.max(b.w * .7, 80)}px;height:46px;background:linear-gradient(${top ? 0 : 180}deg,#fff,${col});filter:drop-shadow(0 0 8px ${col});clip-path:polygon(0 ${top ? 0 : 100}%,100% ${top ? 0 : 100}%,100% ${top ? 45 : 55}%,88% ${top ? 100 : 0}%,76% ${top ? 45 : 55}%,64% ${top ? 100 : 0}%,52% ${top ? 45 : 55}%,40% ${top ? 100 : 0}%,28% ${top ? 45 : 55}%,16% ${top ? 100 : 0}%,4% ${top ? 45 : 55}%,0 ${top ? 45 : 55}%)`; for (const top of [true, false]) { const d = mk('bt-sl', { x: b.x, y: b.y + (top ? -40 : 40) }, jaw(top)), o = top ? -90 : 90; wa(d, [{ opacity: 0, transform: `translate(-50%,calc(-50% + ${o}px))` }, { opacity: 1, transform: `translate(-50%,calc(-50% + ${-o * .05}px))`, offset: .3 }, { opacity: 1, transform: `translate(-50%,calc(-50% + ${-o * .05}px))`, offset: .75 }, { opacity: 0, transform: `translate(-50%,calc(-50% + ${o * .3}px))` }], { duration: 460, easing: 'ease-in' }).then(gone(d)); } };
+  const dashAt = (fromEl, a, b, ms = 480) => { try { const dx = Math.sign(b.x - a.x) * 14, dy = Math.sign(b.y - a.y) * 8; wa(fromEl, [{ translate: '0 0' }, { translate: `${-dx * 1.5}px ${-dy * 1.5}px`, offset: .25 }, { translate: `${(b.x - a.x) * .72}px ${(b.y - a.y) * .72}px`, offset: .55 }, { translate: '0 0' }], { duration: ms, fill: 'none', easing: 'ease-in-out' }); } catch (e) {} };
+  const dim = (op = .55, ms = 900) => { const d = document.createElement('div'); d.className = 'bt-tn'; d.style.cssText = 'background:#05000d;mix-blend-mode:normal;z-index:5'; fieldEl.appendChild(d); wa(d, [{ opacity: 0 }, { opacity: op, offset: .25 }, { opacity: op, offset: .75 }, { opacity: 0 }], { duration: ms }).then(gone(d)); };
+  const disc = (r, css, kf, o) => { const d = mk('bt-pt', r, `border-radius:50%;mix-blend-mode:normal;${css}`); return wa(d, kf, o).then(() => d.remove()); };
+  const fall = (kind, col, from, to, delay, dur = 320, size = 1) => { const d = sh(kind, col, from); wa(d, [{ opacity: 0, transform: `translate(-50%,-50%) scale(${size})` }, { opacity: 1, offset: .15 }, { opacity: 1, transform: `translate(calc(-50% + ${to.x - from.x}px),calc(-50% + ${to.y - from.y}px)) scale(${size})` }], { duration: dur, delay, easing: 'cubic-bezier(.5,0,.9,.6)' }).then(gone(d)); };
+  const R = (n) => (Math.random() - .5) * n;
+  const SIG = {
+    sig_wakaba: async ({ a, b, col, fromEl, impact }) => { wa(fromEl, [{ rotate: '0deg' }, { rotate: '360deg' }], { duration: 480, fill: 'none' }); stream(a, b, '#7be06a', 'leaf', 9, 26, 420, 45); await sleep(520); converge(b, '#58c458', 'leaf', 10, 90); await sleep(520); impact(); },
+    sig_tempest: async ({ a, b, hitSz, impact }) => { stream(a, b, '#7be06a', 'leaf', 8, 44, 460, 50); stream(a, b, '#b8f080', 'leaf', 8, -44, 460, 50); await sleep(560); converge(b, '#58c458', 'leaf', 14, 120, 600, 900); await sleep(560); ring(b, '#58c458', hitSz, 0); impact(1.4); },
+    sig_bloom: async ({ b, hitSz, impact }) => { pillarFx(b, '#7be06a', 90); rays(b, '#ffb0d8', hitSz * 2.4, 900); for (let k = 0; k < 14; k++) fall('petal', '#ffb0d8', { x: b.x + R(170), y: b.y - 210 }, { x: b.x + R(120), y: b.y + 30 }, k * 45, 520); ring(b, '#ffb0d8', hitSz * 1.3, 200); await sleep(520); impact(1.5); await sleep(200); },
+    sig_bubble: async ({ a, b, fromEl, impact }) => { dashAt(fromEl, a, b); for (let k = 0; k < 9; k++) { const sz = 12 + (k % 3) * 7, d = mk('bt-pt', { x: a.x + (b.x - a.x) * k / 9, y: a.y + (b.y - a.y) * k / 9 }, `width:${sz}px;height:${sz}px;border-radius:50%;border:2px solid #cfeaff;background:radial-gradient(circle at 30% 30%,#fff,#8fd0ff55);mix-blend-mode:normal`); wa(d, [{ opacity: 0, transform: 'translate(-50%,-50%)' }, { opacity: 1, offset: .2 }, { opacity: 0, transform: 'translate(-50%,calc(-50% - 50px)) scale(1.4)' }], { duration: 620, delay: k * 40 }).then(gone(d)); } await sleep(270); impact(1.2); await sleep(220); },
+    sig_crash: async ({ b, col, hitSz, impact }) => { crescent({ x: b.x - 170, y: b.y - 70 }, b, '#4aa8ff', 150, 0); crescent({ x: b.x + 170, y: b.y - 70 }, b, '#8fd0ff', 130, 120); for (let k = 0; k < 10; k++) fall('drop', '#4aa8ff', { x: b.x + R(150), y: b.y - 200 }, { x: b.x + R(120), y: b.y + 20 }, 150 + k * 40, 340); await sleep(420); ring(b, '#4aa8ff', hitSz * 1.4, 0); impact(1.8); await sleep(250); },
+    sig_captain: async ({ b, hitSz, impact }) => { converge(b, '#4aa8ff', 'drop', 16, 130, 640, 900); await sleep(300); pillarFx(b, '#4aa8ff', 110, 400, 700); for (let k = 0; k < 3; k++) ring(b, '#8fd0ff', hitSz * 1.2, 200 + k * 140); tint('#2a58b0'); await sleep(520); impact(2); await sleep(200); },
+    sig_paw: async ({ a, b, col, impact }) => { prints(a, b, '#ff8a40', 3); await sleep(520); const d = mk('bt-pt', b, paw('#ff6a20', 90)); wa(d, [{ opacity: 0, transform: 'translate(-50%,-50%) scale(.4)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.15)', offset: .3 }, { opacity: 0, transform: 'translate(-50%,-50%) scale(1.5)' }], { duration: 520 }).then(gone(d)); await sleep(200); impact(1.3); await sleep(250); },
+    sig_twintail: async ({ b, col, hitSz, impact }) => { const L = Math.max(b.w, b.h) * 1.7; streak(b, '#ff7a30', -45, L, 0, 16); streak(b, '#ffb060', 45, L, 110, 16); ring(b, '#ff7a30', hitSz, 160); await sleep(260); impact(1.4); await sleep(250); },
+    sig_ninetail: async ({ a, b, hitSz, impact }) => { const ang = Math.atan2(b.y - a.y, b.x - a.x); for (let k = 0; k < 9; k++) { const an = ang + (k - 4) * .22, L = Math.hypot(b.x - a.x, b.y - a.y) * 1.05; beamFx(a, { x: a.x + Math.cos(an) * L, y: a.y + Math.sin(an) * L }, k % 2 ? '#ffb060' : '#ff6a20', 16); await sleep(45); } await sleep(150); ring(b, '#ff7a30', hitSz * 1.8, 0); ring(b, '#ffd060', hitSz * 1.3, 120); pillarFx(b, '#ff7a30', 100); tint('#ff7a30'); await sleep(160); impact(2); await sleep(250); },
+    sig_dream: async ({ a, b, impact }) => { stream(a, b, '#ff9ad0', 'star', 10, 34); stream(a, b, '#bfe6ff', 'star', 10, -34); await sleep(650); converge(b, '#ffd0ec', 'star', 8, 70, 480); rays(b, '#ffd0ec', 200, 700); await sleep(420); impact(.8); await sleep(200); },
+    sig_time: async ({ b, hitSz, impact }) => { clockFx(b, '#9affb0', hitSz * 1.5); converge(b, '#e8ff9a', 'dot', 14, 110, 700, 360); await sleep(780); flash(b, '#9affb0', hitSz * 1.4); impact(1); await sleep(200); },
+    sig_thunderwing: async ({ b, hitSz, impact }) => { crescent({ x: b.x - 160, y: b.y - 40 }, { x: b.x + 10, y: b.y }, '#ffd830', 150, 0); crescent({ x: b.x + 160, y: b.y - 40 }, { x: b.x - 10, y: b.y }, '#fff070', 150, 100); await sleep(420); rays(b, '#ffd830', hitSz * 2, 600); impact(1.6); tint('#ffd830'); await sleep(250); },
+    sig_blazewing: async ({ a, b, impact }) => { crescent({ x: b.x - 160, y: b.y - 40 }, { x: b.x + 10, y: b.y }, '#ff6a20', 150, 0); crescent({ x: b.x + 160, y: b.y - 40 }, { x: b.x - 10, y: b.y }, '#ffb060', 150, 100); stream(a, b, '#ff8a40', 'ember', 10, 22, 420, 40); await sleep(440); pillarFx(b, '#ff6a20', 90); impact(1.6); await sleep(250); },
+    sig_mane: async ({ a, b, fromEl, impact }) => { rays(a, '#ff9a40', Math.max(a.w, a.h) * 2.6, 520); await sleep(380); dashAt(fromEl, a, b, 460); stream(a, b, '#ff8a40', 'ember', 8, 16, 300, 30); await sleep(300); impact(1.5); await sleep(220); },
+    sig_blizzard: async ({ b, hitSz, impact }) => { for (let k = 0; k < 16; k++) fall('diamond', '#bfe6ff', { x: b.x + 130 + Math.random() * 90, y: b.y - 230 }, { x: b.x - 50 + Math.random() * 90, y: b.y + 10 }, k * 50, 340); await sleep(520); ring(b, '#dff2ff', hitSz * 1.3, 0); tint('#bfe6ff'); impact(1.4); await sleep(250); },
+    sig_mist: async ({ b, hitSz, impact }) => { for (let k = 0; k < 18; k++) fall('drop', '#bfe6ff', { x: b.x + R(190), y: b.y - 210 }, { x: b.x + R(160), y: b.y + 20 }, k * 40, 380); rays(b, '#dff2ff', hitSz * 2.2, 800); await sleep(560); for (let k = 0; k < 3; k++) ring(b, '#bfe6ff', hitSz, k * 120); impact(1); await sleep(300); },
+    sig_ocean: async ({ b, hitSz, impact }) => { for (let k = 0; k < 3; k++) ring(b, '#4a78d0', hitSz * 2.5, k * 150); for (const dx of [-70, 0, 70]) pillarFx({ ...b, x: b.x + dx }, '#4aa8ff', 80, 420, 760); converge(b, '#8fd0ff', 'drop', 16, 150, 700, 720); tint('#2a58b0'); await sleep(560); impact(2.2); await sleep(300); },
+    sig_fang: async ({ b, hitSz, impact }) => { jawFx(b, '#ffd830'); await sleep(260); pillarFx(b, '#ffd830', 70, 400, 420); impact(1.6); await sleep(300); },
+    sig_magma: async ({ b, hitSz, impact }) => { for (let k = 0; k < 3; k++) streak({ x: b.x, y: b.y + b.h * .3 + (k - 1) * 14 }, '#ff5a20', k * 8 - 8, hitSz * 2.2, k * 70, 9); await sleep(260); for (let k = 0; k < 14; k++) { const d = sh('rock', k % 2 ? '#ff5a20' : '#8a5a30', { x: b.x + R(110), y: b.y + b.h * .3 }); wa(d, [{ opacity: 1, transform: 'translate(-50%,-50%)' }, { opacity: 1, transform: `translate(calc(-50% + ${R(80)}px),calc(-50% - ${90 + Math.random() * 90}px)) rotate(${R(540)}deg)`, offset: .5 }, { opacity: 0, transform: `translate(calc(-50% + ${R(140)}px),calc(-50% + 20px)) rotate(${R(900)}deg)` }], { duration: 700, easing: 'ease-out' }).then(gone(d)); } pillarFx(b, '#ff5a20', 100, 400, 640); ring(b, '#ff5a20', hitSz * 1.5, 100); impact(2); await sleep(350); },
+    sig_meteor: async ({ b, impact }) => { for (let k = 0; k < 3; k++) { const f = { x: b.x - 180 + k * 30, y: b.y - 250 }, t = { x: b.x - 20 + k * 22, y: b.y }; fall('star', '#ff5a6a', f, t, k * 150, 340, 1.6); streak({ x: (f.x + t.x) / 2, y: (f.y + t.y) / 2 }, '#ff8a9a', 58, 260, k * 150, 8); } await sleep(300 + 2 * 150 + 120); impact(1.6); await sleep(250); },
+    sig_comet: async ({ b, impact }) => { for (let k = 0; k < 3; k++) { const f = { x: b.x + 180 - k * 30, y: b.y - 250 }, t = { x: b.x + 20 - k * 22, y: b.y }; fall('star', '#5aa8ff', f, t, k * 150, 340, 1.6); streak({ x: (f.x + t.x) / 2, y: (f.y + t.y) / 2 }, '#9ad0ff', -58, 260, k * 150, 8); } await sleep(300 + 2 * 150 + 120); impact(1.6); await sleep(250); },
+    sig_silver: async ({ a, b, impact }) => { crescent({ x: b.x, y: b.y + 130 }, { x: b.x, y: b.y - 30 }, '#dfe8f5', 150, 0); crescent({ x: b.x, y: b.y + 150 }, { x: b.x, y: b.y - 20 }, '#ffffff', 120, 110); stream(a, b, '#e8eef8', 'feather', 10, 26, 420, 40); await sleep(480); impact(1.4); await sleep(250); },
+    sig_dragon: async ({ a, b, hitSz, impact }) => { stream(a, b, '#7be0a0', 'dot', 18, 46, 520, 28, 1.4); stream(a, b, '#ffd860', 'dot', 10, -46, 520, 40, 1); await sleep(640); ring(b, '#7be0a0', hitSz * 1.4, 0); ring(b, '#ffd860', hitSz, 120); impact(1.6); await sleep(250); },
+    sig_rainbow: async ({ a, b, hitSz, impact }) => { ['#ff5a5a', '#ff9a3a', '#ffe040', '#5ad05a', '#4aa8ff', '#6a5aff', '#c060ff'].forEach((c, i) => stream(a, b, c, 'petal', 3, (i - 3) * 16, 460, 70)); await sleep(640); rays(b, '#ffffff', hitSz * 2.4, 800); rays(b, '#ffd860', hitSz * 1.8, 700); tint('#fff6d0'); impact(1.4); await sleep(300); },
+    sig_crystal: async ({ b, hitSz, impact }) => { converge(b, '#d080ff', 'diamond', 10, 110, 520, 360); await sleep(560); for (let k = 0; k < 16; k++) { const an = k / 16 * 6.283, d = sh('diamond', k % 2 ? '#ff9ae0' : '#d080ff', b); wa(d, [{ opacity: 1, transform: 'translate(-50%,-50%) scale(1.5)' }, { opacity: 0, transform: `translate(calc(-50% + ${Math.cos(an) * 150}px),calc(-50% + ${Math.sin(an) * 110}px)) rotate(${R(720)}deg) scale(.6)` }], { duration: 640, easing: 'ease-out' }).then(gone(d)); } ring(b, '#d080ff', hitSz * 1.5, 0); pillarFx(b, '#d080ff', 90); tint('#8a40d0'); impact(1.8); await sleep(300); },
+    // ---- さいしゅうボス「うちゅうの かみ」の とくべつな わざ ----
+    boss_sun: async ({ b, hitSz, impact }) => {   // たいよう: おおきな たいようが おちてくる
+      const css = 'width:170px;height:170px;background:radial-gradient(circle,#fff 0 22%,#ffe080 38%,#ff8a20 66%,transparent 70%);box-shadow:0 0 80px #ff8a30,0 0 160px #ff5a10;mix-blend-mode:screen';
+      disc({ x: b.x, y: b.y - 230 }, css, [{ opacity: 0, transform: 'translate(-50%,-50%) scale(.3)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: .3 }, { opacity: 1, transform: `translate(-50%,calc(-50% + 220px)) scale(1.5)`, offset: .85 }, { opacity: 0, transform: `translate(-50%,calc(-50% + 230px)) scale(2.2)` }], { duration: 900, easing: 'ease-in' });
+      rays({ x: b.x, y: b.y - 230 }, '#ffcc60', 420, 700); await sleep(760); for (let k = 0; k < 3; k++) ring(b, k % 2 ? '#ffd060' : '#ff7a20', hitSz * 1.6, k * 110); tint('#ff8a30'); impact(2.2); await sleep(350); },
+    boss_hole: async ({ b, hitSz, impact }) => {   // ブラックホール: すべてを すいこむ
+      dim(.5, 1200);
+      disc(b, 'width:190px;height:190px;background:radial-gradient(circle,#000 0 36%,#2a0a50 48%,#a050ff 60%,transparent 70%);box-shadow:0 0 50px #7a30e0', [{ opacity: 0, transform: 'translate(-50%,-50%) scale(.2) rotate(0deg)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.2) rotate(240deg)', offset: .3 }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.3) rotate(560deg)', offset: .75 }, { opacity: 0, transform: 'translate(-50%,-50%) scale(.1) rotate(800deg)' }], { duration: 1100, easing: 'ease-in-out' });
+      converge(b, '#c8a0ff', 'dot', 22, 190, 760, 900); converge(b, '#ffffff', 'star', 8, 150, 700, 600); await sleep(900); flash(b, '#a050ff', hitSz * 1.8); impact(2.4); await sleep(350); },
+    boss_eclipse: async ({ b, hitSz, impact }) => {   // エクリプス: たいようと ブラックホールが かさなる
+      dim(.6, 1900);
+      const sunCss = 'width:200px;height:200px;background:radial-gradient(circle,#fff 0 24%,#ffe080 40%,#ff8a20 66%,transparent 70%);box-shadow:0 0 90px #ff8a30;mix-blend-mode:screen';
+      disc({ x: b.x, y: b.y - 40 }, sunCss, [{ opacity: 0, transform: 'translate(-50%,-50%) scale(.3)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: .25 }, { opacity: 1, offset: .7 }, { opacity: 0, transform: 'translate(-50%,-50%) scale(2.4)' }], { duration: 1500 });
+      disc({ x: b.x + 170, y: b.y - 40 }, 'width:190px;height:190px;background:radial-gradient(circle,#000 0 62%,#2a0a50 70%,transparent 76%)', [{ opacity: 0, transform: 'translate(-50%,-50%) scale(.6)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: .25 }, { opacity: 1, transform: 'translate(calc(-50% - 170px),-50%) scale(1.05)', offset: .65 }, { opacity: 1, transform: 'translate(calc(-50% - 170px),-50%) scale(1.05)', offset: .78 }, { opacity: 0, transform: 'translate(calc(-50% - 170px),-50%) scale(2.2)' }], { duration: 1500, easing: 'ease-in-out' });
+      rays({ x: b.x, y: b.y - 40 }, '#ffd870', 460, 1300); converge(b, '#ffffff', 'star', 14, 200, 900, 720); await sleep(1000);
+      for (let k = 0; k < 4; k++) ring(b, ['#ffffff', '#ffd060', '#a050ff', '#ff7a20'][k], hitSz * 2.2, k * 110); tint('#ffffff'); rays(b, '#ffffff', hitSz * 3, 900); await sleep(320); impact(3); await sleep(500); },
+  };
   const playFx = async (fromEl, toEl, sk, elem) => {
     const col = ELC[elem] || '#fff', pw = Math.min(1.8, 0.8 + (sk.power || 40) / 90), b = rectOf(toEl), a = rectOf(fromEl), hitSz = Math.max(b.w, b.h) * 1.1 * pw, mo = motionOf(sk), big = (sk.power || 0) >= 80;
     const impact = (sh = 1) => impactAt(elem, b, col, pw, hitSz, big, sh);
@@ -327,6 +409,7 @@ export async function runBattle(enemyId, opts = {}) {
       for (let k = 0; k < 4; k++) { const d = mk('bt-sw', { x: a.x, y: a.y - a.h * .1 }, `width:${44 + k * 8}px;height:${44 + k * 8}px;border-right-color:#fff`); wa(d, [{ opacity: 0, transform: `translate(-50%,-50%) rotate(${ang}deg) translateX(0) scale(.6)` }, { opacity: 1, offset: .2 }, { opacity: 0, transform: `translate(-50%,-50%) rotate(${ang}deg) translateX(${dist}px) scale(1.9)` }], { duration: 640, delay: k * 150, easing: 'ease-out' }).then(() => d.remove()); }
       await sleep(520); wa(toEl, [{ translate: '0 0' }, { translate: `${Math.sign(b.x - a.x) * 12}px 0` }, { translate: '0 0' }], { duration: 300, fill: 'none' }); shake(2.5); await sleep(520); return;
     }
+    if (SIG[sk.id]) { await SIG[sk.id]({ a, b, col, pw, fromEl, toEl, hitSz, impact, elem }); return; }   // オリジナルわざ
     const fe = elem === 'kami' && !(GD.ELEMENT_EFFECT_ANIM || {}).kami ? 'heaven' : elem, frames = GD.pickEffectFrames(fe, sk.id);
     if (!frames) { const one = GD.ELEMENT_EFFECTS[fe]; if (one) { const i = fxImg(one, b, Math.max(b.w, b.h) * 1.15); await ready(i); wa(i, [{ transform: 'translate(-50%,-50%) scale(.5)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1.1)', opacity: 1, offset: .35 }, { transform: 'translate(-50%,-50%) scale(1.25)', opacity: 0 }], { duration: 560, easing: 'ease-out' }); impact(); await sleep(520); i.remove(); } return; }
     const ti = Math.max(0, frames.length - 3), charge = frames.slice(0, ti), travel = frames[ti], onHit = frames.slice(ti + 1);
@@ -436,6 +519,7 @@ export async function runBattle(enemyId, opts = {}) {
   };
   // てきの「たいあたり」は、タイプに あった わざの なまえ・えんしゅつで みせる(いりょく・じょうたいいじょうは そのまま)
   const cosmetic = (sk) => {
+    if (sk.id === 'tackle') { const g = ((GD.SIG_BY_FORM && GD.SIG_BY_FORM[enemyId]) || []).filter(x => e.lv >= x.lv); if (g.length && Math.random() < 0.5) { const c = GD.SKILLS[g[g.length - 1].id]; return { ...c, power: Math.round(sk.power * 1.5), _fx: null }; } }   // でんせつ・御三家の てきは オリジナルわざを つかう
     if (sk.id !== 'tackle' || !def.element || Math.random() < 0.3) return sk;
     const cand = (GD.COMPANION_SKILL_TRACKS[def.element] || []).map(x => GD.SKILLS[x]).filter(x => x && x.id.startsWith('n_') && learnLv(x) <= e.lv);
     if (!cand.length) return sk; const c = cand[Math.floor(Math.random() * cand.length)];
@@ -446,15 +530,18 @@ export async function runBattle(enemyId, opts = {}) {
     if (bossPhase < 1 && e.hp <= e.maxHp * 0.5) { bossPhase = 1; e.atk = Math.round(e.atk * 1.2); e.matk = Math.round(e.matk * 1.2); e.spd = Math.round(e.spd * 1.1); fieldEl.classList.add('quake'); sfx('no'); msg(`${def.name} は ほんきを だした!`); await sleep(1300); fieldEl.classList.remove('quake'); msg(`${def.name} は ときどき ちからを ためて つよい こうげきを してくるよ!(ぼうぎょで ふせごう)`); await sleep(1500); }
     if (bossPhase < 2 && e.hp <= e.maxHp * 0.25) { bossPhase = 2; e.atk = Math.round(e.atk * 1.15); e.matk = Math.round(e.matk * 1.15); fieldEl.classList.add('quake'); sfx('no'); msg(`${def.name} は おいつめられて いかりに もえている!`); await sleep(1300); fieldEl.classList.remove('quake'); }
   };
+  let finalAlt = 0;
   const enemyAttack = async () => {
     if (hpOf(state.party[ai]) <= 0) return;
     await bossCheck(); if (e.hp <= 0) return;
     if (!(await actCheck('e'))) return;
     let big = false, sk;
-    if (charged) { charged = false; big = true; chargeT = 0; sk = { id: 'x_big', name: `${def.name} の ぜんりょく こうげき`, power: bossPhase >= 2 ? 105 : 88, element: def.element }; }
+    if (charged && enemyId === 'mame_chin_kami') { charged = false; big = true; chargeT = 0; sk = bossPhase >= 2 ? { ...BOSS_MOVES.eclipse, power: 118 } : { ...(finalAlt++ % 2 ? BOSS_MOVES.hole : BOSS_MOVES.sun), power: 92 }; }
+    else if (charged) { charged = false; big = true; chargeT = 0; sk = { id: 'x_big', name: `${def.name} の ぜんりょく こうげき`, power: bossPhase >= 2 ? 105 : 88, element: def.element }; }
     else if (bossPhase >= 1 && ++chargeT >= (bossPhase >= 2 ? 2 : 3)) { chargeT = 0; charged = true; msg(`${def.name} は ちからを ためている…!`); sfx('no'); eImg.classList.add('glow'); await sleep(1400); eImg.classList.remove('glow'); return; }
-    else sk = enemyPick();
+    else sk = enemyId === 'mame_chin_kami' && Math.random() < 0.45 ? (bossPhase < 1 ? BOSS_MOVES.sun : Math.random() < 0.5 ? BOSS_MOVES.sun : BOSS_MOVES.hole) : enemyPick();
     const a = state.party[ai], st = allyStats(), aab = abilityOf(a.id), fx = fxOf(sk), el = sk.element || def.element;
+    if (sk.id === 'boss_eclipse') { msg('たいようと ブラックホールが かさなっていく…!'); sfx('no'); await sleep(1200); }
     msg(`${sk.id === 'x_big' ? sk.name : def.name + ' の ' + sk.name}!`); await sleep(350);
     if (sup && hpOf(sup.m) > 0 && sk.power > 0 && !big && Math.random() < 0.3) {   // サポートの なかまを ねらう
       await playFx(eImg, sup.img, sk, el); const ss = monStats(sup.m), mg2 = skillKind(sk) === 'magic', r2 = calc(eS(mg2 ? 'matk' : 'atk'), sk.power, mg2 ? ss.mdef : ss.def, el, GD.MONSTERS[sup.m.id].element, GD.CRIT_CHANCE);

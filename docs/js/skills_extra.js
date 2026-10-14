@@ -33,7 +33,7 @@ const DESC = { barrage: 'なんども たたみかけて こうげきする', bi
 // レベル→いりょく(既存のわざの きょくせんに あわせる)
 const powerAt = (L) => Math.round(L <= 9 ? 18 + (L - 1) * 1.5 : L <= 13 ? 30 + (L - 9) : L <= 25 ? 34 + (L - 13) * 1.25 : L <= 32 ? 49 + (L - 25) : L <= 44 ? 56 + (L - 32) * 1.5 : L <= 52 ? 74 + (L - 44) : L <= 64 ? 82 + (L - 52) * 1.75 : 103 + (L - 64) * 1.75);
 export function installExtraSkills(GD) {
-  if (GD._extraSkills) return; GD._extraSkills = true;
+  if (GD._extraSkills) return; GD._extraSkills = true; installSignature(GD);
   if (GD.SKILLS.kami_judgement) GD.SKILLS.kami_judgement.learnLevel = 66;   // しんの ひっさつわざは こうはんで おぼえる
   for (const [el, list] of Object.entries(LIST)) {
     const tr = GD.COMPANION_SKILL_TRACKS[el]; if (!tr) continue;
@@ -46,3 +46,42 @@ export function installExtraSkills(GD) {
   }
 }
 export const EXTRA_SKILL_LIST = LIST;
+
+// ---- オリジナルわざ(御三家・でんせつ専用。えんしゅつも オリジナル = battle.jsの SIG) ----
+// [id, なまえ, ぞくせい, おぼえるLv, いりょくの めやすLv, [つかえる すがた], せつめい]
+const SIGS = [
+  ['sig_wakaba', 'わかばスピン', 'grass', 8, 8, ['chin_kusa', 'chin_kusa_2', 'chin_kusa_3'], 'くるくる まわって わかばを とばす'],
+  ['sig_tempest', 'リーフテンペスト', 'grass', 20, 20, ['chin_kusa_2', 'chin_kusa_3'], 'はっぱの あらしで つつみこむ'],
+  ['sig_bloom', 'フォレストブルーム', 'grass', 34, 34, ['chin_kusa_3'], 'おおきな はなを さかせて ひかりで うつ'],
+  ['sig_bubble', 'バブルタックル', 'water', 8, 8, ['furebu_mizu', 'furebu_mizu_2', 'furebu_mizu_3'], 'あわを まとって つっこむ'],
+  ['sig_crash', 'ウェーブクラッシュ', 'water', 20, 20, ['furebu_mizu_2', 'furebu_mizu_3'], 'おおなみを ぶつける'],
+  ['sig_captain', 'キャプテンストーム', 'water', 34, 34, ['furebu_mizu_3'], 'うずまく みずの はしらで のみこむ'],
+  ['sig_paw', 'フレイムパウ', 'fire', 8, 8, ['mike_hi', 'mike_hi_2', 'mike_hi_3'], 'ほのおの にくきゅうで ふみつける'],
+  ['sig_twintail', 'ツインテールフレア', 'fire', 20, 20, ['mike_hi_2', 'mike_hi_3'], 'ふたつの しっぽから ほのおを はなつ'],
+  ['sig_ninetail', 'ナインテイルノヴァ', 'fire', 34, 34, ['mike_hi_3'], 'きゅうほんの ほのおが ひろがって ばくはつする'],
+  ['sig_dream', 'ドリームリボン', 'heaven', 1, 30, ['yume_no_ko'], 'ゆめの リボンで まきつけて こうげきする'],
+  ['sig_time', 'タイムワープ', 'grass', 1, 45, ['toki_no_yousei'], 'ときを ゆがめて あいてを おそう'],
+  ['sig_thunderwing', 'サンダーウィング', 'thunder', 1, 45, ['raigeki_chou'], 'いなずまの つばさで きりさく'],
+  ['sig_blazewing', 'ブレイズウィング', 'fire', 1, 50, ['kaen_chou'], 'ほのおの つばさで やきはらう'],
+  ['sig_mane', 'ほのおのたてがみ', 'fire', 1, 52, ['homura_shishi'], 'たてがみを もやして つっこむ'],
+  ['sig_blizzard', 'ダイヤモンドブリザード', 'water', 1, 55, ['hyosetsu_chou'], 'こおりの けっしょうを ふらせる'],
+  ['sig_mist', 'セイントレイン', 'water', 1, 55, ['mizu_kirin'], 'きよらかな あめを ふらせる'],
+  ['sig_ocean', 'ディープオーシャン', 'water', 1, 60, ['watatsumi'], 'うみの ちからを ときはなつ'],
+  ['sig_fang', 'ライトニングファング', 'thunder', 1, 60, ['kaminari_tora'], 'いなずまを まとった きばで かみつく'],
+  ['sig_magma', 'マグマクラッシュ', 'earth', 1, 65, ['magna_kaiju'], 'だいちを われさけて マグマを ふきあげる'],
+  ['sig_meteor', 'スターメテオ', 'heaven', 1, 65, ['futago_stella'], 'あかい りゅうせいを ふらせる'],
+  ['sig_comet', 'ブルーコメット', 'magic', 1, 65, ['futago_comet'], 'あおい すいせいを ぶつける'],
+  ['sig_silver', 'シルバーウィング', 'wind', 1, 70, ['ginyoku'], 'ぎんいろの つばさで なぎはらう'],
+  ['sig_dragon', 'スカイドラゴン', 'wind', 1, 70, ['souryu_ten'], 'そらを かける りゅうと なって つらぬく'],
+  ['sig_rainbow', 'レインボーフェザー', 'heaven', 1, 75, ['niji_ootori'], 'なないろの はねを まきちらす'],
+  ['sig_crystal', 'クリスタルバースト', 'magic', 1, 80, ['maryoku_ou'], 'まりょくの けっしょうを ばくはつさせる'],
+];
+export const SIG_IDS = SIGS.map(r => r[0]);
+export function installSignature(GD) {
+  if (GD._sigInstalled) return; GD._sigInstalled = true; GD.SIG_BY_FORM = {};
+  for (const [id, name, element, lv, pl, forms, desc] of SIGS) {
+    const power = Math.min(125, Math.round(powerAt(pl) * 1.2));
+    GD.SKILLS[id] = { id, name, power, uses: power >= 80 ? 5 : 10, learnLevel: lv, desc, element, sig: true };
+    for (const f of forms) (GD.SIG_BY_FORM[f] = GD.SIG_BY_FORM[f] || []).push({ id, lv });
+  }
+}
