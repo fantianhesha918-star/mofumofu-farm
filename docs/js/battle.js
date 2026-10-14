@@ -14,6 +14,8 @@ let GD = null;
 // さいしゅうボス「うちゅうの かみ」の とくべつな わざ(たいよう / ブラックホール / ふたつを あわせた さいきょうの わざ)
 const BM = (id, name, element) => ({ id, name, element, power: 26, uses: 99, desc: '', _fx: null });
 const BOSS_MOVES = { sun: BM('boss_sun', 'ソーラーコロナ', 'fire'), hole: BM('boss_hole', 'ブラックホール', 'dark'), eclipse: BM('boss_eclipse', 'エクリプスノヴァ', 'kami') };
+// ぶつり/まほうの なまえから うごきが きまらない わざは ここで ひとつずつ きめる(なまえと えんしゅつを そろえる)
+const MOTION_BY_NAME = { 'しのちょうふく': 'sweep', 'がんせきのちから': 'rain', 'おやこどんナゲット': 'orb', 'やきにくファイヤー': 'orb', 'ひのたま': 'orb', 'タネばくだん': 'orb', 'どろだんご': 'orb', 'エレキボール': 'orb', 'ヒーリングライト': 'orb', 'プラズマヒール': 'orb', 'マジックオーブ': 'orb', 'ドレインタッチ': 'orb', 'すなかけ': 'barrage', 'あわ': 'barrage', 'どろかけ': 'barrage', 'スパーク': 'barrage', 'サンダージャブ': 'barrage', 'サンダーアロー': 'barrage', 'マジックアロー': 'barrage', 'マジックブレット': 'barrage', 'エリアルレイヴ': 'barrage', 'ビーストラッシュ': 'barrage', 'ひっかきラッシュ': 'barrage', 'ベーグルアタック': 'ram', 'サイクラッシュ': 'ram', 'ようがんクラッシュ': 'ram', 'グランドクラッシュ': 'ram', 'イナズマクラッシュ': 'ram', 'だいちのてっけん': 'ram', 'ダークネスストライク': 'ram', 'つきとばし': 'ram', 'とびかかり': 'ram', 'らんぺージ': 'ram', 'ホーリーランス': 'ram', 'かえん': 'beam', 'ねっせん': 'beam', 'みずでっぽう': 'beam', 'ウォータージェット': 'beam', 'でんきショック': 'beam', 'ライトボルト': 'beam', 'チェインライト': 'beam', 'セイクリッドレイ': 'beam', 'ラストライト': 'beam', 'カースアイ': 'beam', 'エレメンタルボルト': 'beam', 'マジックカノン': 'beam', 'ロアー': 'beam', 'デスハウル': 'beam', 'ソウルドレイン': 'beam', 'ピュアフラッシュ': 'beam', 'みずのはね': 'sweep', 'だいれいとう': 'sweep', 'どくのこな': 'sweep', 'すなぼこり': 'sweep', 'はやて': 'sweep', 'ナイトミスト': 'sweep', 'スリープ': 'sweep', 'みずのまい': 'vortex', 'つるのまきつき': 'vortex', 'かぜおこし': 'vortex', 'かぜのおどり': 'vortex', 'スパイラルウィンド': 'vortex', 'ハリケーンブレイク': 'vortex', 'すなじごく': 'vortex', 'ダークバインド': 'vortex', 'テレポート': 'vortex', 'メイルストロム': 'vortex', 'ホーリーストーム': 'vortex', 'ほのおのかべ': 'pillar', 'せいちょう': 'pillar', 'ユグドラシル': 'pillar', 'ストーンエッジ': 'pillar', 'アースウォール': 'pillar', 'すいちょくのちから': 'pillar', 'ライトニングブレイク': 'pillar', 'ギガボルト': 'pillar', 'らいていばんきん': 'pillar', 'カミナリイカヅチ': 'pillar', 'ライトオブヘブン': 'pillar', 'ヘブンズゲート': 'pillar', 'デーモンズゲイト': 'pillar', 'ディメンションゲート': 'pillar', 'しずくのカーテン': 'rain', 'しぜんのめぐみ': 'rain', 'フラワーヒール': 'rain', 'メガトンロック': 'rain', 'シャドウフォール': 'rain', 'スプラッシュ': 'rain', 'ひのもんじ': 'cross', 'つるのムチ': 'cross', 'セイントクロス': 'cross', 'アルティメットセイバー': 'cross', 'しっぽアタック': 'cross', 'べろべろアタック': 'claw', 'フューリーストライク': 'claw', 'かみくだき': 'bite', 'ほのおのちから': 'quake', 'れんごく': 'quake', 'オーシャンブレイク': 'quake', 'しんすいのインパクト': 'quake', 'しぜんのいかり': 'quake', 'グランドネイチャー': 'quake', 'ネイチャーズレイジ': 'quake', 'エアブレイク': 'quake', 'ウィンドバースト': 'quake', 'ガイアインパクト': 'quake', 'アルティメットサンダー': 'quake', 'ラディアンス': 'quake', 'ディバインシールド': 'quake', 'シャイニングサークル': 'quake', 'ルミナスブレイク': 'quake', 'スターライトエクスプロード': 'quake', 'ダークサークル': 'quake', 'ソウルサクリファイス': 'quake', 'ソウルイクリプス': 'quake', 'ワールドオブダーク': 'quake', 'アルティメットダークネス': 'quake', 'マジックシールド': 'quake', 'マナバースト': 'quake', 'マジックサークル': 'quake', 'カオスバースト': 'quake', 'マナブレイク': 'quake', 'アルティメットマジック': 'quake', 'キングオブビースト': 'quake', 'プライマルブレイク': 'quake', 'アルティメットビースト': 'quake', 'ホーリーガード': 'quake' };
 const fxSeen = new Set();
 const preloadFx = (G) => { try { const L = [...Object.values(G.ELEMENT_EFFECTS || {}), ...Object.values(G.ELEMENT_EFFECT_ANIM || {}).flat(2)]; for (const u of L) if (!fxSeen.has(u)) { fxSeen.add(u); const i = new Image(); i.src = 'quest/' + u; } } catch (e) {} };   // わざの えを さきに よみこむ(こうかいばんで おくれて でないように)
 export function questData() {
@@ -278,7 +280,7 @@ export async function runBattle(enemyId, opts = {}) {
     ['cross', /スラッシュ|ブレード|つるぎ|けん|カッター|ギリ|ぎり|きりさ|ざん|やいば/],
     ['pillar', /らいめい|いかずち|さばき|ホーリー|ひばしら|はしら|ばしら|ピラー|かみなり|じゅもん|じゅそ|ほうこう|ジャッジ|ひかりの/],
     ['rain', /メテオ|いん石|ふらせ|レイン|あめ|おとし|しぐれ|さめ|なだれ|ながれぼし|ほうせき/],
-    ['barrage', /れんぞく|つぶて|ニードル|ミサイル|ショット|バレット|ラッシュ|つぶ|ダーツ|たま/],
+    ['barrage', /れんぞく|つぶて|ニードル|ミサイル|ショット|バレット|ダーツ/],
     ['beam', /ビーム|ほうしゃ|ブレス|レーザー|ブラスト|いぶき|ほえ|ハウリング|ふきつけ/],
     ['ram', /たいあたり|タックル|ずつき|とっしん|つっこ|ぶつか|チャージ|てっけん|プレス|クラッシュ|つので|つらぬ|ランス|スピア|おしつぶ|たたきつ/],
     ['vortex', /うず|たつまき|トルネ|ストーム|あらし|つむじ|サイクロン/],
@@ -287,6 +289,7 @@ export async function runBattle(enemyId, opts = {}) {
   ];
   const hashId = (s) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
   const motionOf = (sk) => {
+    if (MOTION_BY_NAME[sk.name]) return MOTION_BY_NAME[sk.name];
     for (const t of [sk.name || '', (sk.desc || '').replace(/つめたい/g, '')]) for (const [k, re] of MOTIONS) if (re.test(t)) return k;
     return ['orb', 'orb', 'barrage', 'sweep', 'orb', 'vortex'][hashId(sk.id || '') % 6];
   };
