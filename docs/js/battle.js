@@ -4,7 +4,7 @@ import { startSky } from './battlesky.js';
 import { AIL, STAGE_LABEL, stageMult, fxOf, fxText, isStatusSkill, installStatus, enemyStatusPool } from './status.js';
 import { installExtraMons } from './monsters_extra.js';
 import { installExtraSkills } from './skills_extra.js';
-import { state, count, addItem, addStat, villageBoost, villageLevel, hasBadge } from './state.js';
+import { state, count, addItem, addStat, villageBoost, villageLevel, hasBadge, ECO } from './state.js';
 import { ITEMS, HOLD, MON_HEAL, DROP_BY_ELEMENT, BUFFS, buffText, ABILITIES, ABILITY_BY_ELEMENT } from './data.js';
 import { itemIcon } from './ui.js';
 import { sfx } from './audio.js';
@@ -137,6 +137,19 @@ export function nextSkillText(m) {   // つぎに おぼえる わざ
 }
 export function movesOf(m) {
   const k = knownOf(m); m.moves = (m.moves || []).filter(s => k.includes(s));
+  {   // オリジナルわざ: おぼえているのに まだ みていない なかまには 1どだけ じどうで セット(いちばん つよい 1つ。こうげきわざは 3つ のこす)
+    const gs = ((GD.SIG_BY_FORM && GD.SIG_BY_FORM[m.id]) || []).filter(g => m.lv >= g.lv); m.sigSeen = m.sigSeen || {};
+    const fresh = gs.filter(g => !m.sigSeen[g.id]); fresh.forEach(g => { m.sigSeen[g.id] = 1; });
+    const g = fresh[fresh.length - 1];
+    if (g && !m.moves.includes(g.id)) {
+      if (m.moves.length < 4) m.moves.push(g.id);
+      else {
+        const atk = m.moves.map((x, i) => [x, i]).filter(([x]) => (GD.SKILLS[x].power || 0) > 0), st = m.moves.map((x, i) => [x, i]).filter(([x]) => !((GD.SKILLS[x].power || 0) > 0));
+        const pool = atk.length >= 3 || !st.length ? atk : st;   // こうげきわざが すくない ときは へんかわざを いれかえる
+        pool.sort((a, b) => (GD.SKILLS[a[0]].power || 0) - (GD.SKILLS[b[0]].power || 0)); m.moves[(pool[0] || [0, 0])[1]] = g.id;
+      }
+    }
+  }
   for (let i = k.length - 1; i >= 0 && m.moves.length < 4; i--) if (!m.moves.includes(k[i])) m.moves.push(k[i]);   // たりなければ つよい技から
   return m.moves.map(s => GD.SKILLS[s]);
 }
@@ -270,7 +283,8 @@ export async function runBattle(enemyId, opts = {}) {
   const wa = (el, kf, o) => { try { return el.animate(kf, { fill: 'both', ...o, duration: o.duration / battleSpeed(), delay: (o.delay || 0) / battleSpeed() }).finished.catch(() => {}); } catch (e) { return Promise.resolve(); } };
   const ready = (i) => i.complete ? Promise.resolve() : new Promise(r => { i.onload = i.onerror = r; setTimeout(r, 900); });
   const fxFrame = async (src, el, ms, pop) => { const r = rectOf(el), i = fxImg(src, r, Math.max(r.w, r.h) * 1.15); await ready(i); if (pop) wa(i, [{ transform: 'translate(-50%,-50%) scale(.7)', opacity: .6 }, { transform: 'translate(-50%,-50%) scale(1.08)', opacity: 1 }], { duration: ms, easing: 'ease-out' }); await sleep(ms); i.remove(); };
-  const burst = (r, col, n, pw) => { for (let k = 0; k < n; k++) { const d = document.createElement('i'), sz = 5 + Math.random() * 9, a = Math.random() * 6.283, dist = (40 + Math.random() * 80) * pw; d.className = 'bt-pt'; d.style.cssText = `left:${r.x}px;top:${r.y}px;width:${sz}px;height:${sz}px;background:${col};box-shadow:0 0 ${sz * 1.6}px ${col}`; fieldEl.appendChild(d); wa(d, [{ transform: 'translate(-50%,-50%) scale(1)', opacity: 1 }, { transform: `translate(calc(-50% + ${Math.cos(a) * dist}px),calc(-50% + ${Math.sin(a) * dist}px)) scale(.2)`, opacity: 0 }], { duration: 420 + Math.random() * 280, easing: 'cubic-bezier(.1,.7,.3,1)' }).then(() => d.remove()); } };
+  const qn = (n) => ECO ? Math.max(2, Math.round(n * .5)) : n;   // 省エネモードは えんしゅつの つぶを はんぶんに
+  const burst = (r, col, n, pw) => { n = qn(n); for (let k = 0; k < n; k++) { const d = document.createElement('i'), sz = 5 + Math.random() * 9, a = Math.random() * 6.283, dist = (40 + Math.random() * 80) * pw; d.className = 'bt-pt'; d.style.cssText = `left:${r.x}px;top:${r.y}px;width:${sz}px;height:${sz}px;background:${col};box-shadow:0 0 ${sz * 1.6}px ${col}`; fieldEl.appendChild(d); wa(d, [{ transform: 'translate(-50%,-50%) scale(1)', opacity: 1 }, { transform: `translate(calc(-50% + ${Math.cos(a) * dist}px),calc(-50% + ${Math.sin(a) * dist}px)) scale(.2)`, opacity: 0 }], { duration: 420 + Math.random() * 280, easing: 'cubic-bezier(.1,.7,.3,1)' }).then(() => d.remove()); } };
   const flash = (r, col, sz) => { const d = document.createElement('div'); d.className = 'bt-fl'; d.style.cssText = `left:${r.x}px;top:${r.y}px;width:${sz}px;height:${sz}px;background:radial-gradient(circle,#fff 0%,${col} 30%,transparent 68%)`; fieldEl.appendChild(d); wa(d, [{ opacity: .95, transform: 'translate(-50%,-50%) scale(.35)' }, { opacity: 0, transform: 'translate(-50%,-50%) scale(1.5)' }], { duration: 380, easing: 'ease-out' }).then(() => d.remove()); };
   const shake = (amp) => wa(fieldEl, [{ transform: 'translate(0,0)' }, { transform: `translate(${-amp}px,${amp * .5}px)` }, { transform: `translate(${amp}px,${-amp * .6}px)` }, { transform: `translate(${-amp * .6}px,${amp * .3}px)` }, { transform: 'translate(0,0)' }], { duration: 280, fill: 'none' });
   // ---- わざの うごき(なまえ・せつめいで きめる。きまらない わざは IDで ばらけさせる) ----
@@ -306,7 +320,7 @@ export async function runBattle(enemyId, opts = {}) {
   };
   const ELSHAPE = { fire: ['ember', 'rise'], water: ['drop', 'fall'], grass: ['leaf', 'spin'], earth: ['rock', 'fall'], wind: ['leaf', 'spin'], thunder: ['star', 'out'], heaven: ['feather', 'spin'], dark: ['dot', 'in'], magic: ['star', 'spin'], beast: ['dot', 'out'], kami: ['feather', 'rise'] };
   const scatter = (el, b, col, pw) => {
-    const [kind, mv] = ELSHAPE[el] || ['dot', 'out'], n = Math.round(7 + pw * 6), bg = kind === 'rock' ? '#9a7a4c' : kind === 'feather' ? '#fffbe8' : col;
+    const [kind, mv] = ELSHAPE[el] || ['dot', 'out'], n = qn(Math.round(7 + pw * 6)), bg = kind === 'rock' ? '#9a7a4c' : kind === 'feather' ? '#fffbe8' : col;
     for (let k = 0; k < n; k++) {
       const a = Math.random() * 6.283, dist = (50 + Math.random() * 70) * pw, ox = Math.cos(a) * dist, oy = Math.sin(a) * dist, rot = (Math.random() - .5) * 720;
       const sx = mv === 'in' ? ox : 0, sy = mv === 'in' ? oy : 0, ex = mv === 'in' ? 0 : ox, ey = mv === 'rise' ? -dist * 1.1 : mv === 'fall' ? Math.abs(oy) * .4 + 50 : mv === 'in' ? 0 : oy;
@@ -327,6 +341,7 @@ export async function runBattle(enemyId, opts = {}) {
   const gone = (d) => () => d.remove();
   // しっぽを ひく ように ながれる(カーブしながら とんでいく)
   const stream = (p, q, col, kind, n, amp, dur = 460, gap = 55, size = 1) => {
+    n = qn(n);
     const dx = q.x - p.x, dy = q.y - p.y, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
     for (let k = 0; k < n; k++) {
       const d = sh(kind, col, p), kf = [0, .25, .5, .75, 1].map(t => ({ offset: t, opacity: t === 0 ? 0 : 1, transform: `translate(calc(-50% + ${dx * t + nx * amp * Math.sin(t * 6.283)}px),calc(-50% + ${dy * t + ny * amp * Math.sin(t * 6.283)}px)) rotate(${t * 540}deg) scale(${size})` }));
@@ -335,6 +350,7 @@ export async function runBattle(enemyId, opts = {}) {
   };
   // まわりから あつまる
   const converge = (b, col, kind, n, rad, dur = 620, spin = 540) => {
+    n = qn(n);
     for (let k = 0; k < n; k++) {
       const an = k / n * 6.283, d = sh(kind, col, b);
       wa(d, [{ opacity: 0, transform: `translate(calc(-50% + ${Math.cos(an) * rad}px),calc(-50% + ${Math.sin(an) * rad * .7}px)) rotate(0deg)` }, { opacity: 1, offset: .2 }, { opacity: 1, transform: `translate(-50%,-50%) rotate(${spin}deg) scale(.8)` }], { duration: dur, delay: k * 20, easing: 'ease-in' }).then(gone(d));
@@ -706,7 +722,7 @@ export async function runBattle(enemyId, opts = {}) {
     }
   };
 
-  if (opts.dbg) opts.dbg({ sd, draw, playFx, aImg, eImg, motionOf });
+  if (opts.dbg) opts.dbg({ sd, draw, playFx, aImg, eImg, motionOf, movesOf });
   const cmd = $('.bt-cmd', root);
   const menu = (rows, back) => new Promise(res => {
     cmd.innerHTML = ''; cmd.classList.toggle('list', rows.length > 4);
