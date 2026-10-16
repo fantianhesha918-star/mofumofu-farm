@@ -14,8 +14,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=202610170856">
-<script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/addons/","./js/audio.js":"./js/audio.js?v=202610170856","./js/battle.js":"./js/battle.js?v=202610170856","./js/battlesky.js":"./js/battlesky.js?v=202610170856","./js/bgm.js":"./js/bgm.js?v=202610170856","./js/data.js":"./js/data.js?v=202610170856","./js/field.js":"./js/field.js?v=202610170856","./js/game.js":"./js/game.js?v=202610170856","./js/input.js":"./js/input.js?v=202610170856","./js/mapmgr.js":"./js/mapmgr.js?v=202610170856","./js/monsters_extra.js":"./js/monsters_extra.js?v=202610170856","./js/pasture.js":"./js/pasture.js?v=202610170856","./js/season.js":"./js/season.js?v=202610170856","./js/skills_extra.js":"./js/skills_extra.js?v=202610170856","./js/state.js":"./js/state.js?v=202610170856","./js/status.js":"./js/status.js?v=202610170856","./js/swimfish.js":"./js/swimfish.js?v=202610170856","./js/ui.js":"./js/ui.js?v=202610170856","./js/world.js":"./js/world.js?v=202610170856"}}</script>
+<link rel="stylesheet" href="style.css?v=202610170857">
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/addons/","./js/audio.js":"./js/audio.js?v=202610170857","./js/battle.js":"./js/battle.js?v=202610170857","./js/battlesky.js":"./js/battlesky.js?v=202610170857","./js/bgm.js":"./js/bgm.js?v=202610170857","./js/data.js":"./js/data.js?v=202610170857","./js/field.js":"./js/field.js?v=202610170857","./js/game.js":"./js/game.js?v=202610170857","./js/input.js":"./js/input.js?v=202610170857","./js/mapmgr.js":"./js/mapmgr.js?v=202610170857","./js/monsters_extra.js":"./js/monsters_extra.js?v=202610170857","./js/pasture.js":"./js/pasture.js?v=202610170857","./js/season.js":"./js/season.js?v=202610170857","./js/skills_extra.js":"./js/skills_extra.js?v=202610170857","./js/state.js":"./js/state.js?v=202610170857","./js/status.js":"./js/status.js?v=202610170857","./js/swimfish.js":"./js/swimfish.js?v=202610170857","./js/ui.js":"./js/ui.js?v=202610170857","./js/world.js":"./js/world.js?v=202610170857"}}</script>
 <script>
 /* 不具合の原因を見つけやすくする: エラーが出たら画面の上に小さく表示(タップで消える) */
 (function () { function show(msg) { try { var d = document.getElementById('errbox'); if (!d) { d = document.createElement('div'); d.id = 'errbox'; d.style.cssText = 'position:fixed;left:6px;right:6px;top:6px;z-index:99999;background:#7a1f1f;color:#fff;font:12px/1.4 monospace;padding:8px 10px;border-radius:8px;max-height:40vh;overflow:auto;white-space:pre-wrap'; d.onclick = function () { d.remove(); }; document.body.appendChild(d); } d.textContent += msg + '\n'; } catch (e) {} }
@@ -64,6 +64,6 @@
 
 <div id="loading2" style="position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:#2c1f14;color:#f4ead2;font-size:16px;transition:opacity .5s">よみこみ中...</div>
 <style>#loading2.done{opacity:0;pointer-events:none}</style>
-<script type="module" src="js/field.js?v=202610170856"></script>
+<script type="module" src="js/field.js?v=202610170857"></script>
 </body>
 </html>
