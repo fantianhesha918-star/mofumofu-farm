@@ -3,7 +3,7 @@
 import { startSky } from './battlesky.js';
 import { AIL, STAGE_LABEL, stageMult, fxOf, fxText, isStatusSkill, installStatus, enemyStatusPool } from './status.js';
 import { installExtraMons } from './monsters_extra.js';
-import { installExtraSkills } from './skills_extra.js';
+import { installExtraSkills, traitSkillsFor } from './skills_extra.js';
 import { state, count, addItem, addStat, villageBoost, villageLevel, hasBadge, ECO } from './state.js';
 import { ITEMS, HOLD, MON_HEAL, DROP_BY_ELEMENT, BUFFS, buffText, ABILITIES, ABILITY_BY_ELEMENT } from './data.js';
 import { itemIcon } from './ui.js';
@@ -76,7 +76,11 @@ const $ = (s, el = document) => el.querySelector(s);
 export const elemName = (el) => (el && GD.ELEMENT_LABELS[el]) || 'ノーマル';
 export const elemChip = (el) => `<span class="ty ty-${el || 'none'}">${el && GD.ELEMENT_ICONS && GD.ELEMENT_ICONS[el] ? `<img src="quest/${GD.ELEMENT_ICONS[el]}" alt="">` : ''}${elemName(el)}</span>`;
 // 相性のヒント(わざを えらぶとき: こうげき側のタイプ → 相手のタイプ)
-export const matchHint = (atkEl, defEl) => { const t = GD.getElementMatchup(atkEl, defEl).tier; return t === 'strong' ? '<b class="mu-s">◎ ばつぐん</b>' : t === 'weak' ? '<b class="mu-w">△ いまひとつ</b>' : ''; };
+const EL_ORDER = ['fire', 'water', 'grass', 'wind', 'earth', 'thunder', 'heaven', 'dark', 'magic', 'beast'];
+export const weakOf = (defEl) => (defEl && defEl !== 'none') ? EL_ORDER.filter(x => GD.getElementMatchup(x, defEl).tier === 'strong') : [];
+export const resistOf = (defEl) => (defEl && defEl !== 'none') ? EL_ORDER.filter(x => GD.getElementMatchup(x, defEl).tier === 'weak') : [];
+export const weakLine = (defEl) => { const w = weakOf(defEl), r = resistOf(defEl); return (w.length ? `<span class="wk wk-s">ばつぐん ${w.map(elemChip).join('')}</span>` : '') + (r.length ? `<span class="wk wk-w">いまひとつ ${r.map(elemChip).join('')}</span>` : ''); };
+export const matchHint = (atkEl, defEl) => { const t = GD.getElementMatchup(atkEl, defEl).tier; return t === 'strong' ? '<b class="mu-s">◎ ばつぐん ×2</b>' : t === 'weak' ? '<b class="mu-w">△ いまひとつ ×0.5</b>' : ''; };
 // レベルアップに いる けいけんち(はやい・ふつう・おそい はモンスターごと。しんかする まえの こは はやく、さいごの すがたの つよい こは ゆっくり)
 export const growthMul = (id) => {
   const d = GD.MONSTERS[id]; if (!d) return 1;
@@ -136,6 +140,7 @@ export function learnLv(sk) { if (!sk) return 99; if (BASIC_SKILLS.includes(sk.i
 export function knownOf(m) {
   const def = GD.MONSTERS[m.id], tr = GD.COMPANION_SKILL_TRACKS[def.element] || GD.COMPANION_SKILL_TRACKS.none, seen = new Set();
   const out = tr.filter(s => GD.SKILLS[s] && learnLv(GD.SKILLS[s]) <= m.lv && !seen.has(s) && seen.add(s));
+  for (const t of traitSkillsFor(GD, m.id, def.element)) if (GD.SKILLS[t.id] && m.lv >= learnLv(GD.SKILLS[t.id]) + t.lvAdd && !out.includes(t.id)) out.push(t.id);   // つめ・はね・つの など とくちょうに あわせた ほかの タイプの わざ
   for (const g of (GD.SIG_BY_FORM && GD.SIG_BY_FORM[m.id]) || []) if (m.lv >= g.lv && !out.includes(g.id)) out.push(g.id);   // オリジナルわざ(御三家・でんせつ)は さいごに くわえる = じどうで えらばれやすい
   return out;
 }
@@ -278,7 +283,7 @@ export async function runBattle(enemyId, opts = {}) {
     const a = state.party[ai], st = monStats(a); fought.add(a); const ad = GD.MONSTERS[a.id], aHp = hpOf(a);
     $('.bt-e .n', root).innerHTML = def.name + (state.mdex[enemyId] === 2 ? '<img class="gotmark" src="quest/assets/items/icon_ball_timothy.webp" alt="つかまえずみ">' : ''); $('.bt-e .lv', root).textContent = 'Lv' + e.lv; $('.bt-e .hp i', root).style.width = Math.max(0, e.hp / e.maxHp * 100) + '%';
     $('.bt-a .n', root).textContent = monName(a); $('.bt-a .lv', root).textContent = 'Lv' + a.lv; $('.bt-a .hp i', root).style.width = Math.max(0, aHp / st.maxHp * 100) + '%';
-    $('.bt-e .tys', root).innerHTML = elemChip(def.element)  + chips(E); $('.bt-a .tys', root).innerHTML = elemChip(ad.element)  + (buff ? `<span class="bf">UP ${buff.turns}</span>` : '') + chips(sd('a'));
+    $('.bt-e .tys', root).innerHTML = elemChip(def.element)  + chips(E) + `<div class="wkrow">${weakLine(def.element)}</div>`; $('.bt-a .tys', root).innerHTML = elemChip(ad.element)  + (buff ? `<span class="bf">UP ${buff.turns}</span>` : '') + chips(sd('a'));
     $('.bt-a .hpn', root).textContent = `HP ${Math.max(0, aHp)} / ${st.maxHp}`; $('.bt-a .xp i', root).style.width = Math.min(100, (a.exp || 0) / needExp(a.lv, a.id) * 100) + '%';
     syncAil();
     if (aImg.dataset.src !== ad.image) { aImg.dataset.src = ad.image; aImg.onload = () => { aImg._pad = bottomPad(aImg); layout(); }; aImg.src = img(ad.image); }
@@ -312,6 +317,7 @@ export async function runBattle(enemyId, opts = {}) {
   const hashId = (s) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
   const motionOf = (sk) => {
     if (MOTION_BY_NAME[sk.name]) return MOTION_BY_NAME[sk.name];
+    if (GD.MOTION_HINT && GD.MOTION_HINT[sk.name]) return GD.MOTION_HINT[sk.name];
     for (const t of [sk.name || '', (sk.desc || '').replace(/つめたい/g, '')]) for (const [k, re] of MOTIONS) if (re.test(t)) return k;
     return ['orb', 'orb', 'barrage', 'sweep', 'orb', 'vortex'][hashId(sk.id || '') % 6];
   };

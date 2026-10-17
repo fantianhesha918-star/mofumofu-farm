@@ -244,6 +244,7 @@ function renderPanel() {
       <div class="row menurow" data-m="howto"><div class="grow">あそびかた<small>ゲームの すすめかた・バトルの コツ</small></div><span class="chev">›</span></div>
       <div class="row menurow" data-m="settings"><div class="grow">せってい<small>おと・バトルの はやさ・くさの りょう・ひかり</small></div><span class="chev">›</span></div>
       <div class="row menurow" data-m="village"><div class="grow">むらの ようす<small>むらレベル・うりあげ・どうぶつ</small></div><span class="chev">›</span></div>
+      <div class="row menurow" data-m="types"><div class="grow">タイプそうせいひょう<small>どの タイプが どれに つよい・よわい</small></div><span class="chev">›</span></div>
       <div class="row menurow" data-m="badge"><div class="grow">バッジ<small>ぬしを たおすと もらえる・おんけい</small></div><span class="chev">›</span></div>
       <div class="row menurow" data-m="save"><div class="grow">${saveRowText()}</div><span class="chev">›</span></div>
       <div class="row menurow" data-m="title"><div class="grow">タイトルへ もどる<small>セーブして ゲームを おわる</small></div><span class="chev">›</span></div>`;
@@ -260,6 +261,7 @@ function renderPanel() {
       else if (m === 'sound') openPanel('sound');
       else if (m === 'village') openPanel('village');
       else if (m === 'badge') openPanel('badge');
+      else if (m === 'types') openPanel('types');
       else if (m === 'gfx') openPanel('gfx');
       else if (m === 'look') openPanel('look');
       else if (m === 'yard') { closePanel(); bus.emit('yardStart'); }
@@ -315,6 +317,16 @@ function renderPanel() {
       });
       body.querySelectorAll('[data-wd]').forEach(b => b.onclick = () => { if (PA.withdrawMon(+b.dataset.wd)) { sfx('ui'); renderPanel(); } else sfx('no'); });
       body.querySelectorAll('[data-dp]').forEach(b => b.onclick = () => { if (PA.depositMon(+b.dataset.dp)) { sfx('ui'); renderPanel(); } else sfx('no'); });
+    });
+  } else if (panelKind === 'types') {
+    h2.textContent = 'タイプそうせいひょう';
+    body.innerHTML = '<p class="hint">よみこみ中...</p>';
+    import('./battle.js').then(async (B) => {
+      const GD = await B.questData(); if (panelKind !== 'types') return;
+      const O = ['fire', 'water', 'grass', 'wind', 'earth', 'thunder', 'heaven', 'dark', 'magic', 'beast'];
+      body.innerHTML = '<p class="hint">わざの タイプと あいての タイプで ダメージが かわるよ。ばつぐん=2ばい、いまひとつ=はんぶん。バトルでは あいての よわてんも でるよ。</p>' +
+        O.map(e => { const st = O.filter(d => GD.getElementMatchup(e, d).tier === 'strong'), wk = O.filter(d => GD.getElementMatchup(e, d).tier === 'weak'); return `<div class="row"><div class="grow">${B.elemChip(e)}<small>◎ ばつぐん: ${st.map(B.elemChip).join('')}　△ いまひとつ: ${wk.map(B.elemChip).join('')}</small></div></div>`; }).join('') +
+        `<div class="row"><div class="grow">${B.elemChip('kami')}<small>どの タイプにも ばつぐん(よわてんは ない)</small></div></div>`;
     });
   } else if (panelKind === 'badge') {
     h2.textContent = 'バッジ';

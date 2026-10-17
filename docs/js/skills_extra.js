@@ -33,7 +33,7 @@ const DESC = { barrage: 'なんども たたみかけて こうげきする', bi
 // レベル→いりょく(既存のわざの きょくせんに あわせる)
 const powerAt = (L) => Math.round(L <= 9 ? 18 + (L - 1) * 1.5 : L <= 13 ? 30 + (L - 9) : L <= 25 ? 34 + (L - 13) * 1.25 : L <= 32 ? 49 + (L - 25) : L <= 44 ? 56 + (L - 32) * 1.5 : L <= 52 ? 74 + (L - 44) : L <= 64 ? 82 + (L - 52) * 1.75 : 103 + (L - 64) * 1.75);
 export function installExtraSkills(GD) {
-  if (GD._extraSkills) return; GD._extraSkills = true; installSignature(GD);
+  if (GD._extraSkills) return; GD._extraSkills = true; installSignature(GD); installTraitSkills(GD);
   if (GD.SKILLS.kami_judgement) GD.SKILLS.kami_judgement.learnLevel = 66;   // しんの ひっさつわざは こうはんで おぼえる
   for (const [el, list] of Object.entries(LIST)) {
     const tr = GD.COMPANION_SKILL_TRACKS[el]; if (!tr) continue;
@@ -84,4 +84,40 @@ export function installSignature(GD) {
     GD.SKILLS[id] = { id, name, power, uses: power >= 80 ? 5 : 10, learnLevel: lv, desc, element, sig: true };
     for (const f of forms) (GD.SIG_BY_FORM[f] = GD.SIG_BY_FORM[f] || []).push({ id, lv });
   }
+}
+
+// ---- とくちょう わざ: つめ・きば・はね・つの・こぶしの ある モンスターは、ほかの タイプの 「つめ/はね」わざも おぼえる ----
+// (でんせつの ゆいいつの オリジナルわざは そのモンスターだけ。ここは ふつうの モンスター用)
+const TRAIT_KEYS = {
+  claw: 'neko tora kitsune kyubi shishi jinrou hakurou cerberus dragon ryu kimaira griffon grif akuma tanuki kuma mogura risu tengu oni yeti orc rakko lion_ko aodori fukurou houou kaiju hydra bakeneko'.split(' '),
+  bite: 'jinrou hakurou cerberus dragon ryu hebi hydra kimaira tora shishi furebu kaiju neko kitsune kyubi tanuki orc oni yeti komori akuma sarekoube shokujinsou unagi gashadokuro mogura_2 mogura_3 kappa'.split(' '),
+  wing: 'aodori komori fukurou chou hato ootori tsubame tenshi shugoshin sei_kishi akuma mitsubachi raimushi yousei watage_2 hitsuji_2 ginyoku houou griffon pegasus dragon chibi_ryu sora_ryu murasakiryu kimaira raichou tengu futago yume_no_ko mahitotsu'.split(' '),
+  horn: 'kirin unicorn sai_boya oni akuma mogura_3 kaiju hitsuji shika taiboku dragon chibi_ryu sora_ryu kimaira hone_kihei'.split(' '),
+  fist: 'golem gankou_goro daichi_taishou goro_kyojuu donguri_robo_2 orc oni yeti mogura_2 kaiju'.split(' '),
+};
+const TRAIT_EXCLUDE = /^(legend_|kami_|mame_chin_kami)/;
+const AFF = { fire: ['earth', 'thunder', 'dark'], water: ['wind', 'thunder', 'earth'], grass: ['earth', 'wind', 'water'], wind: ['thunder', 'heaven', 'dark'], earth: ['fire', 'grass', 'dark'], thunder: ['fire', 'wind', 'water'], heaven: ['wind', 'magic', 'fire'], dark: ['magic', 'wind', 'fire'], magic: ['heaven', 'dark', 'wind'], beast: ['fire', 'earth', 'dark', 'wind', 'thunder'] };
+const EL10 = ['fire', 'water', 'grass', 'wind', 'earth', 'thunder', 'heaven', 'dark', 'magic', 'beast'];
+const TRAIT_NEW = {   // [とくちょう]: [うごき, おぼえる めやすレベル, ぞくせいごとの なまえ, せつめい]
+  wing: ['sweep', 14, { fire: 'ヒートウィング', water: 'アクアウィング', grass: 'リーフウィング', wind: 'ウィンドウィング', earth: 'ロックウィング', thunder: 'ボルトウィング', heaven: 'ホーリーウィング', dark: 'ダークウィング', magic: 'マジックウィング', beast: 'ワイルドウィング' }, 'はねを ひろげて なぎはらう'],
+  horn: ['ram', 18, { fire: 'フレイムホーン', water: 'アクアホーン', grass: 'ウッドホーン', wind: 'ウィンドホーン', earth: 'ロックホーン', thunder: 'ボルトホーン', heaven: 'ヘブンホーン', dark: 'シャドウホーン', magic: 'マジックホーン', beast: 'ワイルドホーン' }, 'つので つきあげる'],
+  fist: ['ram', 16, { fire: 'フレイムナックル', water: 'アクアナックル', grass: 'ウッドナックル', wind: 'ウィンドナックル', earth: 'ロックナックル', thunder: 'ボルトナックル', heaven: 'ヘブンナックル', dark: 'シャドウナックル', magic: 'マジックナックル', beast: 'ワイルドナックル' }, 'こぶしで なぐりつける'],
+};
+export function installTraitSkills(GD) {
+  if (GD._traitSkills) return; GD._traitSkills = true; GD.MOTION_HINT = GD.MOTION_HINT || {};
+  for (const [tr, [mo, L, names, desc]] of Object.entries(TRAIT_NEW)) for (const el of EL10) {
+    const id = `t_${el}_${tr}`, power = powerAt(L);
+    GD.SKILLS[id] = { id, name: names[el], power, uses: power >= 40 ? 10 : 20, learnLevel: L, desc, element: el }; GD.MOTION_HINT[names[el]] = mo;
+  }
+}
+export const traitsOf = (id) => Object.keys(TRAIT_KEYS).filter(t => TRAIT_KEYS[t].some(k => id.includes(k)));
+// [{id, lvAdd}] そのモンスターが ほかの タイプでも おぼえる とくちょうわざ(lvAdd = ふつうの わざより よぶんに かかる レベル)
+export function traitSkillsFor(GD, id, el) {
+  if (TRAIT_EXCLUDE.test(id) || !AFF[el]) return [];
+  const out = [], seen = new Set();
+  for (const t of traitsOf(id)) {
+    if (t === 'claw' || t === 'bite') { for (const e2 of AFF[el].slice(0, el === 'beast' ? 3 : 2)) { const sid = `n_${e2}_${t}`; if (GD.SKILLS[sid] && !seen.has(sid)) { seen.add(sid); out.push({ id: sid, lvAdd: 4 }); } } }
+    else for (const e2 of [el, ...AFF[el].slice(0, 2)]) { const sid = `t_${e2}_${t}`; if (GD.SKILLS[sid] && !seen.has(sid)) { seen.add(sid); out.push({ id: sid, lvAdd: e2 === el ? 0 : 4 }); } }
+  }
+  return out;
 }
