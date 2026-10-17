@@ -33,7 +33,7 @@ const DESC = { barrage: 'なんども たたみかけて こうげきする', bi
 // レベル→いりょく(既存のわざの きょくせんに あわせる)
 const powerAt = (L) => Math.round(L <= 9 ? 18 + (L - 1) * 1.5 : L <= 13 ? 30 + (L - 9) : L <= 25 ? 34 + (L - 13) * 1.25 : L <= 32 ? 49 + (L - 25) : L <= 44 ? 56 + (L - 32) * 1.5 : L <= 52 ? 74 + (L - 44) : L <= 64 ? 82 + (L - 52) * 1.75 : 103 + (L - 64) * 1.75);
 export function installExtraSkills(GD) {
-  if (GD._extraSkills) return; GD._extraSkills = true; installSignature(GD); installTraitSkills(GD);
+  if (GD._extraSkills) return; GD._extraSkills = true; installSignature(GD); installTraitSkills(GD); installSpecialSkills(GD);
   if (GD.SKILLS.kami_judgement) GD.SKILLS.kami_judgement.learnLevel = 66;   // しんの ひっさつわざは こうはんで おぼえる
   for (const [el, list] of Object.entries(LIST)) {
     const tr = GD.COMPANION_SKILL_TRACKS[el]; if (!tr) continue;
@@ -120,4 +120,23 @@ export function traitSkillsFor(GD, id, el) {
     else for (const e2 of [el, ...AFF[el].slice(0, 2)]) { const sid = `t_${e2}_${t}`; if (GD.SKILLS[sid] && !seen.has(sid)) { seen.add(sid); out.push({ id: sid, lvAdd: e2 === el ? 0 : 4 }); } }
   }
   return out;
+}
+
+// ---- ふつうの ことばの ひっさつわざ(こうはんに おぼえる。うごきは 既存の えんしゅつを つかう) ----
+const SPECIAL = [
+  ['sp_reitou', 'れいとうレーザー', 'water', 31, 'beam', 'こごえる ひかりの せんで うちぬく'],
+  ['sp_fubuki', 'ふぶき', 'water', 40, 'sweep', 'ふぶきを おこして ぜんたいを こおらせる'],
+  ['sp_jiware', 'じわれ', 'earth', 44, 'quake', 'じめんを ひきさいて あいてを のみこむ'],
+  ['sp_taifuu', 'たいふう', 'wind', 46, 'vortex', 'ちょうだいな かぜの うずで すいあげる'],
+  ['sp_tsunami', 'つなみ', 'water', 52, 'sweep', 'おおなみで すべてを のみこむ'],
+];
+export function installSpecialSkills(GD) {
+  if (GD._specialSkills) return; GD._specialSkills = true; GD.MOTION_HINT = GD.MOTION_HINT || {};
+  for (const [id, name, el, L, mo, desc] of SPECIAL) {
+    const tr = GD.COMPANION_SKILL_TRACKS[el]; if (!tr || GD.SKILLS[id]) continue;
+    const power = powerAt(L) + 4;
+    GD.SKILLS[id] = { id, name, power, uses: power >= 80 ? 5 : 10, learnLevel: L, desc, element: el }; GD.MOTION_HINT[name] = mo;
+    let at = tr.length; for (let i = 0; i < tr.length; i++) { const t = GD.SKILLS[tr[i]]; if (t && (t.learnLevel || 1) > L) { at = i; break; } }
+    tr.splice(at, 0, id);
+  }
 }
