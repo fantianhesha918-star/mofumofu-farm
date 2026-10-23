@@ -915,7 +915,7 @@ function eachTarget(test) {
   for (const a of hens) if (a.room || COOP_SPOTS[a.ck]) test(a.x, a.z, 1.9, () => henTarget(a), 0.4, a.chick ? 0.2 : 0.4, 55);
   if (P.room === ROOMS.house) for (const a of animals) test(a.x, a.z, 2.3, () => animalTarget(a), -0.5, 0.5, 60);
   if (!P.room) for (const a of cows) if (PENS[a.b]) test(a.x, a.z, 3.0, () => cowTarget(a), -0.6, a.c.h * 0.6, 80);
-  if (!P.room && world.pasture) test(world.pasture.x, world.pasture.z, world.pasture.r + 1.5, () => ({ label: 'なかまの ぼくじょう', sub: `${(state.pasture || []).length}ひき あずかっているよ(まいあさ コインを もってくる)`, short: 'ひらく', can: true, act: () => ui.openPanel('pasture') }), 1.2, 1, 40);
+  if (!P.room) test(PC.x, PC.z, 3.4, () => ({ label: 'あずかりパソコン', sub: `なかまを あずける・ひきとる(いま ${(state.pasture || []).length}ひき あずかっているよ)`, short: 'つかう', can: true, act: () => ui.openPanel('pasture') }), 1.2, 1, 40);
   if (!P.room) for (const v of villagers) test(v.x, v.z, 2.4, () => ({ label: `${vN(v)}と はなす`, sub: `あそびに きた ${v.d.who}`, short: 'はなす', can: true, act: () => talkVillager(v) }), -0.4);
   if (!P.room) for (const m of yardGroup.children) { const f = state.deco[m.userData.di]; if (f && f.k === 'bench') test(f.x, f.z, 2.0, () => ({ label: 'ベンチで ひとやすみ', sub: P.stam >= 99 ? 'いまは げんきいっぱい' : 'スタミナが ぜんかいふく するよ', short: 'やすむ', can: P.stam < 99, act: () => { P.stam = 100; sfx('feed'); ui.toast('ひとやすみ', 'スタミナが ぜんかいふくしたよ', '', 1800); } }), 0.2); }
   for (const n of npcs) test(n.x, n.z, 2.4, () => ({ label: `${nN(n)}と はなす`, sub: 'むらのひと', short: 'はなす', can: true, act: () => { ui.toast(nN(n), n.d.lines[n.line % n.d.lines.length], '', 4200); n.line++; n.wait = 4; sfx('pet'); } }), -0.3);
@@ -1087,6 +1087,22 @@ const GATE = { x: 5, z: -38 };
   g.position.set(GATE.x, heightAt(GATE.x, GATE.z), GATE.z); villageRoot.add(g); GATE.mesh = g;
   world.colliders.circles.push({ x: GATE.x - 2.2, z: GATE.z, r: 0.5 }, { x: GATE.x + 2.2, z: GATE.z, r: 0.5 });
   world.keep && world.keep(GATE.x, GATE.z, 4);
+}
+// ---------- あずかりパソコン(ゲートの みぎ てまえ。なかまを あずける・ひきとる) ----------
+const PC = { x: GATE.x + 7, z: GATE.z + 4.5 };
+{
+  const g = new THREE.Group(), body = new THREE.MeshLambertMaterial({ color: '#d8d4c8' }), dark = new THREE.MeshLambertMaterial({ color: '#4a4a52' }), wood = new THREE.MeshLambertMaterial({ color: '#7a5230' });
+  const desk = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.2, 1.4), wood); desk.position.y = 1.0; g.add(desk);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.0, 0.16), wood); l.position.set(sx * 1.05, 0.5, sz * 0.58); g.add(l); }
+  const mon = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.95, 0.12), body); mon.position.set(0, 1.9, -0.25); g.add(mon);
+  const cv = document.createElement('canvas'); cv.width = 128; cv.height = 96; { const c = cv.getContext('2d'); c.fillStyle = '#12304a'; c.fillRect(0, 0, 128, 96); c.fillStyle = '#7fe0ff'; c.fillRect(14, 14, 100, 6); c.fillRect(14, 30, 70, 6); c.fillRect(14, 46, 84, 6); c.fillStyle = '#ffe9a0'; c.beginPath(); c.arc(64, 74, 9, 0, 6.28); c.fill(); }
+  const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace;
+  const scr = new THREE.Mesh(new THREE.PlaneGeometry(1.14, 0.78), new THREE.MeshBasicMaterial({ map: tx })); scr.position.set(0, 1.9, -0.185); g.add(scr); g.userData.scr = scr;
+  const stand = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), dark); stand.position.set(0, 1.35, -0.25); g.add(stand);
+  const kb = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.06, 0.4), dark); kb.position.set(0, 1.13, 0.3); g.add(kb);
+  g.position.set(PC.x, heightAt(PC.x, PC.z), PC.z); g.traverse(o => { if (o.isMesh) o.castShadow = !isTouch; }); villageRoot.add(g);
+  world.colliders.boxes.push({ minx: PC.x - 1.2, maxx: PC.x + 1.2, minz: PC.z - 0.7, maxz: PC.z + 0.7 });
+  world.keep && world.keep(PC.x, PC.z, 3);
 }
 function openGate() { if (!state.boss.forest) return goOut('forest'); ui.openPanel('gate'); }
 bus.on('goField', (id) => goOut(id));
