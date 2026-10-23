@@ -492,13 +492,13 @@ const gate = new THREE.Group(); const GZ = ELITE ? 25 : 56;
 }
 
 // ---- つぎの フィールドへの ゲート(ぬしを たおすと ひらく) ----
-const ORDER = ['forest', 'lake', 'volcano', 'ghost', 'sky', 'sun', 'cosmos', 'grove', 'castle', 'temple', 'dragon', 'end'], NEXT = ORDER[ORDER.indexOf(FID) + 1], NX = -12;
+const ORDER = ['forest', 'lake', 'volcano', 'ghost', 'sky', 'sun', 'cosmos', 'grove', 'castle', 'temple', 'dragon', 'end'], NEXT = ORDER[ORDER.indexOf(FID) + 1], NX = F.boss.x, NZ = F.boss.z - 12;   // ぬしの うしろに ひらく
 let gate2 = null;
 function buildGate2() {
   if (!(NEXT && FIELDS[NEXT] && state.boss[BOSS.key])) return;
   gate2 = gate.clone(true); const pm = new THREE.MeshBasicMaterial({ color: '#9ad0ff', transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
   gate2.children.forEach(c => { if (c === gate.userData.portal || c.geometry.type === 'PlaneGeometry') c.material = pm; }); gate2.userData.portal = gate2.children.find(c => c.material === pm);
-  gate2.position.set(NX, hAt(NX, GZ), GZ); scene.add(gate2); circles.push({ x: NX - 2.2, z: GZ, r: 0.5 }, { x: NX + 2.2, z: GZ, r: 0.5 });
+  gate2.position.set(NX, hAt(NX, NZ), NZ); scene.add(gate2); circles.push({ x: NX - 2.2, z: NZ, r: 0.5 }, { x: NX + 2.2, z: NZ, r: 0.5 });
 }
 function goNext() {
   busy = true; fading = true; save(); fade(true);
@@ -561,7 +561,7 @@ let target = null;
 function updateTarget() {
   const d = Math.hypot(P.pos.x, P.pos.z - GZ);
   target = d < 5 && !busy ? (ELITE && FID !== 'castle' && !bossBeaten() ? { label: 'ひきかえせない', sub: 'してんのうとの たたかいの とちゅうだ。ぬしを たおすまで もどれないよ', short: 'ひきかえせない', can: false, act: () => {} } : { label: 'むらへ かえる', sub: 'ぼくじょうの むらに もどるよ', short: 'かえる', can: true, act: () => goVillage(false) }) : null;
-  if (!target && gate2 && !busy && Math.hypot(P.pos.x - NX, P.pos.z - GZ) < 5) target = { label: FIELDS[NEXT].name + 'へ すすむ', sub: 'ぬしを たおしたので ひらいたよ。むらの ゲートからも えらべるよ', short: 'すすむ', can: true, act: goNext };
+  if (!target && gate2 && !busy && Math.hypot(P.pos.x - NX, P.pos.z - NZ) < 5) target = { label: FIELDS[NEXT].name + 'へ すすむ', sub: 'ぬしを たおしたので ひらいたよ。むらの ゲートからも えらべるよ', short: 'すすむ', can: true, act: goNext };
   if (!target && bossSprite && !busy && Math.hypot(P.pos.x - BOSS.x, P.pos.z - BOSS.z) < 6.5) target = { label: bossBeaten() ? BOSS.name + 'に さいせんする' : BOSS.name + 'に はなしかける', sub: 'つよい あいてだよ。HPと かいふくの たべものを じゅんびしてね(たたかいが はじまると にげられないよ)', short: 'はなしかける', can: true, act: talkBoss };
   if (!target && !busy) { const sh = shrines.find(s => !(state.legends && state.legends[s.id]) && Math.hypot(P.pos.x - s.x, P.pos.z - s.z) < 4.2); if (sh) target = { label: 'でんせつの ほこら', sub: 'ふしぎな けはいが する…。つよい あいてだよ', short: 'ちかづく', can: true, act: () => challengeLegend(sh) }; }
   if (!target && !busy) { const c = chests.find(c => Math.hypot(P.pos.x - c.x, P.pos.z - c.z) < 3.2); if (c) { const rd = chestReady(c); target = { label: 'たからばこ', sub: rd ? 'ひらいてみよう!' : 'からっぽ(3日で ふっかつ)', short: rd ? 'あける' : 'からっぽ', can: true, act: () => openChest(c) }; } }
