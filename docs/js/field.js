@@ -492,7 +492,7 @@ const gate = new THREE.Group(); const GZ = ELITE ? 25 : 56;
 }
 
 // ---- つぎの フィールドへの ゲート(ぬしを たおすと ひらく) ----
-const ORDER = ['forest', 'lake', 'volcano', 'ghost', 'sky', 'sun', 'cosmos', 'grove', 'castle', 'temple', 'dragon', 'end'], NEXT = ORDER[ORDER.indexOf(FID) + 1], NX = F.boss.x, NZ = F.boss.z - 12;   // ぬしの うしろに ひらく
+const ORDER = ['forest', 'lake', 'volcano', 'ghost', 'sky', 'sun', 'cosmos', 'grove', 'castle', 'temple', 'dragon', 'end'], NEXT = ORDER[ORDER.indexOf(FID) + 1], NX = F.boss.x * 63 / Math.hypot(F.boss.x, F.boss.z), NZ = F.boss.z * 63 / Math.hypot(F.boss.x, F.boss.z);   // ぬしの うしろ(あるける はんいの いちばん おく)に ひらく
 let gate2 = null;
 function buildGate2() {
   if (!(NEXT && FIELDS[NEXT] && state.boss[BOSS.key])) return;
