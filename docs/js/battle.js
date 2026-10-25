@@ -140,15 +140,32 @@ const hpOf = (m) => m.hp == null ? monStats(m).maxHp : m.hp;
 // さいしょは シンプルな 3つ(たいあたり・しっぽをふる・なきごえ)。ほかの わざは レベルが あがるほど ゆっくり ふえる
 const BASIC_SKILLS = ['tackle', 'x_tail', 'x_growl'];
 export function learnLv(sk) { if (!sk) return 99; if (BASIC_SKILLS.includes(sk.id)) return 1; const b = sk.learnLevel || 1; return b <= 1 ? 4 : b + 3; }
+// おぼえる わざは 5レベルごとの まとまりから いちばん つよい 1つだけ(まいかい おぼえない。しつを たかく)。へんかわざは 11〜15・26〜30・41〜45 などの まとまりに 1つ
+const thinCache = {};
+function thinTrack(el) {
+  if (thinCache[el]) return thinCache[el];
+  const tr = GD.COMPANION_SKILL_TRACKS[el] || GD.COMPANION_SKILL_TRACKS.none, seen = new Set(), uniq = tr.map(id => GD.SKILLS[id]).filter(sk => sk && !seen.has(sk.id) && seen.add(sk.id));
+  const out = uniq.filter(sk => BASIC_SKILLS.includes(sk.id)), win = new Map();
+  for (const sk of uniq) {
+    if (BASIC_SKILLS.includes(sk.id)) continue;
+    const g = Math.floor((learnLv(sk) - 1) / 5), w = win.get(g) || { atk: null, st: null };
+    if ((sk.power || 0) > 0) { if (!w.atk || sk.power > w.atk.power || (sk.power === w.atk.power && learnLv(sk) < learnLv(w.atk))) w.atk = sk; }
+    else if (!w.st || learnLv(sk) < learnLv(w.st)) w.st = sk;
+    win.set(g, w);
+  }
+  for (const [g, w] of [...win].sort((p, q) => p[0] - q[0])) { if (w.atk) out.push(w.atk); if (w.st && (g % 3 === 2 || !w.atk)) out.push(w.st); }
+  return (thinCache[el] = out.map(sk => sk.id));
+}
 export function knownOf(m) {
-  const def = GD.MONSTERS[m.id], tr = GD.COMPANION_SKILL_TRACKS[def.element] || GD.COMPANION_SKILL_TRACKS.none, seen = new Set();
+  const def = GD.MONSTERS[m.id], tr = thinTrack(def.element), seen = new Set();
   const out = tr.filter(s => GD.SKILLS[s] && learnLv(GD.SKILLS[s]) <= m.lv && !seen.has(s) && seen.add(s));
-  for (const t of traitSkillsFor(GD, m.id, def.element)) if (GD.SKILLS[t.id] && m.lv >= learnLv(GD.SKILLS[t.id]) + t.lvAdd && !out.includes(t.id)) out.push(t.id);   // つめ・はね・つの など とくちょうに あわせた ほかの タイプの わざ
+  for (const s of (m.moves || [])) if (GD.SKILLS[s] && !out.includes(s)) out.push(s);   // いま セットしている わざは ぜったいに のこす
+  for (const t of traitSkillsFor(GD, m.id, def.element).slice(0, 2).map((x, i) => ({ ...x, lvAdd: x.lvAdd + i * 8 }))) if (GD.SKILLS[t.id] && m.lv >= learnLv(GD.SKILLS[t.id]) + t.lvAdd && !out.includes(t.id)) out.push(t.id);   // つめ・はね・つの など とくちょうに あわせた ほかの タイプの わざ
   for (const g of (GD.SIG_BY_FORM && GD.SIG_BY_FORM[m.id]) || []) if (m.lv >= g.lv && !out.includes(g.id)) out.push(g.id);   // オリジナルわざ(御三家・でんせつ)は さいごに くわえる = じどうで えらばれやすい
   return out;
 }
 export function nextSkillText(m) {   // つぎに おぼえる わざ
-  const def = GD.MONSTERS[m.id], tr = GD.COMPANION_SKILL_TRACKS[def.element] || GD.COMPANION_SKILL_TRACKS.none, nx = tr.map(x => GD.SKILLS[x]).filter(x => x && learnLv(x) > m.lv).sort((p, q) => learnLv(p) - learnLv(q))[0];
+  const def = GD.MONSTERS[m.id], nx = thinTrack(def.element).map(x => GD.SKILLS[x]).filter(x => x && learnLv(x) > m.lv).sort((p, q) => learnLv(p) - learnLv(q))[0];
   return nx ? `${nx.name}(Lv${learnLv(nx)})` : 'ぜんぶ おぼえた';
 }
 export function movesOf(m) {
