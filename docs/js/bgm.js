@@ -58,6 +58,8 @@ const DR = {
   taiko: { k: 'x.......x.......', t: '..1...2...1.2.3.', v: 0.9, boom: 1, crash: 8 },
   epic: { k: 'x...x...x...x...', s: '....x.......x...', h: 'x.x.x.x.x.x.x.x.', t: '..............12', v: 1, fill: 1, crash: 4, boom: 1 },
   heart: { k: 'x..x............', v: 0.55 },
+  fight: { k: 'x..x..x.x..x..x.', s: 'x.g.X.g.x.g.X.xx', h: 'x.x.x.x.x.x.x.x.', o: '..............x.', v: 1, fill: 1, crash: 8 },
+  fightB: { k: 'x..x..x.x.xx..x.', s: 'x.g.X.g.x.g.X.xx', h: 'xxxxxxxxxxxxxxxx', o: '..............x.', v: 1, fill: 1, crash: 8, boom: 1 },
   boss: { k: 'x..x..x.x.xx..x.', s: '....x.......x...', h: 'xxxxxxxxxxxxxxxx', o: '..............x.', v: 1, fill: 1, crash: 8, boom: 1 },
 };
 
@@ -163,10 +165,13 @@ const TRACKS = {
       { i: 'choir', v: 0.11, r: 0.6, m: "1':2 1':2 1':2 3':2 5':4 3':2 1':2|1':3 1':1 3':2 5':2 1'':4 5':4|6':4 1'':2 6':2 3'':4 1'':4|7':4 2'':2 7':2 4'':4 2'':4|1'':4 5':2 3':2 1'':4 3'':4|4':4 6':2 4':2 1'':4 6':4|5':4 7#':2 2'':2 7#':4 5':4|1'':8 5':4 1'':4|6':2 1'':2 3'':4 1'':4 6':4|7':2 2'':2 4'':4 2'':4 7':4|1'':4 3'':2 5'':2 3'':4 1'':4|5':4 7#':4 2'':4 7#':4|4':4 6':4 1'':4 6':4|6':4 1'':4 3'':4 1'':4|5':2 7#':2 2'':2 7#':2 5'':4 2'':4|5':8 7#':4 2'':4" }],
     pad: { i: 'strings', v: 0.07 }, bass: { i: 'synbass', v: 0.24, p: '1.11.1.11.1.1.11' }, arp: { i: 'bell', v: 0.08, p: '0123210301232103', up: 12, r: 0.6 }, drums: { ...DR.boss, crash: 4 } },
 };
+// ファミコン風の べつパターン: 戦闘曲3つを コピー(矩形波2+波形メモリベース+ノイズドラム)
+for (const k of ['battle', 'battle2', 'battle3']) TRACKS['chip_' + k] = JSON.parse(JSON.stringify(TRACKS[k]));
 // きょくの てんかい: sty=がっきの ならべかた / intro=イントロの しょうせつすう / lift=さいごの 8しょうせつで あげる はんおん / brk=いったん しずまる しょうせつ(つぎで ばくはつ) / riser=もりあげの ノイズ
 const PLAN = {
   village: { sty: 'folk' }, f_forest: { sty: 'folk' }, f_lake: { sty: 'folk' }, f_grove: { sty: 'folk' }, f_sun: { sty: 'bright', lift: 2 }, f_sky: { sty: 'sacred' }, f_cosmos: { sty: 'sacred' }, f_temple: { sty: 'sacred', lift: 2 },
   f_ghost: { sty: 'dark' }, f_castle: { sty: 'dark', lift: 2 }, f_volcano: { sty: 'dark', lift: 2 }, f_dragon: { sty: 'epic', lift: 2, riser: 1 }, f_end: { sty: 'epic', lift: 2, riser: 1, brk: 15 },
+  chip_battle: { lift: 2 }, chip_battle2: { lift: 2 }, chip_battle3: { lift: 2 },
   battle: { sty: 'epic', intro: 2, lift: 2, riser: 1 }, battle2: { sty: 'epic', intro: 2, lift: 2, riser: 1 }, battle3: { sty: 'epic', intro: 2, lift: 2, riser: 1 }, battle_trainer: { sty: 'epic', intro: 2, lift: 2, riser: 1 },
   battle_legend: { sty: 'epic', sac: 1, intro: 2, lift: 2, riser: 1, brk: 15 }, boss: { sty: 'epic', intro: 2, lift: 2, riser: 1, brk: 15 }, boss2: { sty: 'epic', intro: 2, lift: 2, riser: 1, brk: 15 }, boss_final: { sty: 'epic', sac: 1, intro: 2, lift: 2, riser: 1, brk: 15 },
 };
@@ -191,6 +196,32 @@ function orchestrate(tr) {
     if (tr.sac) { add('arp', { i: 'tubular', v: 0.09, p: '0...............', up: 12, r: 0.8, pass: 2 }); add('pad', { i: 'choir', v: 0.05, pass: 2, r: 0.8 }); }
   }
 }
+// 戦闘曲の ひな形: メロディ=トランペット系ブラス / ハモリ+はやい きざみ=ストリングス / ベース=とまらない エレキベース / ドラム=スネアおおめ
+function battleArr(tr) {
+  const sc = SCALES[tr.mode || 'major'], harm = (bars) => bars.map(b => b.map(([st, m, len]) => {
+    const rel = m - tr.key, oc = Math.floor(rel / 12), i = sc.indexOf(((rel % 12) + 12) % 12); if (i < 0) return [st, m - 4, len];
+    const j = i - 2; return [st, tr.key + 12 * (oc + Math.floor(j / 7)) + sc[((j % 7) + 7) % 7], len]; }));
+  const base = tr.L_lead.slice();
+  for (const l of base) {
+    if (l.i === 'lead' && l.v >= 0.15) l.i = 'trumpet';
+    if (l.i === 'choir' && l.v >= 0.15) tr.L_lead.push({ ...l, i: 'trumpet', v: 0.12, r: 0.25 });
+    if ((l.i === 'trumpet' || l.i === 'brass') && l.v >= 0.15) tr.L_lead.push({ ...l, i: 'sleg', v: 0.075, r: 0.35, bars_: harm(l.bars_) });
+  }
+  tr.L_arp.push({ i: 'sstac', v: 0.045, p: '0120120120120120', up: 24 }, { i: 'sstac', v: 0.03, p: '2102102102102102', up: 36, pass: 2 });
+  tr.L_bass = [{ i: 'ebass', v: 0.2, p: '1818181818181858' }];
+  tr.L_drums = [/^boss/.test(tr.name) ? DR.fightB : DR.fight];
+}
+function chipArr(tr) {   // 矩形波1=メロディ / 矩形波2=ハモリ・あいの手 / 波形メモリ=ベース / ノイズ=ドラム
+  tr.chip = true; tr.g = 1.35; const sc = SCALES[tr.mode || 'major'], harm = (bars) => bars.map(b => b.map(([st, m, len]) => {
+    const rel = m - tr.key, oc = Math.floor(rel / 12), i = sc.indexOf(((rel % 12) + 12) % 12); if (i < 0) return [st, m - 4, len];
+    const j = i - 2; return [st, tr.key + 12 * (oc + Math.floor(j / 7)) + sc[((j % 7) + 7) % 7], len]; }));
+  const main = tr.L_lead.filter(l => l.v >= 0.15 || l.i === 'brass').map(l => ({ ...l, i: 'pulse', v: 0.075, r: 0.04, leg: 0.9 }));
+  tr.L_lead = [...main, ...main.map(l => ({ ...l, i: 'pulse25', v: 0.05, bars_: harm(l.bars_) }))];
+  tr.L_arp = [{ i: 'pulse25', v: 0.035, p: '..0.1.2.1.0.1.2.', up: 24, len: 1.0 }, { i: 'pulse25', v: 0.04, p: '0120120120120120', up: 24, len: 0.8, pass: 2 }];
+  tr.L_pad = []; tr.L_stab = [];
+  tr.L_bass = [{ i: 'wavebass', v: 0.2, p: '1.8.1.8.1.8.5.8.' }];
+  tr.L_drums = [{ ...DR.fight, o: undefined, fill: 1, crash: 0 }];
+}
 const ALIAS = { field: null, battle: null };   // 'field' → いまの フィールドの きょく / 'battle' → ランダムに えらぶ
 let fieldTheme = 'f_forest', lastBattle = '';
 
@@ -202,7 +233,7 @@ for (const [name, tr] of Object.entries(TRACKS)) {
     let L = tr[k]; if (!L) { tr['L_' + k] = []; continue; } if (!Array.isArray(L)) L = [L]; tr['L_' + k] = L;
     for (const l of L) { if (l.m) l.bars_ = parseMel(l.m, tr, name); else if (l.notes) l.bars_ = splitLegacy(l.notes, tr.chords.length); }
   }
-  orchestrate(tr);
+  orchestrate(tr); tr.name = name; if (/^chip_/.test(name)) chipArr(tr); else if (/^(battle|boss)/.test(name)) battleArr(tr);
 }
 
 // ---------- オーディオ ----------
@@ -235,6 +266,8 @@ const outTo = (node, r = 0.25, dly = 0) => {
 const osc = (type, f, t, end, det = 0, vib = false) => { const o = ac.createOscillator(); o.type = type; o.frequency.value = f; if (det) o.detune.value = det; if (vib) G.vib.connect(o.detune); o.start(t); o.stop(end); return o; };
 function env(g, t, dur, vol, a, d, s, r) { const e = t + Math.max(dur, a + d + 0.02); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + a); g.gain.linearRampToValueAtTime(vol * s, t + a + d); g.gain.setValueAtTime(vol * s, e); g.gain.exponentialRampToValueAtTime(0.0001, e + r); return e + r + 0.05; }
 const lp = (f, q = 0.7) => { const x = ac.createBiquadFilter(); x.type = 'lowpass'; x.frequency.value = f; x.Q.value = q; return x; };
+let pwCtx = null, pwMap = {};
+function pulseWave(d) { if (pwCtx !== ac) { pwCtx = ac; pwMap = {}; } if (pwMap[d]) return pwMap[d]; const N = 32, re = new Float32Array(N), im = new Float32Array(N); for (let n = 1; n < N; n++) { re[n] = 2 / (n * Math.PI) * Math.sin(n * Math.PI * d); im[n] = 2 / (n * Math.PI) * (1 - Math.cos(n * Math.PI * d)); } return pwMap[d] = ac.createPeriodicWave(re, im); }
 function voice(inst, f, t, dur, vol, o = {}) {
   const g = ac.createGain(), r = o.r, dl = o.delay ? 0.45 : 0; let end;
   switch (inst) {
@@ -258,6 +291,11 @@ function voice(inst, f, t, dur, vol, o = {}) {
     case 'horn': { end = env(g, t, dur, vol, 0.14, 0.2, 0.85, 0.3); const fl = lp(1200); fl.connect(g); [-4, 4].forEach(d => osc('sawtooth', f, t, end, d, true).connect(fl)); const tr2 = osc('triangle', f, t, end), tg = ac.createGain(); tg.gain.value = 0.5; tr2.connect(tg); tg.connect(fl); outTo(g, r ?? 0.45, dl); break; }
     case 'trumpet': { end = env(g, t, dur, vol, 0.02, 0.1, 0.85, 0.08); const fl = lp(900); fl.frequency.setValueAtTime(900, t); fl.frequency.linearRampToValueAtTime(Math.min(5200, f * 6), t + 0.08); fl.connect(g); [-6, 6].forEach(d => osc('sawtooth', f, t, end, d, true).connect(fl)); const sq = osc('square', f, t, end), sg = ac.createGain(); sg.gain.value = 0.3; sq.connect(sg); sg.connect(fl); outTo(g, r ?? 0.25, dl); break; }
     case 'cello': { end = env(g, t, dur, vol, 0.2, 0.2, 0.9, 0.35); const fl = lp(Math.min(1500, f * 6)); fl.connect(g); [-6, 6].forEach(d => osc('sawtooth', f, t, end, d, true).connect(fl)); osc('sine', f, t, end).connect(g); outTo(g, r ?? 0.35, dl); break; }
+    case 'pulse': case 'pulse25': { end = env(g, t, dur, vol, 0.003, 0.06, 0.7, 0.04); const o = ac.createOscillator(); o.setPeriodicWave(pulseWave(inst === 'pulse' ? 0.5 : 0.25)); o.frequency.value = f; o.start(t); o.stop(end); outTo(g, r ?? 0.04, 0); o.connect(g); break; }
+    case 'wavebass': { end = env(g, t, dur, vol, 0.002, 0.03, 0.9, 0.02); osc('triangle', f, t, end).connect(g); outTo(g, 0, 0); break; }
+    case 'sleg': { end = env(g, t, dur, vol, 0.04, 0.1, 0.85, 0.12); const fl = lp(Math.min(3400, f * 5)); fl.connect(g); [-8, 8].forEach(d => osc('sawtooth', f, t, end, d, true).connect(fl)); outTo(g, r ?? 0.35, dl); break; }
+    case 'sstac': { end = env(g, t, Math.min(dur, 0.11), vol, 0.006, 0.05, 0.5, 0.04); const fl = lp(Math.min(3000, f * 6)); fl.connect(g); [-7, 7].forEach(d => osc('sawtooth', f, t, end, d, true).connect(fl)); outTo(g, r ?? 0.18, dl); break; }
+    case 'ebass': { end = env(g, t, dur, vol, 0.004, 0.07, 0.65, 0.05); const fl = lp(1100); fl.frequency.setValueAtTime(1100, t); fl.frequency.exponentialRampToValueAtTime(380, t + 0.12); fl.connect(g); osc('sawtooth', f, t, end).connect(fl); const sb = osc('sine', f, t, end), sg = ac.createGain(); sg.gain.value = 0.8; sb.connect(sg); sg.connect(g); outTo(g, 0, 0); break; }
     default: return;
   }
 }
@@ -267,7 +305,15 @@ function riser(t, dur, vol = 0.12) {   // もりあげの ヒューーッ
 }
 let noiseBuf = null, noiseCtx = null;
 function noiseSrc() { if (noiseCtx !== ac) { noiseCtx = ac; noiseBuf = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.6), ac.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; } const n = ac.createBufferSource(); n.buffer = noiseBuf; return n; }
+let chipMode = false;
+function chipPerc(kind, t, vol) {   // ファミコンの ノイズチャンネル風: みじかい ノイズだけ
+  const n = noiseSrc(), f = ac.createBiquadFilter(), g = ac.createGain(); n.loop = true;
+  const k = kind === 'k' || kind === 'boom' || kind === 't', s = kind === 's' || kind === 'c';
+  f.type = k ? 'lowpass' : 'highpass'; f.frequency.value = k ? 220 : s ? 1800 : 7000; const dur = k ? 0.11 : s ? 0.13 : kind === 'crash' ? 0.45 : kind === 'o' ? 0.12 : 0.035;
+  g.gain.setValueAtTime(vol * (k ? 1.6 : 1), t); g.gain.exponentialRampToValueAtTime(0.001, t + dur); n.connect(f); f.connect(g); g.connect(tbus.mix); n.start(t); n.stop(t + dur + 0.05);
+}
 function perc(kind, t, vol, pitch = 1) {
+  if (chipMode) return chipPerc(kind, t, vol);
   if (kind === 'k' || kind === 'boom' || kind === 't') {
     const o = ac.createOscillator(), g = ac.createGain(), boom = kind === 'boom', tom = kind === 't';
     o.type = 'sine'; o.frequency.setValueAtTime(boom ? 110 : tom ? 200 * pitch : 160, t); o.frequency.exponentialRampToValueAtTime(boom ? 38 : tom ? 90 * pitch : 48, t + (boom ? 0.28 : tom ? 0.22 : 0.1));
@@ -281,13 +327,14 @@ function perc(kind, t, vol, pitch = 1) {
 const passOf = (bar) => bar >= 16 ? 3 : bar % 16 < 8 ? 1 : 2;   // 1=まえはん 2=こうはん 3=さいごの もりあがり
 const on = (l, P) => !l.pass || l.pass === P || (P === 3 && l.pass === 2);
 const ch = (p, st) => p[st % p.length];
-function scheduleIntro(tr, s, t, sd) {   // イントロ: ひくい ストリングス+ティンパニ→スネアロール→ブラスの いっぱつ
+function scheduleIntro(tr, s, t, sd) { chipMode = !!tr.chip;   // イントロ: ひくい ストリングス+ティンパニ→スネアロール→ブラスの いっぱつ
   const ct = tr.ct[0], bi = Math.floor(s / 16), st = s % 16, last = bi === tr.intro - 1, g = tr.g;
   if (st === 0) { for (const m of ct) voice(bi === 0 ? 'strings' : 'choir', mtof(m), t, sd * 16, 0.06 * g, { r: 0.6 }); voice('cello', mtof(ct[0] - 12), t, sd * 16, 0.1 * g, {}); if (bi === 0) perc('boom', t, 0.5 * g); if (tr.sty === 'epic') riser(t, sd * 16 * tr.intro, 0.1 * g); }
   if (last) { if ([0, 4, 8, 10, 12, 13, 14, 15].includes(st)) perc('t', t, (0.25 + st * 0.02) * g, 1 + (15 - st) * 0.03); if (st >= 8) perc('s', t, (0.05 + (st - 8) * 0.04) * g); if (st === 15) { for (const m of ct) voice('brass', mtof(m + 12), t, sd * 2, 0.1 * g, {}); } }
   else if (st % 4 === 0) perc('t', t, 0.22 * g, 1.2 - (st / 16) * 0.2);
 }
 function scheduleStep(tr, s, t, sd) {
+  chipMode = !!tr.chip;
   if (s < 0) { scheduleIntro(tr, s + tr.intro * 16, t, sd); return; }
   const bar = Math.floor(s / 16) % tr.n, st = s % 16, ext = bar >= 16, sb = ext ? 8 + (bar - 16) : bar, P = passOf(bar), trp = ext ? tr.lift : 0, ct = tr.ct[sb % tr.ct.length], gg = tr.g, brk = bar === tr.brk;
   if (tr.riser && (bar === 7 || bar === 23 || brk) && st === 0) riser(t, sd * 16, 0.11 * gg);
@@ -322,7 +369,7 @@ function startNow(name) {
 }
 function resolve(name) {
   if (name === 'field') return fieldTheme;
-  if (name === 'battle') { const pool = ['battle', 'battle2', 'battle3'].filter(x => x !== lastBattle); lastBattle = pool[Math.floor(Math.random() * pool.length)]; return lastBattle; }
+  if (name === 'battle') { const pool = ['battle', 'battle2', 'battle3', 'chip_battle', 'chip_battle2', 'chip_battle3'].filter(x => x !== lastBattle); lastBattle = pool[Math.floor(Math.random() * pool.length)]; return lastBattle; }
   return name;
 }
 export function playBgm(name) {
