@@ -97,6 +97,18 @@ export const growthMul = (id) => {
   if (/^(legend_|kami_|shinju_|shitennou_)/.test(id) || id === 'dragon') return 1.3;
   return d.level >= 20 ? 1.15 : 1;
 };
+// モンスターの おおきさ(バトル): しんかまえ(よわい)は ひかえめ → 1しんか → 2しんか の じゅんに おおきく。しんかしない ふつうの こは 1しんかくらい、でんせつ・まぼろしは 2しんかより きもち おおきく
+let PRE_IDS = null;
+const preIds = () => { if (PRE_IDS) return PRE_IDS; PRE_IDS = new Set(); for (const d of Object.values(GD.MONSTERS)) { const t = (d.evolvesTo && d.evolvesTo.id) || (d.evolveStone && d.evolveStone.id); if (t) PRE_IDS.add(t); } return PRE_IDS; };
+export const sizeMul = (id, boss) => {
+  const d = GD.MONSTERS[id]; if (!d) return 1;
+  let k;
+  if (/^(legend_|kami_|shinju_|shitennou_|mame_chin_kami)/.test(id) || id === 'dragon') k = 1.06;
+  else if (id === 'mame_chin') k = 0.84;
+  else if (/^mame_chin_/.test(id)) k = 1.0;
+  else { const next = !!(d.evolvesTo || d.evolveStone), pre = preIds().has(id); k = next && !pre ? 0.84 : next && pre ? 0.92 : pre ? 1.0 : 0.92; }
+  return boss ? Math.max(k, 1.0) * 1.1 : k;
+};
 export const needExp = (lv, id) => Math.max(6, Math.round(GD.expToNext(lv) * 0.6 * (id ? growthMul(id) : 1)));   // スピーディに レベルアップ
 // あいての レベルと じぶんの レベルの さで もらえる けいけんちが かわる(ポケモンふう)。じょばんは おおめ
 export const expLevelMul = (myLv, foeLv) => {
@@ -226,6 +238,7 @@ const WX_MAP = { sun: 'sun', flare: 'sun', rain: 'rain', storm: 'rain', sand: 's
 export const battleWx = (wx) => WX_MAP[wx] || 'clear';
 const ENV_WX = { sun: { fire: 1.3, grass: 1.2, water: 0.8 }, rain: { water: 1.3, fire: 0.8 } };
 const ENV_MSG = { sun: 'ひざしが つよい…! ほのおと くさの ちからが あがる', rain: 'あめが ふっている…! みずの ちからが あがる', sand: 'すなあらしが ふきあれている…!', hail: 'あられが ふりそそいでいる…!', fog: 'きりが たちこめている…! ぶつりわざが あたりにくい' };
+export const isNight = (h) => h != null && (h >= 20 || h < 5);
 export const envMul = (wx, hour, el) => ((ENV_WX[battleWx(wx)] || {})[el] || 1) * (isNight(hour) ? ({ dark: 1.15, heaven: 0.9 }[el] || 1) : ({ heaven: 1.08 }[el] || 1));
 export const envText = (wx, hour) => { const t = []; if (ENV_MSG[battleWx(wx)]) t.push(ENV_MSG[battleWx(wx)]); if (isNight(hour)) t.push('よるの ちからが はたらいている…'); return t.join(' / '); };
 // なかまの せいかく(のびる ステータスが ちがう)
@@ -286,6 +299,7 @@ export async function runBattle(enemyId0, opts = {}) {
   document.body.appendChild(root);
   root.querySelectorAll('.bt-eimg').forEach(x => eImgs.push(x)); root.querySelectorAll('.bt-aimg').forEach(x => aImgs.push(x)); root.querySelectorAll('.bt-e').forEach(x => cardsE.push(x)); root.querySelectorAll('.bt-a').forEach(x => cardsA.push(x)); aImg = aImgs[0]; eImg = eImgs[0];
   try { startSky($('.bt-field', root), opts.bg || 'battle_grass.webp'); } catch (e) { console.warn('sky failed', e); }
+  { const bw = battleWx(opts.wx); if (bw !== 'clear') { const wxEl = document.createElement('div'); wxEl.className = 'wxov wx-' + bw; wxEl.style.backgroundImage = `url(${img(`assets/effects/wx/${bw}.webp`)})`; $('.bt-field', root).appendChild(wxEl); } }
   // 背景の「丸い台」にモンスターの足もとを合わせる(背景は cover 表示なので、表示倍率からピクセル位置を計算)
   const layout = () => {
     const f = $('.bt-field', root), w = f.clientWidth, h = f.clientHeight; if (!w || !h) return;
@@ -294,9 +308,10 @@ export async function runBattle(enemyId0, opts = {}) {
     const BG_AN = { 'battle_castle.webp': { e: [567, 433], a: [233, 817] }, 'battle_temple.webp': { e: [550, 417], a: [293, 867] }, 'battle_sun.webp': { e: [567, 433], a: [283, 817] }, 'battle_grove.webp': { e: [500, 383], a: [300, 850] }, 'battle_dragon.webp': { e: [500, 400], a: [300, 867] }, 'battle_end.webp': { e: [550, 433], a: [267, 833] }, 'battle_cosmos.webp': { e: [567, 433], a: [300, 817] }, 'battle_ghost.webp': { e: [533, 423], a: [293, 800] }, 'battle_forest.webp': { e: [567, 433], a: [293, 833] }, 'battle_sky.webp': { e: [650, 383], a: [267, 800] } };
     const AN = BG_AN[opts.bg] || (opts.bg === 'battle_water.webp' ? { e: [598, 388], a: [282, 932] } : opts.bg === 'battle_volcano.webp' ? { e: [590, 588], a: [282, 892] } : opts.bg === 'battle_cave.webp' ? { e: [600, 398], a: [292, 858] } : { e: [562, 392], a: [265, 890] }), [ex, ey] = P(...AN.e), [ax, ay] = P(...AN.a), ew = Math.min(400 * s * 0.62, w * 0.5), aw = Math.min(480 * s * 0.62, w * 0.55);
     const place = (el, cx, cy, W) => { const dispH = el.naturalWidth ? W * el.naturalHeight / el.naturalWidth : 0, extra = (el._pad || 0) * dispH; el.style.width = W + 'px'; el.style.left = (cx - W / 2) + 'px'; el.style.bottom = (h - cy - 4 * s - extra) + 'px'; el.style.top = 'auto'; el.style.right = 'auto'; el.style.maxHeight = (cy - 8) + 'px'; };
-    if (!dbl) { place(eImgs[0], ex, ey, bossNow(slotsE[0] || cur) ? Math.min(ew * 1.5, w * 0.72) : ew); place(aImgs[0], ax, ay, aw); return; }   // ぬしは ふつうより ひとまわり おおきく
+    const eK = (k) => { const f = slotsE[k] || cur; return sizeMul(f.id, bossNow(f)); }, aK = (k) => { const sl = slotsA[k]; return sl && state.party[sl.ai] ? sizeMul(state.party[sl.ai].id) : 1; };
+    if (!dbl) { place(eImgs[0], ex, ey, Math.min(ew * eK(0), w * 0.72)); place(aImgs[0], ax, ay, aw * aK(0)); return; }   // しんかの だんかいで おおきさを かえる(ぬしは 2しんかより ひとまわり おおきく)
     const DA = DBL_AN[bgFile], sp = opts.bg === 'battle_volcano.webp' ? [66, 92] : [72, 100], EP = DA ? DA.e : [[AN.e[0] - sp[0], AN.e[1] + 28], [AN.e[0] + sp[0], AN.e[1] + 28]], AP = DA ? DA.a : [[AN.a[0] - sp[1], AN.a[1] - 48], [AN.a[0] + sp[1], AN.a[1] - 48]], ewd = Math.min(400 * s * 0.38, w * 0.3), awd = Math.min(480 * s * 0.4, w * 0.3);   // 1つの 足場に 2ひき のる(足場の はばに おさまる おおきさ)
-    EP.forEach((pt, k) => place(eImgs[k], ...P(...pt), ewd)); AP.forEach((pt, k) => place(aImgs[k], ...P(...pt), awd));
+    EP.forEach((pt, k) => place(eImgs[k], ...P(...pt), ewd * eK(k))); AP.forEach((pt, k) => place(aImgs[k], ...P(...pt), awd * aK(k)));
   };
   layout(); const onR = () => layout(); addEventListener('resize', onR); setTimeout(layout, 60); const ro = new ResizeObserver(layout); ro.observe($('.bt-field', root));
   const msg = (t) => { $('.bt-msg', root).textContent = t; };
@@ -893,7 +908,6 @@ export async function runBattle(enemyId0, opts = {}) {
   msg(opts.trainer ? `トレーナーの ${opts.trainer} が しょうぶを しかけてきた!` : opts.boss ? `${def.name} が たちはだかった!` : `あっ! やせいの ${def.name} が とびだしてきた!`); sfx('quest'); await sleep(1300);
   if (opts.boss && !opts.trainer && !state.tips.boss) { state.tips.boss = 1; msg('ヒント: ぬしが「ちからを ためて」きたら、つぎの こうげきは とても つよいよ!'); await sleep(2200); }
   if (!state.tips.bt1) { state.tips.bt1 = 1; msg('ヒント: わざには PP(かいすう)が あるよ。ベッドで ねると ぜんかいふく!'); await sleep(2000); }
-  { const bw = battleWx(opts.wx); if (bw !== 'clear') { const ov = document.createElement('div'); ov.className = 'wxov wx-' + bw; ov.style.backgroundImage = `url(${img(`assets/effects/wx/${bw}.webp`)})`; fieldEl.appendChild(ov); } }
   { const et = envText(opts.wx, opts.hour); if (et) { msg(et); await sleep(1300); } }
   await sleep(300);
 

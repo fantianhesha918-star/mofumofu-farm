@@ -214,7 +214,7 @@ body:not(.touch) #prompt { bottom: calc(26px + var(--sab)); }
 @keyframes btHit { 0%,100% { translate: 0 0; filter: drop-shadow(0 6px 6px #0006) brightness(1); } 25% { translate: -10px 0; filter: brightness(2.2); } 60% { translate: 8px 0; } }
 .bt-img.faint { opacity: 0; transform: translateY(24px) scale(.8); }
 .bt-aimg.faint { transform: scaleX(-1) translateY(24px) scale(.8); }
-.bt-card { position: absolute; padding: 8px 12px; min-width: 150px; background: #2c1f14ee; border: 1px solid #ffffff2a; border-radius: 14px; font-size: 13px; }
+.bt-card { position: absolute; z-index: 5; padding: 8px 12px; min-width: 150px; background: #2c1f14ee; border: 1px solid #ffffff2a; border-radius: 14px; font-size: 13px; }
 .bt-card .n { font-weight: 700; margin-right: 6px; }
 .bt-card .lv { color: #e8c868; font-size: 12px; }
 .bt-card .hp { height: 9px; margin-top: 5px; background: #00000066; border-radius: 6px; overflow: hidden; }
@@ -256,7 +256,7 @@ body:not(.touch) #prompt { bottom: calc(26px + var(--sab)); }
 
 #bt.nt .hp i, #bt.nt .xp i { transition: none !important; }
 .wxov { position: absolute; inset: -4%; z-index: 4; pointer-events: none; background-size: cover; background-position: center; mix-blend-mode: screen; opacity: .8; animation: wxdrift 7s ease-in-out infinite alternate; }
-.wxov.wx-fog { opacity: .4; animation-duration: 12s; } .wxov.wx-sun { opacity: .7; animation-duration: 5s; } .wxov.wx-sand { opacity: .85; animation-duration: 4s; } .wxov.wx-hail { opacity: .85; animation-duration: 3s; } .wxov.wx-rain { opacity: .85; animation: wxrain 1.4s linear infinite; }
+.wxov.wx-fog { opacity: .75; animation-duration: 12s; } .wxov.wx-sun { opacity: .7; animation-duration: 5s; } .wxov.wx-sand { opacity: .85; animation-duration: 4s; } .wxov.wx-hail { opacity: .85; animation-duration: 3s; } .wxov.wx-rain { opacity: .85; animation: wxrain 1.4s linear infinite; }
 @keyframes wxdrift { from { transform: translate(-1.5%, -1%) scale(1.02); } to { transform: translate(1.5%, 1%) scale(1.06); } }
 @keyframes wxrain { from { transform: translateY(-2%); } to { transform: translateY(2%); } }
 .bt-fx { position: absolute; transform: translate(-50%, -50%); pointer-events: none; z-index: 6; }
