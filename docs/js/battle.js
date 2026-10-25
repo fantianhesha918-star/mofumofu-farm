@@ -17,15 +17,20 @@ const BOSS_MOVES = { sun: BM('boss_sun', 'ソーラーコロナ', 'fire'), hole:
 // ぶつり/まほうの なまえから うごきが きまらない わざは ここで ひとつずつ きめる(なまえと えんしゅつを そろえる)
 const MOTION_BY_NAME = { 'しのちょうふく': 'sweep', 'がんせきのちから': 'rain', 'おやこどんナゲット': 'orb', 'やきにくファイヤー': 'orb', 'ひのたま': 'orb', 'タネばくだん': 'orb', 'どろだんご': 'orb', 'エレキボール': 'orb', 'ヒーリングライト': 'orb', 'プラズマヒール': 'orb', 'マジックオーブ': 'orb', 'ドレインタッチ': 'orb', 'すなかけ': 'barrage', 'あわ': 'barrage', 'どろかけ': 'barrage', 'スパーク': 'barrage', 'サンダージャブ': 'barrage', 'サンダーアロー': 'barrage', 'マジックアロー': 'barrage', 'マジックブレット': 'barrage', 'エリアルレイヴ': 'barrage', 'ビーストラッシュ': 'barrage', 'ひっかきラッシュ': 'barrage', 'ベーグルアタック': 'ram', 'サイクラッシュ': 'ram', 'ようがんクラッシュ': 'ram', 'グランドクラッシュ': 'ram', 'イナズマクラッシュ': 'ram', 'だいちのてっけん': 'ram', 'ダークネスストライク': 'ram', 'つきとばし': 'ram', 'とびかかり': 'ram', 'らんぺージ': 'ram', 'ホーリーランス': 'ram', 'かえん': 'beam', 'ねっせん': 'beam', 'みずでっぽう': 'beam', 'ウォータージェット': 'beam', 'でんきショック': 'beam', 'ライトボルト': 'beam', 'チェインライト': 'beam', 'セイクリッドレイ': 'beam', 'ラストライト': 'beam', 'カースアイ': 'beam', 'エレメンタルボルト': 'beam', 'マジックカノン': 'beam', 'ロアー': 'beam', 'デスハウル': 'beam', 'ソウルドレイン': 'beam', 'ピュアフラッシュ': 'beam', 'みずのはね': 'sweep', 'だいれいとう': 'sweep', 'どくのこな': 'sweep', 'すなぼこり': 'sweep', 'はやて': 'sweep', 'ナイトミスト': 'sweep', 'スリープ': 'sweep', 'みずのまい': 'vortex', 'つるのまきつき': 'vortex', 'かぜおこし': 'vortex', 'かぜのおどり': 'vortex', 'スパイラルウィンド': 'vortex', 'ハリケーンブレイク': 'vortex', 'すなじごく': 'vortex', 'ダークバインド': 'vortex', 'テレポート': 'vortex', 'メイルストロム': 'vortex', 'ホーリーストーム': 'vortex', 'ほのおのかべ': 'pillar', 'せいちょう': 'pillar', 'ユグドラシル': 'pillar', 'ストーンエッジ': 'pillar', 'アースウォール': 'pillar', 'すいちょくのちから': 'pillar', 'ライトニングブレイク': 'pillar', 'ギガボルト': 'pillar', 'らいていばんきん': 'pillar', 'カミナリイカヅチ': 'pillar', 'ライトオブヘブン': 'pillar', 'ヘブンズゲート': 'pillar', 'デーモンズゲイト': 'pillar', 'ディメンションゲート': 'pillar', 'しずくのカーテン': 'rain', 'しぜんのめぐみ': 'rain', 'フラワーヒール': 'rain', 'メガトンロック': 'rain', 'シャドウフォール': 'rain', 'スプラッシュ': 'rain', 'ひのもんじ': 'cross', 'つるのムチ': 'cross', 'セイントクロス': 'cross', 'アルティメットセイバー': 'cross', 'しっぽアタック': 'cross', 'べろべろアタック': 'claw', 'フューリーストライク': 'claw', 'かみくだき': 'bite', 'ほのおのちから': 'quake', 'れんごく': 'quake', 'オーシャンブレイク': 'quake', 'しんすいのインパクト': 'quake', 'しぜんのいかり': 'quake', 'グランドネイチャー': 'quake', 'ネイチャーズレイジ': 'quake', 'エアブレイク': 'quake', 'ウィンドバースト': 'quake', 'ガイアインパクト': 'quake', 'アルティメットサンダー': 'quake', 'ラディアンス': 'quake', 'ディバインシールド': 'quake', 'シャイニングサークル': 'quake', 'ルミナスブレイク': 'quake', 'スターライトエクスプロード': 'quake', 'ダークサークル': 'quake', 'ソウルサクリファイス': 'quake', 'ソウルイクリプス': 'quake', 'ワールドオブダーク': 'quake', 'アルティメットダークネス': 'quake', 'マジックシールド': 'quake', 'マナバースト': 'quake', 'マジックサークル': 'quake', 'カオスバースト': 'quake', 'マナブレイク': 'quake', 'アルティメットマジック': 'quake', 'キングオブビースト': 'quake', 'プライマルブレイク': 'quake', 'アルティメットビースト': 'quake', 'ホーリーガード': 'quake' };
 // Geminiで つくった えんしゅつの コマ(くろはいけい=screen / しろはいけい=multiply で かさねる)
-const NEW_FX = { kami: ['kami_1', 'kami_1b', 'kami_3', 'kami_4', 'kami_5'], dark: ['dark_2', 'dark_3'], magic: ['magic_2', 'magic_3'], beast: ['beast_2'], heaven: ['heaven_2', 'heaven_3'], earth: ['earth_2', 'earth_3'] };
+const NEW_FX = {
+  fire: ['fire_n1', 'fire_n2', 'fire_n3'], water: ['water_n1', 'water_n2', 'water_n3'], thunder: ['thunder_n1', 'thunder_n2', 'thunder_n3'], wind: ['wind_n1', 'wind_n2', 'wind_n3'], grass: ['grass_n1', 'grass_n2', 'grass_n3'],
+  heaven: ['heaven_n1', 'heaven_2', 'heaven_3'], earth: ['earth_n1', 'earth_2', 'earth_3'], dark: ['dark_n1', 'dark_2', 'dark_3'], magic: ['magic_n1', 'magic_2', 'magic_3'], beast: ['beast_n1', 'beast_2'],
+  kami: ['kami_1', 'kami_1b', 'kami_3', 'kami_4', 'kami_5'] };
+const SP_FX = { sp_jiware: 'sp_jiware', sp_tsunami: 'sp_tsunami', sp_fubuki: 'sp_fubuki', sp_taifuu: 'sp_taifuu' };   // せんようの わざえんしゅつ(4コマ)
+const FX_COMMON = ['fx_heal', 'fx_guard', 'fx_faint'];   // かいふく・ぼうぎょ・ひんし
 const FX_PARTS = ['part_slash_1', 'part_slash_2', 'part_claw', 'part_bite', 'part_crescent', 'part_ring', 'part_burst', 'part_swirl', 'part_sparkle', 'part_pillar', 'part_beam'];
 const registerExtraFx = (G) => {
   if (G._fxExtra) return; G._fxExtra = true; G.ELEMENT_EFFECT_ANIM = G.ELEMENT_EFFECT_ANIM || {};
   for (const [el, names] of Object.entries(NEW_FX)) { const arr = (G.ELEMENT_EFFECT_ANIM[el] = G.ELEMENT_EFFECT_ANIM[el] || []); for (const n of names) arr.push([1, 2, 3, 4].map(k => `assets/effects/anim/${n}/f${k}.webp`)); }
 };
-const fxBlend = (u) => /\/anim\/earth_[23]\//.test(u) ? 'multiply' : /\/anim\/(kami_|dark_[23]|magic_[23]|beast_2|heaven_[23])/.test(u) ? 'screen' : '';
+const fxBlend = (u) => /\/anim\/(earth_(n1|2|3)|sp_jiware)\//.test(u) ? 'multiply' : /\/anim\/(kami_|ail_|fire_n|water_n|thunder_n|wind_n|grass_n|heaven_|dark_|magic_|beast_|fx_|sp_)/.test(u) ? 'screen' : '';
 const fxSeen = new Set();
-const preloadFx = (G) => { try { const L = [...Object.values(G.ELEMENT_EFFECTS || {}), ...Object.values(G.ELEMENT_EFFECT_ANIM || {}).flat(2), ...FX_PARTS.map(n => `assets/effects/parts/${n}.webp`), 'assets/effects/boss/boss_sun.webp', 'assets/effects/boss/boss_hole.webp']; for (const u of L) if (!fxSeen.has(u)) { fxSeen.add(u); const i = new Image(); i.src = 'quest/' + u; } } catch (e) {} };   // わざの えを さきに よみこむ(こうかいばんで おくれて でないように)
+const preloadFx = (G) => { try { const L = [...Object.values(G.ELEMENT_EFFECTS || {}), ...Object.values(G.ELEMENT_EFFECT_ANIM || {}).flat(2), ...FX_PARTS.map(n => `assets/effects/parts/${n}.webp`), ...[...Object.values(SP_FX), ...FX_COMMON].flatMap(n => [1, 2, 3, 4].map(k => `assets/effects/anim/${n}/f${k}.webp`)), 'assets/effects/boss/boss_sun.webp', 'assets/effects/boss/boss_hole.webp']; for (const u of L) if (!fxSeen.has(u)) { fxSeen.add(u); const i = new Image(); i.src = 'quest/' + u; } } catch (e) {} };   // わざの えを さきに よみこむ(こうかいばんで おくれて でないように)
 export function questData() {
   return new Promise((res, rej) => {
     if (window.GAME_DATA) { GD = window.GAME_DATA; installStatus(GD); installExtraSkills(GD); installExtraMons(GD); registerExtraFx(GD); setTimeout(() => preloadFx(GD), 2500); return res(GD); }
@@ -107,9 +112,9 @@ export function magicOf(id, element, atk, dfn) {
   const pr = MAGIC_PROFILE[element] || [1, 1], h = hashId(id);
   return { matk: Math.max(1, Math.round(atk * pr[0] * (0.92 + (h % 17) * 0.01))), mdef: Math.max(1, Math.round(dfn * pr[1] * (0.92 + ((h >> 5) % 17) * 0.01))) };
 }
-// わざが ぶつり か まほう か(タイプと なまえから クロコが ふりわけ)
+// わざが ぶつり か まほう か: 「ものが あたる(つめ・ほね・いわ・つる・けん・たいあたり など)」は ぶつり、ひかりや ほのおなどの ちからだけは まほう。なまえから なんとなく ふりわけ
 const MAGIC_EL = new Set(['fire', 'water', 'wind', 'thunder', 'heaven', 'dark', 'magic', 'kami']);
-const PHYS_NAME = /アタック|たいあたり|ずつき|タックル|スラッシュ|クラッシュ|ひっかき|パンチ|キック|かみつ|ファング|クロー|チャージ|ラッシュ|ストライク|スピア|ブレード|ソード|カッター|ナゲット|プレス|ぶつけ|なげ|てっけん|つので|しっぽ/;
+const PHYS_NAME = /アタック|たいあたり|ずつき|タックル|スラッシュ|クラッシュ|ひっかき|パンチ|キック|かみつ|ファング|クロー|チャージ|ラッシュ|ストライク|スピア|ブレード|ソード|カッター|ナゲット|プレス|ぶつけ|なげ|てっけん|つので|しっぽ|すなかけ|つぶて|いしつぶて|はっぱ|つるの|タネ|どろ|いわ|ロック|ストーン|ランス|スピア|けん$|つるぎ|やいば|しゅりけん|つめ|とびかかり|つきとばし|ブロー|かいてん|がんせき|ムチ|のこな/;
 const MAGIC_NAME = /ブラスト|ウェーブ|フィールド|ストーム|ネイチャー|ヒール|クエイク|ノヴァ|ガイア|ブレス|ハウリング|ビーム|オーラ|のろい|ねむり/;
 export const skillKind = (sk) => { const n = sk.name || ''; if (PHYS_NAME.test(n)) return 'phys'; if (MAGIC_EL.has(sk.element)) return 'magic'; return MAGIC_NAME.test(n) ? 'magic' : 'phys'; };
 export const kindLabel = (sk) => isStatusSkill(sk) ? 'へんか' : skillKind(sk) === 'magic' ? 'まほう' : 'ぶつり';
@@ -216,11 +221,13 @@ const STRUGGLE = { id: 'struggle', name: 'わるあがき', power: 30, uses: 99,
 export const ppMax = (s) => s.uses || 20;
 export const ppOf = (m, s) => (m.pp && m.pp[s.id] != null) ? m.pp[s.id] : ppMax(s);
 // てんき・じかんの えいきょう
-const ENV_WX = { rain: { water: 1.2, thunder: 1.1, fire: 0.85 }, storm: { thunder: 1.3, wind: 1.2, fire: 0.8 }, fog: { dark: 1.2, magic: 1.15, heaven: 0.9 }, snow: { water: 1.1, heaven: 1.15, fire: 0.8, grass: 0.9 }, ash: { fire: 1.15, earth: 1.15, water: 0.9 }, flare: { fire: 1.25, thunder: 1.1, water: 0.85 }, meteor: { heaven: 1.2, magic: 1.15 }, petal: { grass: 1.15, wind: 1.15, dark: 0.9 }, spirit: { dark: 1.2, magic: 1.15, heaven: 0.9 }, clear: {} };
-const ENV_NAME = { rain: 'あめ', storm: 'あらし', fog: 'きり', snow: 'ゆき', ash: 'ふんか', flare: 'フレア', meteor: 'りゅうせいぐん', petal: 'はなふぶき', spirit: 'ひとだま' };
-export const isNight = (h) => h != null && (h >= 20 || h < 5);
-export const envMul = (wx, hour, el) => ((ENV_WX[wx] || {})[el] || 1) * (isNight(hour) ? ({ dark: 1.15, heaven: 0.9 }[el] || 1) : ({ heaven: 1.08 }[el] || 1));
-export const envText = (wx, hour) => { const t = []; if (ENV_NAME[wx]) t.push(`${ENV_NAME[wx]}の ちから`); if (isNight(hour)) t.push('よるの ちから'); return t.length ? t.join('と ') + ' が はたらいている…' : ''; };
+// バトルの てんこう: ひでり・あめ(いりょくアップ)/すなあらし・あられ(まいターン ダメージ)/きり(ぶつりが あたりにくい)。フィールドの てんこうは ここへ よみかえる
+const WX_MAP = { sun: 'sun', flare: 'sun', rain: 'rain', storm: 'rain', sand: 'sand', ash: 'sand', hail: 'hail', snow: 'hail', fog: 'fog' };
+export const battleWx = (wx) => WX_MAP[wx] || 'clear';
+const ENV_WX = { sun: { fire: 1.3, grass: 1.2, water: 0.8 }, rain: { water: 1.3, fire: 0.8 } };
+const ENV_MSG = { sun: 'ひざしが つよい…! ほのおと くさの ちからが あがる', rain: 'あめが ふっている…! みずの ちからが あがる', sand: 'すなあらしが ふきあれている…!', hail: 'あられが ふりそそいでいる…!', fog: 'きりが たちこめている…! ぶつりわざが あたりにくい' };
+export const envMul = (wx, hour, el) => ((ENV_WX[battleWx(wx)] || {})[el] || 1) * (isNight(hour) ? ({ dark: 1.15, heaven: 0.9 }[el] || 1) : ({ heaven: 1.08 }[el] || 1));
+export const envText = (wx, hour) => { const t = []; if (ENV_MSG[battleWx(wx)]) t.push(ENV_MSG[battleWx(wx)]); if (isNight(hour)) t.push('よるの ちからが はたらいている…'); return t.join(' / '); };
 // なかまの せいかく(のびる ステータスが ちがう)
 export const NATURES = {
   yancha:   { name: 'やんちゃ',   up: ['atk', 'こうげき'],       down: ['def', 'ぼうぎょ'] },
@@ -293,7 +300,7 @@ export async function runBattle(enemyId0, opts = {}) {
   };
   layout(); const onR = () => layout(); addEventListener('resize', onR); setTimeout(layout, 60); const ro = new ResizeObserver(layout); ro.observe($('.bt-field', root));
   const msg = (t) => { $('.bt-msg', root).textContent = t; };
-  const pop = (side, txt, cls) => { const p = $('.bt-pop', root), r = rectOf(imgOf(side)); p.className = 'bt-pop ' + (cls || '') + ' ' + side; p.style.left = r.x + 'px'; p.style.top = (r.y - r.h * 0.25) + 'px'; p.textContent = txt; void p.offsetWidth; p.classList.add('on'); };
+  const pop = (side, txt, cls) => { if (cls === 'heal') playStrip('fx_heal', imgOf(side), 1.6, 150); const p = $('.bt-pop', root), r = rectOf(imgOf(side)); p.className = 'bt-pop ' + (cls || '') + ' ' + side; p.style.left = r.x + 'px'; p.style.top = (r.y - r.h * 0.25) + 'px'; p.textContent = txt; void p.offsetWidth; p.classList.add('on'); };
   // ステータス(とくせい・りょうりバフ こみ)
   const allyStats = () => {
     const a = state.party[ai], st = { ...monStats(a) }, ab = abilityOf(a.id);
@@ -304,18 +311,16 @@ export async function runBattle(enemyId0, opts = {}) {
     if (S.ail && S.ail.k === 'paralyze') st.spd *= 0.5; if (S.ail && S.ail.k === 'burn') st.atk *= 0.75;
     for (const k of ['atk', 'matk', 'def', 'mdef', 'spd']) st[k] = Math.round(st[k]); return st;
   };
-  // じょうたいいじょうの アニメ(Blenderで つくった コマ送りの えを モンスターの うえに かさねる)
-  const ailEl = {};
-  const syncAil = () => {
-    const items = [];
-    for (let k = 0; k < 2; k++) { if (slotsA[k]) { const m = state.party[slotsA[k].ai]; items.push(['a' + k, sdOf(m).ail && sdOf(m).ail.k, hpOf(m), aImgs[k]]); } else items.push(['a' + k, null, 0, null]); if (slotsE[k]) items.push(['e' + k, slotsE[k].E.ail && slotsE[k].E.ail.k, slotsE[k].e.hp, eImgs[k]]); else items.push(['e' + k, null, 0, null]); }
-    for (const [key, k, hp, im] of items) {
-      let el = ailEl[key];
-      if (!k || hp <= 0 || !im) { if (el) { el.remove(); ailEl[key] = null; } continue; }
-      if (!el) { el = document.createElement('div'); el.className = 'ailfx'; fieldEl.appendChild(el); ailEl[key] = el; }
-      if (el.dataset.k !== k) { el.dataset.k = k; el.style.backgroundImage = `url(assets/ailfx/${k}.webp)`; }
-      const r = rectOf(im), sz = Math.max(r.w, r.h) * 1.15; el.style.width = el.style.height = sz + 'px'; el.style.left = (r.x - sz / 2) + 'px'; el.style.top = (r.y - sz / 2) + 'px';
-    }
+  // じょうたいいじょうの えんしゅつ(ポケモンふう): かかった とき・うごけない とき・ダメージの ときに みじかく 1〜2かい だけ ながす。
+  // ふだんは なまえの バッジ(chips)だけ。モンスターの うえで ずっと ビリビリ しない。
+  const syncAil = () => {};
+  const AIL_FX = { freeze: { seq: [1, 2, 4], sc: 1.0, op: .65 }, confuse: { seq: [1, 2, 3, 4], sc: 1.15, op: 1 }, paralyze: { seq: [1, 2, 3, 4], sc: 1.15, op: .8 } };
+  const playAil = async (side, kind, loops = 1) => {
+    const im = side && imgOf(side); if (!im || !kind) return;
+    try {
+      const c = AIL_FX[kind] || { seq: [1, 2, 3, 4], sc: 1.15, op: 1 }, r = rectOf(im), w = Math.max(r.w, r.h) * c.sc;
+      for (let l = 0; l < loops; l++) for (const k of c.seq) { const i = fxImg(`assets/effects/anim/ail_${kind}/f${k}.webp`, r, w); i.style.opacity = c.op; await ready(i); await sleep(loops > 1 ? 190 : 170); i.remove(); }
+    } catch (e) {}
   };
   const enemySpd = () => e.spd * (e.ab === 'swift' ? 1.15 : 1) * stageMult(E.stg.spd) * (E.ail && E.ail.k === 'paralyze' ? 0.5 : 1);
   const eS = (k) => { let v = e[k]; if (k === 'atk' || k === 'matk') v *= stageMult(E.stg.atk); else v *= stageMult(E.stg.def); if (k === 'atk' && E.ail && E.ail.k === 'burn') v *= 0.75; return v; };
@@ -345,6 +350,7 @@ export async function runBattle(enemyId0, opts = {}) {
   const wa = (el, kf, o) => { try { return el.animate(kf, { fill: 'both', ...o, duration: o.duration / battleSpeed(), delay: (o.delay || 0) / battleSpeed() }).finished.catch(() => {}); } catch (e) { return Promise.resolve(); } };
   const ready = (i) => i.complete ? Promise.resolve() : new Promise(r => { i.onload = i.onerror = r; setTimeout(r, 900); });
   const fxFrame = async (src, el, ms, pop) => { const r = rectOf(el), i = fxImg(src, r, Math.max(r.w, r.h) * 1.15); await ready(i); if (pop) wa(i, [{ transform: 'translate(-50%,-50%) scale(.7)', opacity: .6 }, { transform: 'translate(-50%,-50%) scale(1.08)', opacity: 1 }], { duration: ms, easing: 'ease-out' }); await sleep(ms); i.remove(); };
+  const playStrip = async (name, el, scale, ms, pop = true) => { try { const r = rectOf(el), w = Math.max(r.w, r.h) * scale; for (let k = 1; k <= 4; k++) { const i = fxImg(`assets/effects/anim/${name}/f${k}.webp`, r, w); await ready(i); if (pop) wa(i, [{ transform: 'translate(-50%,-50%) scale(.85)', opacity: .7 }, { transform: 'translate(-50%,-50%) scale(1.04)', opacity: 1 }], { duration: ms, easing: 'ease-out' }); await sleep(ms); i.remove(); } } catch (e) {} };
   const qn = (n) => ECO ? Math.max(2, Math.round(n * .5)) : n;   // 省エネモードは えんしゅつの つぶを はんぶんに
   const burst = (r, col, n, pw) => { n = qn(n); for (let k = 0; k < n; k++) { const d = document.createElement('i'), sz = 5 + Math.random() * 9, a = Math.random() * 6.283, dist = (40 + Math.random() * 80) * pw; d.className = 'bt-pt'; d.style.cssText = `left:${r.x}px;top:${r.y}px;width:${sz}px;height:${sz}px;background:${col};box-shadow:0 0 ${sz * 1.6}px ${col}`; fieldEl.appendChild(d); wa(d, [{ transform: 'translate(-50%,-50%) scale(1)', opacity: 1 }, { transform: `translate(calc(-50% + ${Math.cos(a) * dist}px),calc(-50% + ${Math.sin(a) * dist}px)) scale(.2)`, opacity: 0 }], { duration: 420 + Math.random() * 280, easing: 'cubic-bezier(.1,.7,.3,1)' }).then(() => d.remove()); } };
   const flash = (r, col, sz) => { const d = document.createElement('div'); d.className = 'bt-fl'; d.style.cssText = `left:${r.x}px;top:${r.y}px;width:${sz}px;height:${sz}px;background:radial-gradient(circle,#fff 0%,${col} 30%,transparent 68%)`; fieldEl.appendChild(d); wa(d, [{ opacity: .95, transform: 'translate(-50%,-50%) scale(.35)' }, { opacity: 0, transform: 'translate(-50%,-50%) scale(1.5)' }], { duration: 380, easing: 'ease-out' }).then(() => d.remove()); };
@@ -501,6 +507,7 @@ export async function runBattle(enemyId0, opts = {}) {
       await sleep(520); wa(toEl, [{ translate: '0 0' }, { translate: `${Math.sign(b.x - a.x) * 12}px 0` }, { translate: '0 0' }], { duration: 300, fill: 'none' }); shake(2.5); await sleep(520); return;
     }
     if (SIG[sk.id]) { await SIG[sk.id]({ a, b, col, pw, fromEl, toEl, hitSz, impact, elem }); return; }   // オリジナルわざ
+    if (SP_FX[sk.id]) { const pr = playStrip(SP_FX[sk.id], toEl, sk.id === 'sp_tsunami' ? 2.4 : 2.0, 200); await sleep(420); impact(1.7); shake(3); await pr; return; }   // せんよう 4コマ演出
     const fe = elem === 'kami' && !(GD.ELEMENT_EFFECT_ANIM || {}).kami ? 'heaven' : elem, frames = GD.pickEffectFrames(fe, sk.id);
     if (!frames) { const one = GD.ELEMENT_EFFECTS[fe]; if (one) { const i = fxImg(one, b, Math.max(b.w, b.h) * 1.15); await ready(i); wa(i, [{ transform: 'translate(-50%,-50%) scale(.5)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1.1)', opacity: 1, offset: .35 }, { transform: 'translate(-50%,-50%) scale(1.25)', opacity: 0 }], { duration: 560, easing: 'ease-out' }); impact(); await sleep(520); i.remove(); } return; }
     const ti = Math.max(0, frames.length - 3), charge = frames.slice(0, ti), travel = frames[ti], onHit = frames.slice(ti + 1);
@@ -550,7 +557,7 @@ export async function runBattle(enemyId0, opts = {}) {
     if (side === 'e' && opts.boss) ch *= 0.6;
     if (Math.random() >= ch) return false;
     S.ail = { k: kind, t: kind === 'sleep' ? 2 + Math.floor(Math.random() * 2) : kind === 'freeze' ? 3 : kind === 'confuse' ? 2 + Math.floor(Math.random() * 3) : 99 };
-    draw(); msg(`${nameOf(side)} は ${AIL[kind].msg}`); sfx(side === 'a' ? 'no' : 'quest'); await sleep(1000); return true;
+    draw(); msg(`${nameOf(side)} は ${AIL[kind].msg}`); sfx(side === 'a' ? 'no' : 'quest'); playAil(side, kind, 2); await sleep(1700); return true;
   };
   const changeStage = async (side, k, n) => {
     const S = sd(side), old = S.stg[k], nw = Math.max(-3, Math.min(3, old + n)), nm = nameOf(side);
@@ -568,16 +575,17 @@ export async function runBattle(enemyId0, opts = {}) {
   // こうげきの まえの チェック: ねむり・こおり・まひ・こんらん で うごけないことがある
   const actCheck = async (side) => {
     const S = sd(side), ail = S.ail; if (!ail) return true; const nm = nameOf(side);
-    if (ail.k === 'sleep') { if (--ail.t <= 0) { S.ail = null; draw(); msg(`${nm} は めを さました!`); await sleep(800); return true; } msg(`${nm} は ぐうぐう ねむっている…`); await sleep(1000); return false; }
-    if (ail.k === 'freeze') { if (Math.random() < 0.3 || --ail.t <= 0) { S.ail = null; draw(); msg(`${nm} の こおりが とけた!`); await sleep(800); return true; } msg(`${nm} は こおりついて うごけない!`); await sleep(1000); return false; }
-    if (ail.k === 'paralyze' && Math.random() < 0.25) { msg(`${nm} は からだが しびれて うごけない!`); await sleep(1000); return false; }
+    if (ail.k === 'sleep') { if (--ail.t <= 0) { S.ail = null; draw(); msg(`${nm} は めを さました!`); await sleep(800); return true; } msg(`${nm} は ぐうぐう ねむっている…`); playAil(side, 'sleep', 1); await sleep(1100); return false; }
+    if (ail.k === 'freeze') { if (Math.random() < 0.3 || --ail.t <= 0) { S.ail = null; draw(); msg(`${nm} の こおりが とけた!`); await sleep(800); return true; } msg(`${nm} は こおりついて うごけない!`); playAil(side, 'freeze', 1); await sleep(1100); return false; }
+    if (ail.k === 'paralyze' && Math.random() < 0.25) { msg(`${nm} は からだが しびれて うごけない!`); sfx('no'); playAil(side, 'paralyze', 1); try { wa(imgOf(side), [{ translate: '0 0' }, { translate: '-6px 0' }, { translate: '6px 0' }, { translate: '-5px 0' }, { translate: '5px 0' }, { translate: '0 0' }], { duration: 560, fill: 'none' }); } catch (e) {} await sleep(1100); return false; }
     if (ail.k === 'confuse') {
       if (--ail.t <= 0) { S.ail = null; draw(); msg(`${nm} の こんらんが とけた!`); await sleep(800); return true; }
-      msg(`${nm} は こんらんしている…`); await sleep(700);
+      msg(`${nm} は こんらんしている…`); playAil(side, 'confuse', 1); await sleep(900);
       if (Math.random() < 0.4) { const n = Math.max(1, Math.round(maxOf(side) * 0.1)); msg(`${nm} は わけも わからず じぶんを こうげきした!`); sfx('no'); hurt(side, n); await hit(imgOf(side)); pop(side, '-' + n, ''); await sleep(700); return false; }
     }
     return true;
   };
+  const fogMiss = (sk) => battleWx(opts.wx) === 'fog' && skillKind(sk) === 'phys' && Math.random() < 0.25;
   const allyAttack = async (sk) => {
     if (!(await actCheck('a'))) return;
     const a = state.party[ai], st = allyStats(), ad = GD.MONSTERS[a.id], ab = abilityOf(a.id), fx = fxOf(sk), el = sk.element || ad.element;
@@ -587,6 +595,7 @@ export async function runBattle(enemyId0, opts = {}) {
       if (fx.foe || fx.st) await playFx(aImg, eImg, sk, el); else { aImg.classList.add('glow'); await sleep(500); aImg.classList.remove('glow'); }
       await useFx('a', fx, true); return;
     }
+    if (fogMiss(sk)) { msg('きりで わざが あたらなかった!'); sfx('no'); await sleep(1000); return; }
     await playFx(aImg, eImg, sk, el);
     const mg = skillKind(sk) === 'magic', r = calc(mg ? st.matk : st.atk, sk.power, eS(mg ? 'mdef' : 'def'), el, def.element, st.crit / 100);
     let dmg = Math.round(r.dmg * envMul(opts.wx, opts.hour, el)); if (ab === 'pinch' && hpOf(a) < st.maxHp / 3) dmg = Math.round(dmg * 1.3); if (ab === 'typeboost' && el === ad.element) dmg = Math.round(dmg * 1.15); if (e.ab === 'thick') dmg = Math.max(1, Math.round(dmg * 0.88));
@@ -635,6 +644,7 @@ export async function runBattle(enemyId0, opts = {}) {
       if (fx.foe || fx.st) await playFx(eImg, aImg, sk, el); else { eImg.classList.add('glow'); await sleep(500); eImg.classList.remove('glow'); }
       await useFx('e', fx, true); return;
     }
+    if (!big && fogMiss(sk)) { msg('きりで わざが あたらなかった!'); sfx('no'); await sleep(1000); return; }
     await playFx(eImg, aImg, sk, el);
     const mg = skillKind(sk) === 'magic', r = calc(eS(mg ? 'matk' : 'atk'), sk.power, mg ? st.mdef : st.def, el, GD.MONSTERS[a.id].element, GD.CRIT_CHANCE + (e.ab === 'sharp' ? 0.1 : 0));
     let dmg = Math.round(r.dmg * envMul(opts.wx, opts.hour, el)); if (guarding) dmg = Math.max(1, Math.round(dmg * (big ? 0.35 : 0.5))); if (e.ab === 'pinch' && e.hp < e.maxHp / 3) dmg = Math.round(dmg * 1.3); if (e.ab === 'typeboost' && el === def.element) dmg = Math.round(dmg * 1.15); if (aab === 'thick') dmg = Math.max(1, Math.round(dmg * 0.88));
@@ -678,7 +688,7 @@ export async function runBattle(enemyId0, opts = {}) {
   const afterFoeFaint = async (j) => {   // あいてが たおれた: けいけんち → つぎの あいてを だす(いれば)
     const f = slotsE[j]; useE(j);
     if (opts.trainer && !bossNow(f)) { msg(`${def.name} は たおれた!`); sfx('quest'); await sleep(700); await recall(eImgs[j], ballPrefix(f.ball), true); jingle('win'); }
-    else { eImg.classList.add('faint'); msg(`${def.name} を たおした!`); jingle('win'); await sleep(1300); }
+    else { playStrip('fx_faint', eImg, 1.7, 190); eImg.classList.add('faint'); msg(`${def.name} を たおした!`); jingle('win'); await sleep(1300); }
     useA(firstA()); await payFoe();
     if (reserveE.length) {
       const nx = reserveE.shift(); slotsE[j] = nx; useE(j); draw();
@@ -694,7 +704,7 @@ export async function runBattle(enemyId0, opts = {}) {
   // こちらの モンスターが たおれた: ボールに もどして、つぎを えらんで なげる。'ok' | 'empty'(ひかえが いない) | 'lose'
   const afterAllyFaint = async (k = curA) => {
     const sl = slotsA[k]; if (!sl) return 'ok'; const a = state.party[sl.ai]; if (hpOf(a) > 0) return 'ok';
-    msg(`${monName(a)} は たおれた…`); sfx('no'); await sleep(900);
+    msg(`${monName(a)} は たおれた…`); sfx('no'); playStrip('fx_faint', aImgs[k] || aImg, 1.7, 190); await sleep(900);
     await recall(aImgs[k], ballOf(a), false);
     const used = slotsA.map((x, j) => x && j !== k ? x.ai : -1), cand = state.party.map((m, i) => i).filter(i => hpOf(state.party[i]) > 0 && !used.includes(i));
     if (!cand.length) { slotsA[k] = null; draw(); return slotsA.some(Boolean) ? 'empty' : 'lose'; }
@@ -720,9 +730,21 @@ export async function runBattle(enemyId0, opts = {}) {
       if (side === 'a') { if (!slotsA[k]) continue; useA(k); } else { if (!slotsE[k]) continue; useE(k); }
       const S = sd(side); if (!S.ail || hpNow(side) <= 0 || !AIL[S.ail.k].dot) continue;
       const mx = maxOf(side), n = Math.max(1, Math.round(mx / AIL[S.ail.k].dot * (side === 'e' && opts.boss ? 0.5 : 1)));
-      hurt(side, n); await hit(imgOf(side)); pop(side, '-' + n, ''); msg(`${nameOf(side)} は ${AIL[S.ail.k].name}の ダメージを うけた`); sfx('no'); await sleep(700);
+      playAil(side, S.ail.k, 1); hurt(side, n); await hit(imgOf(side)); pop(side, '-' + n, ''); msg(`${nameOf(side)} は ${AIL[S.ail.k].name}の ダメージを うけた`); sfx('no'); await sleep(700);
       if (S.ail.k === 'leech') { const o = side === 'a' ? liveE()[0] : liveA()[0]; if (o != null) { if (side === 'a') { useE(o); healSide('e', n); } else { useA(o); healSide('a', n); } await sleep(400); } }
     }
+    { const bw = battleWx(opts.wx);
+      if (bw === 'sand' || bw === 'hail') {
+        let said = false;
+        for (let k = 0; k < 2; k++) for (const side of ['a', 'e']) {
+          if (side === 'a') { if (!slotsA[k]) continue; useA(k); } else { if (!slotsE[k]) continue; useE(k); }
+          if (hpNow(side) <= 0) continue;
+          if (bw === 'sand' && (side === 'a' ? GD.MONSTERS[state.party[ai].id].element : def.element) === 'earth') continue;
+          if (!said) { said = true; msg(bw === 'sand' ? 'すなあらしが ふきあれている!' : 'あられが ふりそそいでいる!'); await sleep(700); }
+          const n = Math.max(1, Math.round(maxOf(side) / 16 * (side === 'e' && opts.boss ? 0.5 : 1)));
+          hurt(side, n); await hit(imgOf(side)); pop(side, '-' + n, ''); await sleep(500);
+        }
+      } }
     await settle(); if (result) return;
     for (const k of liveA()) {
       useA(k); const a = state.party[ai];
@@ -871,6 +893,7 @@ export async function runBattle(enemyId0, opts = {}) {
   msg(opts.trainer ? `トレーナーの ${opts.trainer} が しょうぶを しかけてきた!` : opts.boss ? `${def.name} が たちはだかった!` : `あっ! やせいの ${def.name} が とびだしてきた!`); sfx('quest'); await sleep(1300);
   if (opts.boss && !opts.trainer && !state.tips.boss) { state.tips.boss = 1; msg('ヒント: ぬしが「ちからを ためて」きたら、つぎの こうげきは とても つよいよ!'); await sleep(2200); }
   if (!state.tips.bt1) { state.tips.bt1 = 1; msg('ヒント: わざには PP(かいすう)が あるよ。ベッドで ねると ぜんかいふく!'); await sleep(2000); }
+  { const bw = battleWx(opts.wx); if (bw !== 'clear') { const ov = document.createElement('div'); ov.className = 'wxov wx-' + bw; ov.style.backgroundImage = `url(${img(`assets/effects/wx/${bw}.webp`)})`; fieldEl.appendChild(ov); } }
   { const et = envText(opts.wx, opts.hour); if (et) { msg(et); await sleep(1300); } }
   await sleep(300);
 
@@ -921,7 +944,7 @@ export async function runBattle(enemyId0, opts = {}) {
     const sl = slotsA[x.k]; if (!sl || state.party[sl.ai] !== x.who || hpOf(x.who) <= 0) return;
     useA(x.k); const a = state.party[ai]; let tj = x.t; if (tj == null || !slotsE[tj] || slotsE[tj].e.hp <= 0) tj = liveE()[0]; if (tj == null) return; useE(tj);
     if (x.kind === 'skill') {
-      if (x.sk === '__guard') { sl.guard = true; msg(`${monName(a)} は みを まもっている!`); sfx('pick'); aImg.classList.add('glow'); await sleep(800); aImg.classList.remove('glow'); }
+      if (x.sk === '__guard') { sl.guard = true; msg(`${monName(a)} は みを まもっている!`); sfx('pick'); playStrip('fx_guard', aImg, 1.7, 200); aImg.classList.add('glow'); await sleep(800); aImg.classList.remove('glow'); }
       else await allyAttack(x.sk);
     } else if (x.kind === 'item') {
       const v = x.v;

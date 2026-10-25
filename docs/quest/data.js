@@ -351,47 +351,9 @@
   };
   // 属性ごとの「チャージ→飛翔→着弾+消散」複数コマ演出素材(1属性につき1〜3パターン)。
   // ここに無い属性があれば ELEMENT_EFFECTS の単一静止画にフォールバックする。
+  // 属性ごとの わざえんしゅつ(4コマ)は battle.js の NEW_FX から ついかする(ふるい ドット絵は もう つかわない)
   var ELEMENT_EFFECT_ANIM = {
-    fire: [
-      ["assets/effects/anim/fire_1/f1.webp", "assets/effects/anim/fire_1/f2.webp", "assets/effects/anim/fire_1/f3.webp", "assets/effects/anim/fire_1/f4.webp", "assets/effects/anim/fire_1/f5.webp", "assets/effects/anim/fire_1/f6.webp"],
-      ["assets/effects/anim/fire_2/f1.webp", "assets/effects/anim/fire_2/f2.webp", "assets/effects/anim/fire_2/f3.webp"],
-      ["assets/effects/anim/fire_3/f1.webp", "assets/effects/anim/fire_3/f2.webp", "assets/effects/anim/fire_3/f3.webp"]
-    ],
-    water: [
-      ["assets/effects/anim/water_1/f1.webp", "assets/effects/anim/water_1/f2.webp", "assets/effects/anim/water_1/f3.webp", "assets/effects/anim/water_1/f4.webp"],
-      ["assets/effects/anim/water_2/f1.webp", "assets/effects/anim/water_2/f2.webp", "assets/effects/anim/water_2/f3.webp", "assets/effects/anim/water_2/f4.webp"],
-      ["assets/effects/anim/water_3/f1.webp", "assets/effects/anim/water_3/f2.webp", "assets/effects/anim/water_3/f3.webp", "assets/effects/anim/water_3/f4.webp"]
-    ],
-    wind: [
-      ["assets/effects/anim/wind_1/f1.webp", "assets/effects/anim/wind_1/f2.webp", "assets/effects/anim/wind_1/f3.webp"],
-      ["assets/effects/anim/wind_2/f1.webp", "assets/effects/anim/wind_2/f2.webp", "assets/effects/anim/wind_2/f3.webp"],
-      ["assets/effects/anim/wind_3/f1.webp", "assets/effects/anim/wind_3/f2.webp", "assets/effects/anim/wind_3/f3.webp"]
-    ],
-    thunder: [
-      ["assets/effects/anim/thunder_1/f1.webp", "assets/effects/anim/thunder_1/f2.webp", "assets/effects/anim/thunder_1/f3.webp", "assets/effects/anim/thunder_1/f4.webp", "assets/effects/anim/thunder_1/f5.webp", "assets/effects/anim/thunder_1/f6.webp"],
-      ["assets/effects/anim/thunder_2/f1.webp", "assets/effects/anim/thunder_2/f2.webp", "assets/effects/anim/thunder_2/f3.webp", "assets/effects/anim/thunder_2/f4.webp", "assets/effects/anim/thunder_2/f5.webp", "assets/effects/anim/thunder_2/f6.webp"],
-      ["assets/effects/anim/thunder_3/f1.webp", "assets/effects/anim/thunder_3/f2.webp", "assets/effects/anim/thunder_3/f3.webp", "assets/effects/anim/thunder_3/f4.webp", "assets/effects/anim/thunder_3/f5.webp"]
-    ],
-    grass: [
-      ["assets/effects/anim/grass_1/f1.webp", "assets/effects/anim/grass_1/f2.webp", "assets/effects/anim/grass_1/f3.webp", "assets/effects/anim/grass_1/f4.webp", "assets/effects/anim/grass_1/f5.webp", "assets/effects/anim/grass_1/f6.webp"],
-      ["assets/effects/anim/grass_2/f1.webp", "assets/effects/anim/grass_2/f2.webp", "assets/effects/anim/grass_2/f3.webp", "assets/effects/anim/grass_2/f4.webp", "assets/effects/anim/grass_2/f5.webp", "assets/effects/anim/grass_2/f6.webp"],
-      ["assets/effects/anim/grass_3/f1.webp", "assets/effects/anim/grass_3/f2.webp", "assets/effects/anim/grass_3/f3.webp", "assets/effects/anim/grass_3/f4.webp", "assets/effects/anim/grass_3/f5.webp", "assets/effects/anim/grass_3/f6.webp"]
-    ],
-    heaven: [
-      ["assets/effects/anim/heaven_1/f1.webp", "assets/effects/anim/heaven_1/f2.webp", "assets/effects/anim/heaven_1/f3.webp", "assets/effects/anim/heaven_1/f4.webp", "assets/effects/anim/heaven_1/f5.webp", "assets/effects/anim/heaven_1/f6.webp"]
-    ],
-    earth: [
-      ["assets/effects/anim/earth_1/f1.png", "assets/effects/anim/earth_1/f2.png", "assets/effects/anim/earth_1/f3.png", "assets/effects/anim/earth_1/f4.png"]
-    ],
-    dark: [
-      ["assets/effects/anim/dark_1/f1.png", "assets/effects/anim/dark_1/f2.png", "assets/effects/anim/dark_1/f3.png", "assets/effects/anim/dark_1/f4.png"]
-    ],
-    magic: [
-      ["assets/effects/anim/magic_1/f1.png", "assets/effects/anim/magic_1/f2.png", "assets/effects/anim/magic_1/f3.png", "assets/effects/anim/magic_1/f4.png"]
-    ],
-    beast: [
-      ["assets/effects/anim/beast_1/f1.png", "assets/effects/anim/beast_1/f2.png", "assets/effects/anim/beast_1/f3.png", "assets/effects/anim/beast_1/f4.png"]
-    ]
+    fire: [], water: [], wind: [], thunder: [], grass: [], heaven: [], earth: [], dark: [], magic: [], beast: []
   };
   // わざ(スキル)IDごとに使う演出パターンを決める(同じ属性でも技によって見た目が変わる = 「わざを増やす」)。
   // 同じ技は常に同じパターンになるよう、ID文字列から決定的にハッシュして選ぶ。
