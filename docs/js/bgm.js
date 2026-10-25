@@ -140,7 +140,7 @@ export function setVolumes(bgm, sfx) {
 }
 // 短いファンファーレ
 export function jingle(kind = 'win') {
-  if (!ensure()) return; const t = ac.currentTime + 0.05, seq = kind === 'win' ? [[72, 0, .14], [72, .16, .14], [72, .32, .14], [76, .5, .3], [72, .86, .14], [76, 1.02, .14], [79, 1.2, .5]] : [[79, 0, .12], [76, .12, .12], [72, .24, .12], [67, .36, .4]];
+  if (!ensure()) return; const t = ac.currentTime + 0.05, seq = kind === 'catch' ? [[67, 0, .12], [72, .13, .12], [76, .26, .12], [79, .39, .3], [76, .78, .12], [79, .92, .12], [84, 1.06, .2], [83, 1.34, .12], [84, 1.48, .8], [79, 1.48, .8], [76, 1.48, .8]] : kind === 'win' ? [[72, 0, .14], [72, .16, .14], [72, .32, .14], [76, .5, .3], [72, .86, .14], [76, 1.02, .14], [79, 1.2, .5]] : [[79, 0, .12], [76, .12, .12], [72, .24, .12], [67, .36, .4]];
   const was = cur; if (was) { clearInterval(timer); timer = null; }
   for (const [m, d, l] of seq) note('square', mtof(m), t + d, l, 0.07); for (const [m, d, l] of seq) note('triangle', mtof(m - 12), t + d, l, 0.1);
   if (was) setTimeout(() => { if (want === was) startNow(was); }, 2100);

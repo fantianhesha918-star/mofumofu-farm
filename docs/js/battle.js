@@ -53,15 +53,16 @@ export async function evoSwap(el, oldImage, newImage, wait = (ms) => new Promise
   const onKey = (e) => { if (e.key === 'Escape') stop = true; }; addEventListener('keydown', onKey); btn.onclick = () => { stop = true; };
   const step = async (ms) => { await wait(ms); return !stop; };
   const WHITE = 'brightness(12) saturate(0)'; let ok = true;
-  el.style.filter = 'brightness(1.8)'; ok = await step(500);
+  const K = 1.9;   // ゆっくり(ドキドキ)
+  el.style.filter = 'brightness(1.8)'; sfx('quest'); ok = await step(900);
   for (const d of [380, 340, 300, 265, 230, 200, 170, 145, 125, 108, 95, 85, 78]) {
     if (!ok) break;
-    el.style.filter = WHITE; ok = await step(d * 0.4); if (!ok) break; showNew = !showNew; el.src = showNew ? newSrc : oldSrc; el.style.filter = 'brightness(1.15)'; ok = await step(d * 0.6);
+    sfx('tick'); el.style.filter = WHITE; ok = await step(d * 0.4 * K); if (!ok) break; showNew = !showNew; el.src = showNew ? newSrc : oldSrc; el.style.filter = 'brightness(1.15)'; ok = await step(d * 0.6 * K);
   }
   btn.remove(); removeEventListener('keydown', onKey);
   if (!ok) { el.src = oldSrc; el.style.transition = ''; el.style.filter = keep; return false; }
-  el.style.filter = WHITE; await wait(260); el.src = newSrc; await wait(120);
-  el.style.transition = 'filter .7s ease-out'; el.style.filter = 'brightness(1)'; await wait(700); el.style.transition = ''; el.style.filter = keep; return true;
+  el.style.filter = WHITE; sfx('levelup'); await wait(520); el.src = newSrc; await wait(240);
+  el.style.transition = 'filter 1.3s ease-out'; el.style.filter = 'brightness(1)'; await wait(1300); el.style.transition = ''; el.style.filter = keep; return true;
 }
 // バトルの そと(なかまがめん)で しんかいしを つかうとき: がめんの まんなかで えんしゅつ
 export async function evoOverlay(oldImage, newImage, oldName = '', newName = '') {   // しんかしたら true
@@ -404,7 +405,7 @@ export async function runBattle(enemyId0, opts = {}) {
     }
     if (el === 'wind') crescent({ x: b.x - 60, y: b.y }, { x: b.x + 60, y: b.y }, col, 70, 0);
   };
-  const impactAt = (el, b, col, pw, hitSz, big, sh = 1) => { flash(b, col, hitSz * .8); part('part_burst', b, hitSz * 1.7, hitSz * 1.7, col, [{ opacity: .95, transform: TR(0, 0, Math.random() * 30, .3) }, { opacity: 0, transform: TR(0, 0, 40 + Math.random() * 30, 1.15) }], { duration: 440, easing: 'ease-out' }); if (big) part('part_sparkle', b, hitSz * 1.9, hitSz * 1.9, '#ffffff', [{ opacity: 0, transform: TR(0, 0, 0, .5) }, { opacity: 1, offset: .4, transform: TR(0, 0, 8, 1) }, { opacity: 0, transform: TR(0, 0, 16, 1.1) }], { duration: 600 }); burst(b, col, Math.round(5 + pw * 5), pw); scatter(el, b, col, pw); shake((2 + pw * 3) * sh); if (big) tint(col); };
+  const impactAt = (el, b, col, pw, hitSz, big, sh = 1) => { sfx('el_' + el); flash(b, col, hitSz * .8); part('part_burst', b, hitSz * 1.7, hitSz * 1.7, col, [{ opacity: .95, transform: TR(0, 0, Math.random() * 30, .3) }, { opacity: 0, transform: TR(0, 0, 40 + Math.random() * 30, 1.15) }], { duration: 440, easing: 'ease-out' }); if (big) part('part_sparkle', b, hitSz * 1.9, hitSz * 1.9, '#ffffff', [{ opacity: 0, transform: TR(0, 0, 0, .5) }, { opacity: 1, offset: .4, transform: TR(0, 0, 8, 1) }, { opacity: 0, transform: TR(0, 0, 16, 1.1) }], { duration: 600 }); burst(b, col, Math.round(5 + pw * 5), pw); scatter(el, b, col, pw); shake((2 + pw * 3) * sh); if (big) tint(col); };
   // ---- オリジナルわざの えんしゅつ(御三家・でんせつ・さいしゅうボス専用) ----
   Object.assign(SHAPE, { diamond: 'width:12px;height:19px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)', petal: 'width:12px;height:17px;border-radius:50% 0 50% 50%' });
   const sh = (kind, col, r, extra = '') => mk('bt-pt', r, `${SHAPE[kind]};background:${kind === 'feather' ? '#fffbe8' : col};box-shadow:0 0 8px ${col};mix-blend-mode:normal;${extra}`);
@@ -487,6 +488,7 @@ export async function runBattle(enemyId0, opts = {}) {
   const playFx = async (fromEl, toEl, sk, elem) => {
     const col = ELC[elem] || '#fff', pw = Math.min(1.8, 0.8 + (sk.power || 40) / 90), b = rectOf(toEl), a = rectOf(fromEl), hitSz = Math.max(b.w, b.h) * 1.1 * pw, mo = motionOf(sk), big = (sk.power || 0) >= 80;
     const impact = (sh = 1) => impactAt(elem, b, col, pw, hitSz, big, sh);
+    if (sk.power > 0 && !SIG[sk.id]) sfx('mv_' + (mo === 'rain' || mo === 'barrage' || mo === 'beam' || mo === 'ram' || mo === 'bite' || mo === 'claw' || mo === 'cross' || mo === 'pillar' || mo === 'vortex' || mo === 'sweep' || mo === 'quake' ? mo : 'orb'));
     if (sk.id === 'x_tail') {   // しっぽをふる: からだを ふりふり ゆらす
       wa(fromEl, [{ rotate: '0deg', translate: '0 0' }, { rotate: '-9deg', translate: '-7px 0' }, { rotate: '9deg', translate: '7px 0' }, { rotate: '-9deg', translate: '-7px 0' }, { rotate: '9deg', translate: '7px 0' }, { rotate: '-6deg', translate: '-4px 0' }, { rotate: '0deg', translate: '0 0' }], { duration: 760, fill: 'none', easing: 'ease-in-out' });
       for (let k = 0; k < 3; k++) { await sleep(180); burst({ x: a.x + (k - 1) * a.w * .3, y: a.y - a.h * .35 }, '#ffe9a0', 3, .5); }
@@ -529,6 +531,7 @@ export async function runBattle(enemyId0, opts = {}) {
     const raw = Math.max(1, atk * power / 20 - dfn * 0.4), rand = 0.9 + Math.random() * 0.2, crit = Math.random() < critP, mu = GD.getElementMatchup(ae, de);
     return { dmg: Math.max(1, Math.round(raw * rand * (crit ? GD.CRIT_MULT : 1) * mu.mult)), crit, tier: mu.tier };
   };
+  const hitSnd = (r) => r.crit ? 'hit_crit' : r.tier === 'strong' ? 'hit_strong' : r.tier === 'weak' ? 'hit_weak' : 'hit';   // ダメージの おもさで おとを かえる
   const tierText = (t, crit) => (crit ? 'かいしんの いちげき! ' : '') + (t === 'strong' ? 'こうかは ばつぐんだ!' : t === 'weak' ? 'こうかは いまひとつ…' : '');
 
   // ---- じょうたいいじょう・のうりょくアップダウン ----
@@ -589,7 +592,7 @@ export async function runBattle(enemyId0, opts = {}) {
     let dmg = Math.round(r.dmg * envMul(opts.wx, opts.hour, el)); if (ab === 'pinch' && hpOf(a) < st.maxHp / 3) dmg = Math.round(dmg * 1.3); if (ab === 'typeboost' && el === ad.element) dmg = Math.round(dmg * 1.15); if (e.ab === 'thick') dmg = Math.max(1, Math.round(dmg * 0.88));
     let held = false; if (e.ab === 'fortress' && !cur.fort && dmg >= e.hp && e.hp > 1) { dmg = e.hp - 1; cur.fort = true; held = true; }
     if (E.ail && E.ail.k === 'freeze' && el === 'fire') { E.ail = null; }
-    e.hp = Math.max(0, e.hp - dmg); sfx('pet'); await hit(eImg); draw(); pop('e', '-' + dmg, r.crit ? 'crit' : '');
+    e.hp = Math.max(0, e.hp - dmg); sfx(hitSnd(r)); await hit(eImg); draw(); pop('e', '-' + dmg, r.crit ? 'crit' : '');
     const t = tierText(r.tier, r.crit); if (t) { msg(t); await sleep(650); } else await sleep(250);
     if (held) { msg(`${def.name} は ふくつの こころで こらえた!`); await sleep(800); }
     if (sk.id === 'struggle') { const rc = Math.max(1, Math.round(dmg / 4)); hurt('a', rc); pop('a', '-' + rc, ''); msg(`${monName(a)} は はんどうを うけた!`); await sleep(700); }
@@ -637,7 +640,7 @@ export async function runBattle(enemyId0, opts = {}) {
     let dmg = Math.round(r.dmg * envMul(opts.wx, opts.hour, el)); if (guarding) dmg = Math.max(1, Math.round(dmg * (big ? 0.35 : 0.5))); if (e.ab === 'pinch' && e.hp < e.maxHp / 3) dmg = Math.round(dmg * 1.3); if (e.ab === 'typeboost' && el === def.element) dmg = Math.round(dmg * 1.15); if (aab === 'thick') dmg = Math.max(1, Math.round(dmg * 0.88));
     let held = false; if ((aab === 'fortress' || holdOf(a).sash) && !aFort && dmg >= hpOf(a) && hpOf(a) > 1) { dmg = hpOf(a) - 1; aFort = true; held = true; }
     const A = sd('a'); if (A.ail && A.ail.k === 'freeze' && el === 'fire') A.ail = null;
-    a.hp = Math.max(0, hpOf(a) - dmg); sfx('no'); await hit(aImg); draw(); pop('a', '-' + dmg, r.crit ? 'crit' : '');
+    a.hp = Math.max(0, hpOf(a) - dmg); sfx(hitSnd(r)); await hit(aImg); draw(); pop('a', '-' + dmg, r.crit ? 'crit' : '');
     const t = tierText(r.tier, r.crit); if (t) { msg(t); await sleep(650); } else await sleep(250);
     if (held) { msg(`${monName(a)} は ふくつの こころで こらえた!`); await sleep(800); }
     if (fx && hpOf(a) > 0) await useFx('e', fx, false);
@@ -792,15 +795,15 @@ export async function runBattle(enemyId0, opts = {}) {
     const src = (n) => img(`assets/capture/capture_${prefix}_${n}.webp`), sx = pr.left + pr.width / 2 - fr.left, sy = pr.top + pr.height / 2 - fr.top, ex = er.left + er.width / 2 - fr.left, ey = er.top + er.height / 2 - fr.top;
     const ball = document.createElement('img'); ball.className = 'capture-ball-anim'; ball.src = src('fly'); ball.style.left = sx + 'px'; ball.style.top = sy + 'px'; field.appendChild(ball);
     requestAnimationFrame(() => { ball.classList.add('flying', 'spin'); ball.style.left = ex + 'px'; ball.style.top = ey + 'px'; });
-    setTimeout(() => { ball.classList.remove('flying', 'spin'); eImg.classList.add('suck-in'); setTimeout(() => { eImg.style.visibility = 'hidden'; eImg.classList.remove('suck-in'); }, 260); ball.src = src('squish'); ball.classList.add('squish'); }, 450);
+    setTimeout(() => { ball.classList.remove('flying', 'spin'); sfx('ballhit'); eImg.classList.add('suck-in'); setTimeout(() => { eImg.style.visibility = 'hidden'; eImg.classList.remove('suck-in'); }, 260); ball.src = src('squish'); ball.classList.add('squish'); }, 850);
     setTimeout(() => {
       ball.classList.remove('squish'); let w = 0;
       const next = () => {
-        if (w >= 3) { if (ok) { ball.src = src('success'); ball.classList.add('success-pop'); setTimeout(() => { ball.remove(); res(); }, 750); } else { ball.src = src('fail'); ball.classList.add('fail-pop'); eImg.style.visibility = ''; eImg.classList.add('pop-out'); setTimeout(() => eImg.classList.remove('pop-out'), 400); setTimeout(() => { ball.remove(); res(); }, 550); } return; }
-        ball.src = src('wobble' + (++w)); ball.classList.remove('wobble'); void ball.offsetWidth; ball.classList.add('wobble'); sfx('pick'); setTimeout(next, 340);
+        if (w >= 3) { setTimeout(() => { if (ok) { ball.src = src('success'); ball.classList.add('success-pop'); jingle('catch'); setTimeout(() => { ball.remove(); res(); }, 1300); } else { ball.src = src('fail'); ball.classList.add('fail-pop'); sfx('no'); eImg.style.visibility = ''; eImg.classList.add('pop-out'); setTimeout(() => eImg.classList.remove('pop-out'), 400); setTimeout(() => { ball.remove(); res(); }, 700); } }, 800); return; }
+        ball.src = src('wobble' + (++w)); ball.classList.remove('wobble'); void ball.offsetWidth; ball.classList.add('wobble'); sfx('wobble'); setTimeout(next, 1000);
       };
       next();
-    }, 700);
+    }, 1350);
   });
   const xpOf = (a) => Math.round(def.exp * expLevelMul(a.lv, eLv) * (opts.trainer && !bossNow() ? 1.5 : 1) * (1 + villageBoost() * 0.5) * (hasBadge('forest') ? 1.15 : 1) * (hasBadge('sky') ? 1.15 : 1) * (hasBadge('dragon') ? 1.15 : 1) * (abilityOf(a.id) === 'wise' ? 1.15 : 1) * (holdOf(a).exp || 1) * ((buff && buff.exp) || 1));
   const gainExp = async () => {
@@ -808,7 +811,7 @@ export async function runBattle(enemyId0, opts = {}) {
     xpLog.push([monName(a), xp, false]); msg(`${xp} の けいけんちを てにいれた!`); a.exp = (a.exp || 0) + xp; await sleep(900);
     a.bond = (a.bond || 0) + 1;   // いっしょに たたかうと なかよしに
     while (a.exp >= needExp(a.lv, a.id)) {
-      const before = knownOf(a), oldLv = a.lv, oldSt = monStats(a); a.exp -= needExp(a.lv, a.id); a.lv++; a.hp = hpOf({ ...a, hp: null }); draw(); sfx('quest'); msg(`${monName(a)} は レベル ${a.lv} に あがった!`); await levelPopup(monName(a), oldLv, a.lv, oldSt, monStats(a));
+      const before = knownOf(a), oldLv = a.lv, oldSt = monStats(a); a.exp -= needExp(a.lv, a.id); a.lv++; a.hp = hpOf({ ...a, hp: null }); draw(); sfx('levelup'); msg(`${monName(a)} は レベル ${a.lv} に あがった!`); await levelPopup(monName(a), oldLv, a.lv, oldSt, monStats(a));
       await learnNew(a, before);
       const ev = GD.MONSTERS[a.id].evolvesTo; if (ev && a.lv >= ev.level && GD.MONSTERS[ev.id]) await evolve(a, ev.id);
     }
@@ -819,7 +822,7 @@ export async function runBattle(enemyId0, opts = {}) {
       xpLog.push([nm, gain, !full]); m.exp = (m.exp || 0) + gain; if (full) m.bond = (m.bond || 0) + 1;
       msg(`${nm} も ${gain} の けいけんちを てにいれた!${full ? '' : '(ひかえ)'}`); await sleep(800);
       while (m.exp >= needExp(m.lv, m.id)) {
-        const before = knownOf(m), oldLv = m.lv, oldSt = monStats(m), alive = hpOf(m) > 0; m.exp -= needExp(m.lv, m.id); m.lv++; if (alive) m.hp = null; sfx('quest');
+        const before = knownOf(m), oldLv = m.lv, oldSt = monStats(m), alive = hpOf(m) > 0; m.exp -= needExp(m.lv, m.id); m.lv++; if (alive) m.hp = null; sfx('levelup');
         msg(`${nm} は レベル ${m.lv} に あがった!`); await levelPopup(nm, oldLv, m.lv, oldSt, monStats(m));
         movesOf(m); for (const sk of knownOf(m).filter(x => !before.includes(x))) if (m.moves.length < 4) { m.moves.push(sk); msg(`${nm} は ${GD.SKILLS[sk].name} を おぼえた!`); await sleep(1000); }
         const ev2 = GD.MONSTERS[m.id].evolvesTo; if (ev2 && m.lv >= ev2.level && GD.MONSTERS[ev2.id]) { const old = nm; if (await evoOverlay(GD.MONSTERS[m.id].image, GD.MONSTERS[ev2.id].image, old, GD.MONSTERS[ev2.id].name)) { m.id = ev2.id; state.mdex[ev2.id] = 2; msg(`${old} は ${monName(m)} に しんかした!`); await sleep(1000); } else { msg('なにも おきなかった…'); await sleep(1000); } }
@@ -927,7 +930,7 @@ export async function runBattle(enemyId0, opts = {}) {
         const hpR = e.hp / e.maxHp, base = Math.min(0.9, 0.15 + (1 - hpR) * 0.6), luckB = monStats(a).luck * 0.004;
         const chance = bl.mult === Infinity ? 1 : Math.min(1, base * bl.mult * (def.catchPenalty || 1) + luckB + (abilityOf(a.id) === 'catcher' ? 0.06 : 0)), ok = Math.random() < chance;
         await captureAnim(bl.anim, ok);
-        if (ok) { msg(`${def.name} を なかまに した!`); sfx('quest'); await sleep(1100); state.mdex[enemyId] = 2; if (state.party.length < 6) { const nmon = { id: enemyId, lv: e.lv, exp: 0, hp: null, ball: v }; state.party.push(nmon); await askNick(nmon); } else {   // てもちが 6ぴきなら ぼくじょうへ おくる(むらで いれかえできる)
+        if (ok) { msg(`${def.name} を なかまに した!`); await sleep(1900); state.mdex[enemyId] = 2; if (state.party.length < 6) { const nmon = { id: enemyId, lv: e.lv, exp: 0, hp: null, ball: v }; state.party.push(nmon); await askNick(nmon); } else {   // てもちが 6ぴきなら ぼくじょうへ おくる(むらで いれかえできる)
           state.pasture = state.pasture || [];
           if (state.pasture.length < 12) { const nmon = { id: enemyId, lv: e.lv, exp: 0, hp: null, ball: v }; state.pasture.push(nmon); msg(`てもちが いっぱいなので ${def.name} は なかまの ぼくじょうに おくられた!`); await sleep(1500); msg('むらの あずかりパソコンで てもちと いれかえられるよ'); await sleep(1500); }
           else { msg('ぼくじょうも いっぱいなので 野に かえした…'); await sleep(1100); }
