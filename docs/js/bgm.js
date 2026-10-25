@@ -171,11 +171,15 @@ for (const k of ['battle', 'battle2', 'battle3']) TRACKS['chip_' + k] = JSON.par
 // GBA風 どうどうパターン: トレーナー・でんせつ・ボス用の コピー
 const GBA_SRC = { gba_trainer: 'battle_trainer', gba_legend: 'battle_legend', gba_boss: 'boss', gba_boss2: 'boss2' };
 for (const [k, v] of Object.entries(GBA_SRC)) TRACKS[k] = JSON.parse(JSON.stringify(TRACKS[v]));
+// ピアノ主役パターン: ピアノ=イントロ+しゅせんりつ / ストリングス=きんぱくの ばんそう+メロディ補強 / 金管=サビ / ベース+ドラム=はやさ
+const PF_SRC = { pf_battle: 'battle', pf_battle2: 'battle2', pf_battle3: 'battle3', pf_trainer: 'battle_trainer', pf_boss: 'boss', pf_boss2: 'boss2' };
+for (const [k, v] of Object.entries(PF_SRC)) TRACKS[k] = JSON.parse(JSON.stringify(TRACKS[v]));
 // きょくの てんかい: sty=がっきの ならべかた / intro=イントロの しょうせつすう / lift=さいごの 8しょうせつで あげる はんおん / brk=いったん しずまる しょうせつ(つぎで ばくはつ) / riser=もりあげの ノイズ
 const PLAN = {
   village: { sty: 'folk' }, f_forest: { sty: 'folk' }, f_lake: { sty: 'folk' }, f_grove: { sty: 'folk' }, f_sun: { sty: 'bright', lift: 2 }, f_sky: { sty: 'sacred' }, f_cosmos: { sty: 'sacred' }, f_temple: { sty: 'sacred', lift: 2 },
   f_ghost: { sty: 'dark' }, f_castle: { sty: 'dark', lift: 2 }, f_volcano: { sty: 'dark', lift: 2 }, f_dragon: { sty: 'epic', lift: 2, riser: 1 }, f_end: { sty: 'epic', lift: 2, riser: 1, brk: 15 },
   gba_trainer: { intro: 2, lift: 2 }, gba_legend: { intro: 2, lift: 2, brk: 15 }, gba_boss: { intro: 2, lift: 2, brk: 15 }, gba_boss2: { intro: 2, lift: 2, brk: 15 },
+  pf_battle: { intro: 2, lift: 2 }, pf_battle2: { intro: 2, lift: 2 }, pf_battle3: { intro: 2, lift: 2 }, pf_trainer: { intro: 2, lift: 2 }, pf_boss: { intro: 2, lift: 2, riser: 1, brk: 15 }, pf_boss2: { intro: 2, lift: 2, riser: 1, brk: 15 },
   chip_battle: { lift: 2 }, chip_battle2: { lift: 2 }, chip_battle3: { lift: 2 },
   battle: { sty: 'epic', intro: 2, lift: 2, riser: 1 }, battle2: { sty: 'epic', intro: 2, lift: 2, riser: 1 }, battle3: { sty: 'epic', intro: 2, lift: 2, riser: 1 }, battle_trainer: { sty: 'epic', intro: 2, lift: 2, riser: 1 },
   battle_legend: { sty: 'epic', sac: 1, intro: 2, lift: 2, riser: 1, brk: 15 }, boss: { sty: 'epic', intro: 2, lift: 2, riser: 1, brk: 15 }, boss2: { sty: 'epic', intro: 2, lift: 2, riser: 1, brk: 15 }, boss_final: { sty: 'epic', sac: 1, intro: 2, lift: 2, riser: 1, brk: 15 },
@@ -216,6 +220,21 @@ function battleArr(tr) {
   tr.L_bass = [{ i: 'ebass', v: 0.2, p: '1818181818181858' }];
   tr.L_drums = [/^boss/.test(tr.name) ? DR.fightB : DR.fight];
 }
+function pfArr(tr) {
+  tr.pf = true; const sc = SCALES[tr.mode || 'major'], harm = (bars) => bars.map(b => b.map(([st, m, len]) => {
+    const rel = m - tr.key, oc = Math.floor(rel / 12), i = sc.indexOf(((rel % 12) + 12) % 12); if (i < 0) return [st, m - 4, len];
+    const j = i - 2; return [st, tr.key + 12 * (oc + Math.floor(j / 7)) + sc[((j % 7) + 7) % 7], len]; }));
+  const groups = new Map(); for (const l of tr.L_lead) { if (!(l.v >= 0.15 || l.i === 'brass')) continue; const k = l.m || JSON.stringify(l.notes); (groups.get(k) || groups.set(k, []).get(k)).push(l); }
+  const mel = [...groups.values()].map(g => g.length > 1 ? { ...g[0], pass: undefined } : g[0]), out = [];
+  for (const l of mel) {
+    out.push({ ...l, i: 'piano', v: 0.2, r: 0.35, leg: 1.2 }, { ...l, i: 'piano', v: 0.08, oct: -1, r: 0.35, leg: 1.2 },
+      { ...l, i: 'sleg', v: 0.08, pass: 2, bars_: l.bars_, r: 0.35 }, { ...l, i: 'sleg', v: 0.06, pass: 2, bars_: harm(l.bars_), r: 0.35 }, { ...l, i: 'brass', v: 0.13, pass: 2, r: 0.3 });
+  }
+  tr.L_lead = out; tr.L_pad = [{ i: 'strings', v: 0.06, r: 0.4 }]; tr.L_stab = [{ i: 'trumpet', v: 0.09, p: 'x..x..x.x..x..x.', up: 12, len: 1.2, pass: 3 }];
+  tr.L_arp = [{ i: 'sstac', v: 0.05, p: '0120120120120120', up: 24 }, { i: 'sstac', v: 0.03, p: '2102102102102102', up: 36, pass: 2 }];
+  tr.L_bass = [{ i: 'ebass', v: 0.2, p: '1818181818181858' }];
+  tr.L_drums = [/^pf_boss/.test(tr.name) ? DR.fightB : DR.fight];
+}
 function gbaArr(tr) {   // ブラス=しゅせんりつ・ファンファーレ / シンセ=わおんの あつみ・かざり / ベース=どっしり / ドラム=どうどう
   const main = tr.L_lead.filter(l => l.v >= 0.15 || l.i === 'brass' || l.i === 'trumpet' || l.i === 'lead');
   tr.L_lead = main.map(l => ({ ...l, i: 'brass', v: 0.17, r: 0.3 }));
@@ -248,7 +267,7 @@ for (const [name, tr] of Object.entries(TRACKS)) {
     let L = tr[k]; if (!L) { tr['L_' + k] = []; continue; } if (!Array.isArray(L)) L = [L]; tr['L_' + k] = L;
     for (const l of L) { if (l.m) l.bars_ = parseMel(l.m, tr, name); else if (l.notes) l.bars_ = splitLegacy(l.notes, tr.chords.length); }
   }
-  orchestrate(tr); tr.name = name; if (/^gba_/.test(name)) gbaArr(tr); else if (/^chip_/.test(name)) chipArr(tr); else if (/^(battle|boss)/.test(name)) battleArr(tr);
+  orchestrate(tr); tr.name = name; if (/^pf_/.test(name)) pfArr(tr); else if (/^gba_/.test(name)) gbaArr(tr); else if (/^chip_/.test(name)) chipArr(tr); else if (/^(battle|boss)/.test(name)) battleArr(tr);
 }
 
 // ---------- オーディオ ----------
@@ -345,6 +364,13 @@ const on = (l, P) => !l.pass || l.pass === P || (P === 3 && l.pass === 2);
 const ch = (p, st) => p[st % p.length];
 function scheduleIntro(tr, s, t, sd) { chipMode = !!tr.chip;   // イントロ: ひくい ストリングス+ティンパニ→スネアロール→ブラスの いっぱつ
   const ct = tr.ct[0], bi = Math.floor(s / 16), st = s % 16, last = bi === tr.intro - 1, g = tr.g;
+  if (tr.pf) {   // ピアノの イントロ: ゆっくり アルペジオ → さいごの しょうせつは かけあがり
+    if (st === 0) { for (const m of ct) voice('sleg', mtof(m), t, sd * 16, 0.045 * g, { r: 0.5 }); if (bi === 0) perc('boom', t, 0.4 * g); }
+    const ix = last ? st : st / 2;
+    if (last || st % 2 === 0) voice('piano', mtof(ct[ix % 3] + 12 * (last ? Math.floor(st / 5) : Math.floor((ix % 6) / 3)) + 24), t, sd * 2, (last ? 0.12 + st * 0.006 : 0.14) * g, { r: 0.4 });
+    if (last) { if (st >= 8) perc('s', t, (0.05 + (st - 8) * 0.04) * g); if (st === 15) perc('t', t, 0.3 * g); }
+    return;
+  }
   if (st === 0) { for (const m of ct) voice(bi === 0 ? 'strings' : 'choir', mtof(m), t, sd * 16, 0.06 * g, { r: 0.6 }); voice('cello', mtof(ct[0] - 12), t, sd * 16, 0.1 * g, {}); if (bi === 0) perc('boom', t, 0.5 * g); if (tr.sty === 'epic') riser(t, sd * 16 * tr.intro, 0.1 * g); }
   if (last) { if ([0, 4, 8, 10, 12, 13, 14, 15].includes(st)) perc('t', t, (0.25 + st * 0.02) * g, 1 + (15 - st) * 0.03); if (st >= 8) perc('s', t, (0.05 + (st - 8) * 0.04) * g); if (st === 15) { for (const m of ct) voice('brass', mtof(m + 12), t, sd * 2, 0.1 * g, {}); } }
   else if (st % 4 === 0) perc('t', t, 0.22 * g, 1.2 - (st / 16) * 0.2);
@@ -383,17 +409,17 @@ function startNow(name) {
   if (!cfg.bgm || !name || !TRACKS[name]) { cur = null; return; }
   cur = name; step = -(TRACKS[name].intro || 0) * 16; nextT = 0; tbus = trackBus(); timer = setInterval(tick, 80); tick();
 }
-const GBA_ALT = { battle_trainer: 'gba_trainer', battle_legend: 'gba_legend', boss: 'gba_boss', boss2: 'gba_boss2' };
+const GBA_ALT = { battle_trainer: ['gba_trainer', 'pf_trainer'], battle_legend: ['gba_legend'], boss: ['gba_boss', 'pf_boss'], boss2: ['gba_boss2', 'pf_boss2'] };
 function resolve(name) {
   if (name === 'field') return fieldTheme;
-  if (name === 'battle') { const pool = ['battle', 'battle2', 'battle3', 'chip_battle', 'chip_battle2', 'chip_battle3'].filter(x => x !== lastBattle); lastBattle = pool[Math.floor(Math.random() * pool.length)]; return lastBattle; }
+  if (name === 'battle') { const pool = ['battle', 'battle2', 'battle3', 'chip_battle', 'chip_battle2', 'chip_battle3', 'pf_battle', 'pf_battle2', 'pf_battle3'].filter(x => x !== lastBattle); lastBattle = pool[Math.floor(Math.random() * pool.length)]; return lastBattle; }
   const alt = GBA_ALT[name];
-  if (alt && Math.random() < 0.5) return alt;
+  if (alt) { const o = [name, ...alt]; return o[Math.floor(Math.random() * o.length)]; }
   return name;
 }
 export function playBgm(name) {
   want = name; if (!ensure()) return;   // まだ音が使えない(タッチしたら はじまる)
-  if (timer && cur && GBA_ALT[name] === cur) return; const to = resolve(name); if (to === cur && timer) return; startNow(to);
+  if (timer && cur && (GBA_ALT[name] || []).includes(cur)) return; const to = resolve(name); if (to === cur && timer) return; startNow(to);
 }
 export function setFieldBgm(fid) { fieldTheme = 'f_' + fid; if (!TRACKS[fieldTheme]) fieldTheme = 'f_forest'; playBgm('field'); }
 export function stopBgm() { want = null; cur = null; clearInterval(timer); timer = null; fadeOut(tbus); tbus = null; }
