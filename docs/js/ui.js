@@ -447,7 +447,7 @@ function renderPanel() {
       body.innerHTML = `<p class="hint">あそびやすさを ととのえよう。</p>
         <div class="row"><div class="grow">バトルの はやさ<small>メッセージや えんしゅつの スピード</small></div>${sbtn(1, 'ふつう')}${sbtn(1.6, 'はやい')}${sbtn(2.5, 'さいそく')}</div>
         <div class="row"><div class="grow">オートセーブの おしらせ<small>セーブした とき 画面の すみに ちいさく ひょうじ</small></div><button class="pill ${asv ? 'sel' : ''}" data-as="${asv ? 0 : 1}">${asv ? 'ひょうじする' : 'ひょうじしない'}</button></div>
-        <div class="row"><div class="grow">2ひきで たたかう<small>ぬし・トレーナーせんで 2ひきめが サポートする</small></div><button class="pill ${asist ? 'sel' : ''}" data-as2="${asist ? 0 : 1}">${asist ? 'する' : 'しない'}</button></div>
+        <div class="row"><div class="grow">2ひきバトル<small>トレーナーが 2ひき ならんで たたかってくる ときに、こちらも 2ひき だす</small></div><button class="pill ${asist ? 'sel' : ''}" data-as2="${asist ? 0 : 1}">${asist ? 'する' : 'しない'}</button></div>
         <div class="row"><div class="grow">しょうエネモード<small>30フレーム・かげなし・くさ すくなめで バッテリーを ながもちさせる(きりかえると ゲームを よみこみなおすよ)</small></div><button class="pill ${ECO ? 'sel' : ''}" data-eco="${ECO ? 0 : 1}">${ECO ? 'ON' : 'OFF'}</button></div>
         <div class="row"><div class="grow">データを かきだす<small>セーブを ファイルに ほぞん(バックアップ)</small></div><button class="pill" id="sbEx">かきだす</button></div>
         <div class="row"><div class="grow">データを よみこむ<small>かきだした ファイルから もどす(いまの データは きえるよ)</small></div><button class="pill" id="sbIm">よみこむ</button><input type="file" id="sbFile" accept=".json,application/json" hidden></div>

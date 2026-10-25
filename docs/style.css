@@ -464,3 +464,15 @@ body:not(.touch) #hotbar .tog span { display: none; }
 .mbtns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .mbtns .pill { flex: 1 0 28%; padding: 8px 6px; }
 .mbtns .pill.sub { background: #6a5a42; color: #e8dcc0; }
+
+/* 2ひきバトル(あいても こちらも 2ひき) */
+#bt.dbl .bt-card { min-width: 0; width: 38%; padding: 4px 8px; font-size: 11px; }
+#bt.dbl .bt-card .hp { height: 6px; margin-top: 3px; }
+#bt.dbl .bt-card .tys, #bt.dbl .bt-card .wkrow { display: none; }
+#bt.dbl .bt-card .hpn { font-size: 10px; margin-top: 1px; }
+#bt.dbl .bt-e { left: 2%; top: 2%; }
+#bt.dbl .bt-e2 { left: auto; right: 2%; top: 2%; }
+#bt.dbl .bt-a { right: auto; left: 2%; bottom: 2%; }
+#bt.dbl .bt-a2 { left: auto; right: 2%; bottom: 2%; }
+.bt-aimg2 { transform: scaleX(-1); }
+.bt-aimg2.faint { transform: scaleX(-1) translateY(24px) scale(.8); }

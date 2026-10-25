@@ -8,7 +8,7 @@ import { sfx, unlockAudio } from './audio.js';
 import { lawnKit } from './world.js';
 import { BADGES, DAY_SECONDS, DROP_BY_ELEMENT, ITEMS, HEAL, EVO_STONES } from './data.js';
 import { playBgm } from './bgm.js';
-import { runBattle, markCaught, giveStarter, giveMon, healParty, questData } from './battle.js';
+import { runBattle, markCaught, giveStarter, giveMon, healParty, questData, assistOn } from './battle.js';
 
 const $ = (s) => document.querySelector(s);
 const V3 = THREE.Vector3;
@@ -412,8 +412,15 @@ async function makeTrainers() {
   const models = {};
   for (const g of ['male', 'female']) { try { models[g] = await loader.loadAsync(`./assets/human_${g}_lite.glb`); } catch (e) { console.warn('trainer model failed', e); return; } }
   spots.forEach(([x, z], i) => {
-    const [name, gender] = TRAINER_NAMES[(fi + i * 2) % TRAINER_NAMES.length], wild = WILD[(fi + i) % WILD.length][0], b = GD.MONSTERS[wild];
-    const over = { level: b.level + k.lv + 2, hp: Math.round(b.hp * k.hp * 1.15), atk: Math.round(b.atk * k.atk * 1.05), def: Math.round(b.def * k.def * 1.05), spd: Math.round(b.spd * k.spd), exp: Math.round(b.exp * k.exp * 1.6), money: Math.round(b.money * k.money * 2.5) };
+    const [name, gender] = TRAINER_NAMES[(fi + i * 2) % TRAINER_NAMES.length];
+    // もっている なかまの かず(1〜3ひき。あとの フィールドほど おおめ)。1ぴきだけの ときは すこし レベルが たかい
+    const roll = ((fi * 7 + i * 13 + 5) * 37) % 100, size = fi < 2 ? (roll < 60 ? 1 : 2) : fi < 6 ? (roll < 30 ? 1 : roll < 75 ? 2 : 3) : (roll < 15 ? 1 : roll < 55 ? 2 : 3), share = size === 1 ? 1 : 0.75;
+    const team = [], used = new Set();
+    for (let j = 0; team.length < size && j < 12; j++) {
+      const wid = WILD[(fi + i + j * 3) % WILD.length][0]; if (used.has(wid) || !GD.MONSTERS[wid]) continue; used.add(wid); const b = GD.MONSTERS[wid];
+      team.push({ id: wid, over: { level: b.level + k.lv + 2 + (size === 1 ? 3 : 0), hp: Math.round(b.hp * k.hp * 1.15), atk: Math.round(b.atk * k.atk * 1.05), def: Math.round(b.def * k.def * 1.05), spd: Math.round(b.spd * k.spd), exp: Math.round(b.exp * k.exp * 1.6 * share), money: Math.round(b.money * k.money * 2.5 * share) } });
+    }
+    const wild = team[0].id, over = team[0].over;
     const root = models[gender].scene.clone(true); root.traverse(o => { if (o.isMesh && !o.geometry.attributes.normal) o.geometry.computeVertexNormals(); });
     const box = new THREE.Box3().setFromObject(root), sz = box.getSize(new V3()), c = box.getCenter(new V3()), s = 3.2 / sz.y;
     root.scale.setScalar(s); root.position.set(-c.x * s, -box.min.y * s, -c.z * s);
@@ -422,7 +429,7 @@ async function makeTrainers() {
     const mt = new THREE.CanvasTexture(mk); mt.colorSpace = THREE.SRGBColorSpace; const mark = new THREE.Sprite(new THREE.SpriteMaterial({ map: mt, transparent: true, depthWrite: false })); mark.scale.set(0.9, 0.9, 1); mark.position.y = 4.0; outer.add(mark);
     const circ = { x, z, r: 0.9 }; circles.push(circ);
     const key = FID + '_' + i;
-    trainers.push({ key, name, mon: wild, over, x, z, outer, mark, circ, hx: x, hz: z, hd: R(0, 6.28), want: R(0, 6.28), wt: R(1, 3), tx: x, tz: z, walk: false, sp: 0, lines: [`${name}: やあ! きみも ぼうけんしゃ かい?`, `${name}: ぼくの なかまと しょうぶしよう! まけないよ!`], afterLines: [`${name}: つよいね! また きたえておくよ。`] });
+    trainers.push({ key, name, mon: wild, over, team, ball: fi < 3 ? 'nakama_ball' : fi < 7 ? 'super_ball' : 'hyper_ball', x, z, outer, mark, circ, hx: x, hz: z, hd: R(0, 6.28), want: R(0, 6.28), wt: R(1, 3), tx: x, tz: z, walk: false, sp: 0, lines: [`${name}: やあ! きみも ぼうけんしゃ かい?`, `${name}: ぼくの なかまと しょうぶしよう! まけないよ!`], afterLines: [`${name}: つよいね! また きたえておくよ。`] });
   });
 }
 async function talkTrainer(t) {
@@ -475,7 +482,7 @@ async function spotTrainer(t) {
 }
 async function challengeTrainer(t) {
   if (busy) return; busy = true; sfx('quest'); fade(true); await new Promise(r => setTimeout(r, 700));
-  const res = await runBattle(t.mon, { boss: t.over, trainer: t.name, bg: F.bg, wx: WX, hour: hourNow(), onBossWin: async (msg, sleep) => { state.trainers[t.key] = 1; msg(`${t.name} との しょうぶに かった!`); sfx('quest'); await sleep(1600); } });
+  const res = await runBattle(t.mon, { boss: t.over, team: t.team, double: t.team.length >= 2 && assistOn(), trainerBall: t.ball, trainer: t.name, bg: F.bg, wx: WX, hour: hourNow(), onBossWin: async (msg, sleep) => { state.trainers[t.key] = 1; msg(`${t.name} との しょうぶに かった!`); sfx('quest'); await sleep(1600); } });
   save(); fade(false); grace = 6; encDist = 0; ui.setCoins(); tCool = 5;
   if (res === 'lose') { goVillage(true); return; }
   busy = false;

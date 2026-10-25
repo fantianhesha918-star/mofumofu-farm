@@ -33,6 +33,9 @@ export function questData() {
   });
 }
 const img = (p) => 'quest/' + p;
+// 2ひきバトル用の はいけい(そとの ばしょごとに 2ひき ならぶ ばしょの えが ある ものだけ)。あしもとの いちは DBL_AN(800x1200の ざひょう)
+const DBL_BG = new Set([]);
+const DBL_AN = {};
 // 画像の下の透明な余白の割合(足もとを台に合わせるため)
 function bottomPad(el) {
   try { const c = document.createElement('canvas'), W = 48, H = 48; c.width = W; c.height = H; const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(el, 0, 0, W, H); const d = g.getImageData(0, 0, W, H).data;
@@ -217,28 +220,45 @@ export const assistOn = () => { try { return localStorage.getItem('chinchilla-ra
 
 
 // 1戦。結果: 'win' | 'lose' | 'run' | 'caught'
-export async function runBattle(enemyId, opts = {}) {
+export async function runBattle(enemyId0, opts = {}) {
+  let enemyId = enemyId0;
   await questData();
   if (!state.party.length) giveStarter();
-  const base = GD.MONSTERS[enemyId], def = { ...base, ...(opts.boss || {}), ...(opts.over || {}) }, eLv = def.level, e = { id: enemyId, lv: eLv, maxHp: def.hp, hp: def.hp, atk: def.atk, def: def.def, spd: def.spd, ...magicOf(enemyId, def.element, def.atk, def.def) };
-  if (!state.mdex[enemyId]) state.mdex[enemyId] = 1;
-  e.ab = abilityOf(enemyId); let buff = null, aFort = false, eFort = false;
-  const E = { stg: { atk: 0, def: 0, spd: 0 }, ail: null }, fxMap = new Map();
+  // ---- あいて(トレーナーは 1〜3ひき。ダブルのときは さいしょの 2ひきが でる)。いま はたらいている あいて/こちらを「コンテキスト」に いれて つかう ----
+  const mkFoe = (id, ov) => {
+    const base = GD.MONSTERS[id], d = { ...base, ...(ov || {}) }, o = { id, lv: d.level, maxHp: d.hp, hp: d.hp, atk: d.atk, def: d.def, spd: d.spd, ...magicOf(id, d.element, d.atk, d.def) };
+    if (!state.mdex[id]) state.mdex[id] = 1; o.ab = abilityOf(id);
+    return { id, def: d, e: o, E: { stg: { atk: 0, def: 0, spd: 0 }, ail: null }, fort: false, ball: opts.trainerBall || 'nakama_ball' };
+  };
+  const foeList = (opts.team && opts.team.length ? opts.team : [{ id: enemyId0, over: { ...(opts.boss || {}), ...(opts.over || {}) } }]).map(m => mkFoe(m.id, m.over));
+  const dbl = !!(opts.double && foeList.length >= 2);   // あいてが 2ひき どうじに でる たたかい
+  const slotsE = [foeList[0], dbl ? foeList[1] : null], reserveE = foeList.slice(dbl ? 2 : 1);
+  let cur = slotsE[0], curE = 0, def = cur.def, e = cur.e, E = cur.E, eLv = def.level;
+  enemyId = cur.id;
+  const useE = (k) => { cur = slotsE[k]; curE = k; eImg = eImgs[k]; enemyId = cur.id; def = cur.def; e = cur.e; E = cur.E; eLv = def.level; };
+  let buff = null, aFort = false;
+  const fxMap = new Map();
   const fought = new Set();   // このバトルで でた なかま
-  let guarding = false, bossPhase = 0, chargeT = 0, charged = false, sup = null;   // ぼうぎょ・ぬしの へんか・サポートの なかま
+  let guarding = false, bossPhase = 0, chargeT = 0, charged = false;   // ぼうぎょ・ぬしの へんか
   const xpLog = [];   // じょうたいいじょう・のうりょくの ランク(このバトルだけ)
-  const sd = (side) => { if (side === 'e') return E; const m = state.party[ai]; return fxMap.get(m) || fxMap.set(m, { stg: { atk: 0, def: 0, spd: 0 }, ail: null }).get(m); };
+  const sdOf = (m) => fxMap.get(m) || fxMap.set(m, { stg: { atk: 0, def: 0, spd: 0 }, ail: null }).get(m);
+  const sd = (side) => side === 'e' ? E : sdOf(state.party[ai]);
   let ai = state.party.findIndex(m => hpOf(m) > 0);
   if (ai < 0) { state.party[0].hp = 1; ai = 0; }   // 全員たおれていても、先頭が1だけ元気に
+  const slotsA = [{ ai, guard: false }, null]; let curA = 0, aImg = null, eImg = null; const aImgs = [], eImgs = [], cardsA = [], cardsE = [];
+  if (dbl) { const j = state.party.findIndex((m, i) => i !== ai && hpOf(m) > 0); if (j >= 0) slotsA[1] = { ai: j, guard: false }; }   // こちらも 2ひき(いきのこりが いれば)
+  const useA = (k) => { curA = k; ai = slotsA[k].ai; aImg = aImgs[k]; };
+  const bgFile = dbl && DBL_BG.has(opts.bg) ? opts.bg.replace('.webp', '_d.webp') : opts.bg;
   const root = document.createElement('div'); root.id = 'bt';
-  root.innerHTML = `<div class="bt-field" style="--bg:url(${img('assets/battlefields/' + (opts.bg || 'battle_grass.webp'))})"><div class="bt-bg"></div>
-    <div class="bt-card bt-e"><b class="n"></b><span class="lv"></span><div class="tys"></div><div class="hp"><i></i></div></div>
-    <img class="bt-img bt-eimg" alt="">
-    <div class="bt-card bt-a"><b class="n"></b><span class="lv"></span><div class="tys"></div><div class="hp"><i></i></div><small class="hpn"></small><div class="xp"><i></i></div></div>
-    <img class="bt-img bt-aimg" alt="">
+  const cardH = (c, ally) => `<div class="bt-card ${c}"><b class="n"></b><span class="lv"></span><div class="tys"></div><div class="hp"><i></i></div>${ally ? '<small class="hpn"></small><div class="xp"><i></i></div>' : ''}</div>`;
+  root.innerHTML = `<div class="bt-field" style="--bg:url(${img('assets/battlefields/' + (bgFile || 'battle_grass.webp'))})"><div class="bt-bg"></div>
+    ${cardH('bt-e')}<img class="bt-img bt-eimg" alt="">${cardH('bt-e bt-e2')}<img class="bt-img bt-eimg bt-eimg2" alt="" hidden>
+    ${cardH('bt-a', 1)}<img class="bt-img bt-aimg" alt="">${cardH('bt-a bt-a2', 1)}<img class="bt-img bt-aimg bt-aimg2" alt="" hidden>
     <div class="bt-pop"></div>
   </div><div class="bt-ui"><div class="bt-msg"></div><div class="bt-cmd"></div></div>`;
+  if (dbl) root.classList.add('dbl');
   document.body.appendChild(root);
+  root.querySelectorAll('.bt-eimg').forEach(x => eImgs.push(x)); root.querySelectorAll('.bt-aimg').forEach(x => aImgs.push(x)); root.querySelectorAll('.bt-e').forEach(x => cardsE.push(x)); root.querySelectorAll('.bt-a').forEach(x => cardsA.push(x)); aImg = aImgs[0]; eImg = eImgs[0];
   try { startSky($('.bt-field', root), opts.bg || 'battle_grass.webp'); } catch (e) { console.warn('sky failed', e); }
   // 背景の「丸い台」にモンスターの足もとを合わせる(背景は cover 表示なので、表示倍率からピクセル位置を計算)
   const layout = () => {
@@ -248,13 +268,13 @@ export async function runBattle(enemyId, opts = {}) {
     const BG_AN = { 'battle_castle.webp': { e: [567, 433], a: [233, 817] }, 'battle_temple.webp': { e: [550, 417], a: [293, 867] }, 'battle_sun.webp': { e: [567, 433], a: [283, 817] }, 'battle_grove.webp': { e: [500, 383], a: [300, 850] }, 'battle_dragon.webp': { e: [500, 400], a: [300, 867] }, 'battle_end.webp': { e: [550, 433], a: [267, 833] }, 'battle_cosmos.webp': { e: [567, 433], a: [300, 817] }, 'battle_ghost.webp': { e: [533, 423], a: [293, 800] }, 'battle_forest.webp': { e: [567, 433], a: [293, 833] }, 'battle_sky.webp': { e: [650, 383], a: [267, 800] } };
     const AN = BG_AN[opts.bg] || (opts.bg === 'battle_water.webp' ? { e: [598, 388], a: [282, 932] } : opts.bg === 'battle_volcano.webp' ? { e: [590, 588], a: [282, 892] } : opts.bg === 'battle_cave.webp' ? { e: [600, 398], a: [292, 858] } : { e: [562, 392], a: [265, 890] }), [ex, ey] = P(...AN.e), [ax, ay] = P(...AN.a), ew = Math.min(400 * s * 0.62, w * 0.5), aw = Math.min(480 * s * 0.62, w * 0.55);
     const place = (el, cx, cy, W) => { const dispH = el.naturalWidth ? W * el.naturalHeight / el.naturalWidth : 0, extra = (el._pad || 0) * dispH; el.style.width = W + 'px'; el.style.left = (cx - W / 2) + 'px'; el.style.bottom = (h - cy - 4 * s - extra) + 'px'; el.style.top = 'auto'; el.style.right = 'auto'; el.style.maxHeight = (cy - 8) + 'px'; };
-    place($('.bt-eimg', root), ex, ey, ew); place($('.bt-aimg', root), ax, ay, aw);
+    if (!dbl) { place(eImgs[0], ex, ey, ew); place(aImgs[0], ax, ay, aw); return; }
+    const DA = DBL_AN[bgFile], EP = DA ? DA.e : [[AN.e[0] - 100, AN.e[1] + 30], [AN.e[0] + 100, AN.e[1] - 25]], AP = DA ? DA.a : [[AN.a[0] - 90, AN.a[1] - 40], [AN.a[0] + 100, AN.a[1] + 25]], ewd = Math.min(400 * s * 0.5, w * 0.36), awd = Math.min(480 * s * 0.5, w * 0.4);
+    EP.forEach((pt, k) => place(eImgs[k], ...P(...pt), ewd)); AP.forEach((pt, k) => place(aImgs[k], ...P(...pt), awd));
   };
   layout(); const onR = () => layout(); addEventListener('resize', onR); setTimeout(layout, 60); const ro = new ResizeObserver(layout); ro.observe($('.bt-field', root));
   const msg = (t) => { $('.bt-msg', root).textContent = t; };
-  const pop = (side, txt, cls) => { const p = $('.bt-pop', root); p.className = 'bt-pop ' + (cls || '') + ' ' + side; p.textContent = txt; void p.offsetWidth; p.classList.add('on'); };
-  const eImg = $('.bt-eimg', root), aImg = $('.bt-aimg', root);
-  eImg.src = img(def.image); eImg.onload = () => { eImg._pad = bottomPad(eImg); layout(); };
+  const pop = (side, txt, cls) => { const p = $('.bt-pop', root), r = rectOf(imgOf(side)); p.className = 'bt-pop ' + (cls || '') + ' ' + side; p.style.left = r.x + 'px'; p.style.top = (r.y - r.h * 0.25) + 'px'; p.textContent = txt; void p.offsetWidth; p.classList.add('on'); };
   // ステータス(とくせい・りょうりバフ こみ)
   const allyStats = () => {
     const a = state.party[ai], st = { ...monStats(a) }, ab = abilityOf(a.id);
@@ -266,27 +286,37 @@ export async function runBattle(enemyId, opts = {}) {
     for (const k of ['atk', 'matk', 'def', 'mdef', 'spd']) st[k] = Math.round(st[k]); return st;
   };
   // じょうたいいじょうの アニメ(Blenderで つくった コマ送りの えを モンスターの うえに かさねる)
-  const ailEl = { a: null, e: null };
+  const ailEl = {};
   const syncAil = () => {
-    for (const side of ['a', 'e']) {
-      const S = sd(side), k = S.ail && S.ail.k; let el = ailEl[side];
-      if (!k || hpNow(side) <= 0) { if (el) { el.remove(); ailEl[side] = null; } continue; }
-      if (!el) { el = document.createElement('div'); el.className = 'ailfx'; fieldEl.appendChild(el); ailEl[side] = el; }
+    const items = [];
+    for (let k = 0; k < 2; k++) { if (slotsA[k]) { const m = state.party[slotsA[k].ai]; items.push(['a' + k, sdOf(m).ail && sdOf(m).ail.k, hpOf(m), aImgs[k]]); } else items.push(['a' + k, null, 0, null]); if (slotsE[k]) items.push(['e' + k, slotsE[k].E.ail && slotsE[k].E.ail.k, slotsE[k].e.hp, eImgs[k]]); else items.push(['e' + k, null, 0, null]); }
+    for (const [key, k, hp, im] of items) {
+      let el = ailEl[key];
+      if (!k || hp <= 0 || !im) { if (el) { el.remove(); ailEl[key] = null; } continue; }
+      if (!el) { el = document.createElement('div'); el.className = 'ailfx'; fieldEl.appendChild(el); ailEl[key] = el; }
       if (el.dataset.k !== k) { el.dataset.k = k; el.style.backgroundImage = `url(assets/ailfx/${k}.webp)`; }
-      const r = rectOf(imgOf(side)), sz = Math.max(r.w, r.h) * 1.15; el.style.width = el.style.height = sz + 'px'; el.style.left = (r.x - sz / 2) + 'px'; el.style.top = (r.y - sz / 2) + 'px';
+      const r = rectOf(im), sz = Math.max(r.w, r.h) * 1.15; el.style.width = el.style.height = sz + 'px'; el.style.left = (r.x - sz / 2) + 'px'; el.style.top = (r.y - sz / 2) + 'px';
     }
   };
   const enemySpd = () => e.spd * (e.ab === 'swift' ? 1.15 : 1) * stageMult(E.stg.spd) * (E.ail && E.ail.k === 'paralyze' ? 0.5 : 1);
   const eS = (k) => { let v = e[k]; if (k === 'atk' || k === 'matk') v *= stageMult(E.stg.atk); else v *= stageMult(E.stg.def); if (k === 'atk' && E.ail && E.ail.k === 'burn') v *= 0.75; return v; };
   const chips = (S) => (S.ail ? `<span class="ail ail-${S.ail.k}">${AIL[S.ail.k].name}</span>` : '') + Object.entries(S.stg).filter(([, n]) => n).map(([k, n]) => `<span class="bf${n < 0 ? ' dn' : ''}">${STAGE_LABEL[k]}${n > 0 ? '+' : ''}${n}</span>`).join('');
   const draw = () => {
-    const a = state.party[ai], st = monStats(a); fought.add(a); const ad = GD.MONSTERS[a.id], aHp = hpOf(a);
-    $('.bt-e .n', root).innerHTML = def.name + (state.mdex[enemyId] === 2 ? '<img class="gotmark" src="quest/assets/items/icon_ball_timothy.webp" alt="つかまえずみ">' : ''); $('.bt-e .lv', root).textContent = 'Lv' + e.lv; $('.bt-e .hp i', root).style.width = Math.max(0, e.hp / e.maxHp * 100) + '%';
-    $('.bt-a .n', root).textContent = monName(a); $('.bt-a .lv', root).textContent = 'Lv' + a.lv; $('.bt-a .hp i', root).style.width = Math.max(0, aHp / st.maxHp * 100) + '%';
-    $('.bt-e .tys', root).innerHTML = elemChip(def.element)  + chips(E) + `<div class="wkrow">${weakLine(def.element)}</div>`; $('.bt-a .tys', root).innerHTML = elemChip(ad.element)  + (buff ? `<span class="bf">UP ${buff.turns}</span>` : '') + chips(sd('a'));
-    $('.bt-a .hpn', root).textContent = `HP ${Math.max(0, aHp)} / ${st.maxHp}`; $('.bt-a .xp i', root).style.width = Math.min(100, (a.exp || 0) / needExp(a.lv, a.id) * 100) + '%';
+    for (let k = 0; k < 2; k++) {
+      const f = slotsE[k], c = cardsE[k], im = eImgs[k]; c.hidden = !f; im.hidden = !f; if (!f) continue;
+      $('.n', c).innerHTML = f.def.name + (state.mdex[f.id] === 2 ? '<img class="gotmark" src="quest/assets/items/icon_ball_timothy.webp" alt="つかまえずみ">' : ''); $('.lv', c).textContent = 'Lv' + f.e.lv; $('.hp i', c).style.width = Math.max(0, f.e.hp / f.e.maxHp * 100) + '%';
+      $('.tys', c).innerHTML = elemChip(f.def.element) + chips(f.E) + `<div class="wkrow">${weakLine(f.def.element)}</div>`;
+      if (im.dataset.src !== f.def.image) { im.dataset.src = f.def.image; im.onload = () => { im._pad = bottomPad(im); layout(); }; im.src = img(f.def.image); }
+    }
+    for (let k = 0; k < 2; k++) {
+      const sl = slotsA[k], c = cardsA[k], im = aImgs[k]; c.hidden = !sl; im.hidden = !sl; if (!sl) continue;
+      const a = state.party[sl.ai], st = monStats(a); fought.add(a); const ad = GD.MONSTERS[a.id], aHp = hpOf(a);
+      $('.n', c).textContent = monName(a); $('.lv', c).textContent = 'Lv' + a.lv; $('.hp i', c).style.width = Math.max(0, aHp / st.maxHp * 100) + '%';
+      $('.tys', c).innerHTML = elemChip(ad.element) + (buff ? `<span class="bf">UP ${buff.turns}</span>` : '') + chips(sdOf(a));
+      $('.hpn', c).textContent = `HP ${Math.max(0, aHp)} / ${st.maxHp}`; $('.xp i', c).style.width = Math.min(100, (a.exp || 0) / needExp(a.lv, a.id) * 100) + '%';
+      if (im.dataset.src !== ad.image) { im.dataset.src = ad.image; im.onload = () => { im._pad = bottomPad(im); layout(); }; im.src = img(ad.image); }
+    }
     syncAil();
-    if (aImg.dataset.src !== ad.image) { aImg.dataset.src = ad.image; aImg.onload = () => { aImg._pad = bottomPad(aImg); layout(); }; aImg.src = img(ad.image); }
   };
   // ---- わざの エフェクト(ちんちらクエストの素材) ----
   const fieldEl = $('.bt-field', root);
@@ -539,7 +569,7 @@ export async function runBattle(enemyId, opts = {}) {
     await playFx(aImg, eImg, sk, el);
     const mg = skillKind(sk) === 'magic', r = calc(mg ? st.matk : st.atk, sk.power, eS(mg ? 'mdef' : 'def'), el, def.element, st.crit / 100);
     let dmg = Math.round(r.dmg * envMul(opts.wx, opts.hour, el)); if (ab === 'pinch' && hpOf(a) < st.maxHp / 3) dmg = Math.round(dmg * 1.3); if (ab === 'typeboost' && el === ad.element) dmg = Math.round(dmg * 1.15); if (e.ab === 'thick') dmg = Math.max(1, Math.round(dmg * 0.88));
-    let held = false; if (e.ab === 'fortress' && !eFort && dmg >= e.hp && e.hp > 1) { dmg = e.hp - 1; eFort = true; held = true; }
+    let held = false; if (e.ab === 'fortress' && !cur.fort && dmg >= e.hp && e.hp > 1) { dmg = e.hp - 1; cur.fort = true; held = true; }
     if (E.ail && E.ail.k === 'freeze' && el === 'fire') { E.ail = null; }
     e.hp = Math.max(0, e.hp - dmg); sfx('pet'); await hit(eImg); draw(); pop('e', '-' + dmg, r.crit ? 'crit' : '');
     const t = tierText(r.tier, r.crit); if (t) { msg(t); await sleep(650); } else await sleep(250);
@@ -580,12 +610,6 @@ export async function runBattle(enemyId, opts = {}) {
     const a = state.party[ai], st = allyStats(), aab = abilityOf(a.id), fx = fxOf(sk), el = sk.element || def.element;
     if (sk.id === 'boss_eclipse') { msg('たいようと ブラックホールが かさなっていく…!'); sfx('no'); await sleep(1200); }
     msg(`${sk.id === 'x_big' ? sk.name : def.name + ' の ' + sk.name}!`); await sleep(350);
-    if (sup && hpOf(sup.m) > 0 && sk.power > 0 && !big && Math.random() < 0.3) {   // サポートの なかまを ねらう
-      await playFx(eImg, sup.img, sk, el); const ss = monStats(sup.m), mg2 = skillKind(sk) === 'magic', r2 = calc(eS(mg2 ? 'matk' : 'atk'), sk.power, mg2 ? ss.mdef : ss.def, el, GD.MONSTERS[sup.m.id].element, GD.CRIT_CHANCE);
-      sup.m.hp = Math.max(0, hpOf(sup.m) - r2.dmg); sfx('no'); await hit(sup.img); supDraw(); msg(`${monName(sup.m)} は ${r2.dmg} の ダメージを うけた!`); await sleep(700);
-      if (hpOf(sup.m) <= 0) { msg(`${monName(sup.m)} は たおれた…`); sup.img.classList.add('faint'); await sleep(900); sup.img.remove(); sup = null; }
-      return;
-    }
     if (sk.power === 0) {
       if (fx.foe || fx.st) await playFx(eImg, aImg, sk, el); else { eImg.classList.add('glow'); await sleep(500); eImg.classList.remove('glow'); }
       await useFx('e', fx, true); return;
@@ -599,50 +623,87 @@ export async function runBattle(enemyId, opts = {}) {
     const t = tierText(r.tier, r.crit); if (t) { msg(t); await sleep(650); } else await sleep(250);
     if (held) { msg(`${monName(a)} は ふくつの こころで こらえた!`); await sleep(800); }
     if (fx && hpOf(a) > 0) await useFx('e', fx, false);
-    guarding = false;
   };
   // ラウンドの おわり: じこさいせい / りょうりバフの ターンを へらす
-  const supDraw = () => { if (!sup) return; const st = monStats(sup.m); $('.hp i', sup.box).style.width = Math.max(0, hpOf(sup.m) / st.maxHp * 100) + '%'; };
-  const supAct = async () => {   // サポートの なかまは まいターン じどうで こうげき
-    if (!sup || hpOf(sup.m) <= 0 || e.hp <= 0) return;
-    const m = sup.m, st = monStats(m), mv = movesOf(m).filter(s => s.power > 0 && ppOf(m, s) > 0).sort((p, q) => q.power - p.power); if (!mv.length) return;
-    const sk = mv[Math.random() < 0.7 ? 0 : Math.floor(Math.random() * mv.length)], el = sk.element || GD.MONSTERS[m.id].element, mg = skillKind(sk) === 'magic';
-    m.pp = m.pp || {}; m.pp[sk.id] = Math.max(0, ppOf(m, sk) - 1);
-    msg(`${monName(m)} も ${sk.name}!`); sfx('pick'); await sleep(300); await playFx(sup.img, eImg, sk, el);
-    const r = calc(mg ? st.matk : st.atk, sk.power, eS(mg ? 'mdef' : 'def'), el, def.element, 0.05), dmg = Math.max(1, Math.round(r.dmg * 0.75 * envMul(opts.wx, opts.hour, el)));
-    e.hp = Math.max(0, e.hp - dmg); sfx('pet'); await hit(eImg); draw(); pop('e', '-' + dmg, ''); await sleep(450);
+  // ---- ボールの えんしゅつ(だす・もどす)。こちらは つかまえた ときの ボールを つかう ----
+  const ballPrefix = (id) => (ITEMS[id] && ITEMS[id].ball && ITEMS[id].ball.anim) || 'ball';
+  const ballOf = (m) => ballPrefix(m && m.ball);
+  const bsrc = (pre, n) => img(`assets/capture/capture_${pre}_${n}.webp`);
+  const sendOut = async (el, pre, fromRight) => {   // ボールを なげて、ひらいて、モンスターが とびだす
+    const fr = rectOf(el), tx = fr.x, ty = fr.y + fr.h * 0.15, fw = fieldEl.getBoundingClientRect().width, sx = fromRight ? fw + 30 : -30, sy = fr.y + fr.h * 0.4, ball = document.createElement('img');
+    el.classList.remove('faint'); el.style.visibility = 'hidden';
+    ball.className = 'capture-ball-anim'; ball.src = bsrc(pre, 'fly'); ball.style.width = '78px'; ball.style.left = '0'; ball.style.top = '0'; fieldEl.appendChild(ball); sfx('pick');
+    const kf = []; for (let i = 0; i <= 12; i++) { const t = i / 12; kf.push({ transform: `translate(${sx + (tx - sx) * t}px, ${sy + (ty - sy) * t - Math.sin(Math.PI * t) * fr.h * 0.75}px) translate(-50%, -50%) rotate(${(fromRight ? -1 : 1) * t * 540}deg)` }); }
+    const an = ball.animate(kf, { duration: 580 / battleSpeed(), easing: 'linear', fill: 'forwards' }); try { await an.finished; } catch (err) {}
+    ball.style.left = tx + 'px'; ball.style.top = ty + 'px'; an.cancel(); ball.src = bsrc(pre, 'squish'); await sleep(150);
+    ball.src = bsrc(pre, 'fail'); ball.classList.add('pop-open'); sfx('quest'); el.style.visibility = ''; el.classList.add('summon'); await sleep(650); ball.remove(); el.classList.remove('summon');
   };
+  const recall = async (el, pre, toRight) => {   // モンスターが ボールに すいこまれて、ボールが もちぬしの ほうへ もどる
+    if (el.style.visibility === 'hidden') return;
+    const r = rectOf(el), ball = document.createElement('img'); sfx('pick');
+    wa(el, [{ opacity: 1, scale: '1', filter: 'brightness(1)' }, { opacity: 1, scale: '0.9', filter: 'brightness(3) saturate(0.2)', offset: .45 }, { opacity: 0, scale: '0.08', filter: 'brightness(4)' }], { duration: 420, fill: 'none' });
+    await sleep(400); el.style.visibility = 'hidden';
+    ball.className = 'capture-ball-anim'; ball.src = bsrc(pre, 'squish'); ball.style.width = '78px'; ball.style.left = r.x + 'px'; ball.style.top = (r.y + r.h * 0.1) + 'px'; fieldEl.appendChild(ball); await sleep(240);
+    const fw = fieldEl.getBoundingClientRect().width; wa(ball, [{ left: r.x + 'px', top: (r.y + r.h * 0.1) + 'px' }, { left: (toRight ? fw + 50 : -50) + 'px', top: (r.y - r.h * 0.4) + 'px' }], { duration: 380, fill: 'forwards', easing: 'ease-in' }); await sleep(380); ball.remove();
+  };
+  const liveE = () => slotsE.map((f, k) => f && f.e.hp > 0 ? k : -1).filter(k => k >= 0);
+  const liveA = () => slotsA.map((sl, k) => sl && hpOf(state.party[sl.ai]) > 0 ? k : -1).filter(k => k >= 0);
+  // たおした/つかまえた あいての けいけんち・しょうきん・ドロップ(いまの def / ai を つかう)
+  const payFoe = async () => {
+    await gainExp(); const money = Math.round(def.money * (hasBadge('ghost') ? 1.25 : 1) * (abilityOf(state.party[ai].id) === 'greedy' ? 1.15 : 1) * (holdOf(state.party[ai]).money || 1) * (1 + monStats(state.party[ai]).luck * 0.004)); state.coins += money; xpLog.money = (xpLog.money || 0) + money; addStat('win', 1); msg(`${money} コインを てにいれた!`); sfx('coin'); await sleep(1100);
+    { const dr = rollDrops(def, !!opts.boss && !opts.trainer), names = Object.entries(dr); if (names.length) { for (const [id, n] of names) addItem(id, n); xpLog.drops = (xpLog.drops || []).concat(names); msg(names.map(([id, n]) => `${ITEMS[id].name}×${n}`).join('、') + ' を てにいれた!'); sfx('pick'); await sleep(1400); } }
+  };
+  const firstA = () => Math.max(0, slotsA.findIndex(Boolean));
+  const afterFoeFaint = async (j) => {   // あいてが たおれた: けいけんち → つぎの あいてを だす(いれば)
+    const f = slotsE[j]; useE(j);
+    if (opts.trainer) { msg(`${def.name} は たおれた!`); sfx('quest'); await sleep(700); await recall(eImgs[j], ballPrefix(f.ball), true); jingle('win'); }
+    else { eImg.classList.add('faint'); msg(`${def.name} を たおした!`); jingle('win'); await sleep(1300); }
+    useA(firstA()); await payFoe();
+    if (reserveE.length) { const nx = reserveE.shift(); slotsE[j] = nx; useE(j); draw(); msg(`${opts.trainer} は ${def.name} を くりだした!`); await sleep(500); await sendOut(eImgs[j], ballPrefix(nx.ball), true); }
+    else { slotsE[j] = null; draw(); }
+    if (!slotsE.some(Boolean)) result = 'win';
+  };
+  // こちらの モンスターが たおれた: ボールに もどして、つぎを えらんで なげる。'ok' | 'empty'(ひかえが いない) | 'lose'
+  const afterAllyFaint = async (k = curA) => {
+    const sl = slotsA[k]; if (!sl) return 'ok'; const a = state.party[sl.ai]; if (hpOf(a) > 0) return 'ok';
+    msg(`${monName(a)} は たおれた…`); sfx('no'); await sleep(900);
+    await recall(aImgs[k], ballOf(a), false);
+    const used = slotsA.map((x, j) => x && j !== k ? x.ai : -1), cand = state.party.map((m, i) => i).filter(i => hpOf(state.party[i]) > 0 && !used.includes(i));
+    if (!cand.length) { slotsA[k] = null; draw(); return slotsA.some(Boolean) ? 'empty' : 'lose'; }
+    let pick = cand[0];
+    if (cand.length > 1) {
+      msg('つぎに だす なかまを えらんでね'); const fd = (slotsE.find(Boolean) || cur).def;
+      pick = await menu(cand.map(i => { const m = state.party[i]; return { html: `${monName(m)} ${elemChip(GD.MONSTERS[m.id].element)}<small>Lv${m.lv} HP ${Math.max(0, hpOf(m))}/${monStats(m).maxHp}　${matchHint(GD.MONSTERS[m.id].element, fd.element)}</small>`, v: i }; })); cmd.innerHTML = '';
+    }
+    sl.ai = pick; sl.guard = false; sdOf(state.party[pick]).stg = { atk: 0, def: 0, spd: 0 }; if (curA === k) ai = pick; draw();
+    msg(`ゆけっ ${monName(state.party[pick])}!`); await sleep(400); await sendOut(aImgs[k], ballOf(state.party[pick]), false); return 'ok';
+  };
+  // たおれた ものを ぜんぶ しょりする(あいて → こちら)。ぜんいん たおれたら result を きめる
+  const settle = async () => {
+    for (let j = 0; j < 2; j++) if (slotsE[j] && slotsE[j].e.hp <= 0) await afterFoeFaint(j);
+    if (result) return;
+    for (let k = 0; k < 2; k++) if (slotsA[k] && hpOf(state.party[slotsA[k].ai]) <= 0) { const r = await afterAllyFaint(k); if (r === 'lose') { result = 'lose'; return; } }
+  };
+  // ラウンドの おわり: じょうたいいじょう・じこさいせい・りょうりバフ
   const roundEnd = async () => {
-    const a = state.party[ai]; guarding = false;
+    for (const sl of slotsA) if (sl) sl.guard = false;
     await bossCheck();
-    await supAct(); if (e.hp <= 0) { result = 'win'; return; }
-    for (const side of ['a', 'e']) {
+    for (let k = 0; k < 2; k++) for (const side of ['a', 'e']) {
+      if (side === 'a') { if (!slotsA[k]) continue; useA(k); } else { if (!slotsE[k]) continue; useE(k); }
       const S = sd(side); if (!S.ail || hpNow(side) <= 0 || !AIL[S.ail.k].dot) continue;
       const mx = maxOf(side), n = Math.max(1, Math.round(mx / AIL[S.ail.k].dot * (side === 'e' && opts.boss ? 0.5 : 1)));
       hurt(side, n); await hit(imgOf(side)); pop(side, '-' + n, ''); msg(`${nameOf(side)} は ${AIL[S.ail.k].name}の ダメージを うけた`); sfx('no'); await sleep(700);
-      if (S.ail.k === 'leech') { const o = side === 'a' ? 'e' : 'a'; if (hpNow(o) > 0) { healSide(o, n); await sleep(400); } }
+      if (S.ail.k === 'leech') { const o = side === 'a' ? liveE()[0] : liveA()[0]; if (o != null) { if (side === 'a') { useE(o); healSide('e', n); } else { useA(o); healSide('a', n); } await sleep(400); } }
     }
-    if (e.hp <= 0) { result = 'win'; return; }
-    if (hpOf(a) <= 0) { if (!(await afterAllyFaint())) result = 'lose'; return; }
-    if (hpOf(a) > 0 && abilityOf(a.id) === 'regen') { const mx = monStats(a).maxHp, add = Math.min(mx - hpOf(a), Math.max(1, Math.round(mx / 12))); if (add > 0) { a.hp = hpOf(a) + add; draw(); pop('a', '+' + add, 'heal'); msg(`${monName(a)} は じこさいせいで かいふくした`); await sleep(600); } }
-    { const ho = holdOf(a); if (hpOf(a) > 0 && ho.regen) { const mx = monStats(a).maxHp, add = Math.min(mx - hpOf(a), Math.max(1, Math.round(mx / ho.regen))); if (add > 0) { a.hp = hpOf(a) + add; draw(); pop('a', '+' + add, 'heal'); msg(`${monName(a)} は ${ITEMS[a.held].name}で かいふくした`); await sleep(600); } } }
-    if (e.hp > 0 && e.ab === 'regen') { const add = Math.min(e.maxHp - e.hp, Math.max(1, Math.round(e.maxHp / 12))); if (add > 0) { e.hp += add; draw(); pop('e', '+' + add, 'heal'); await sleep(500); } }
-    if (buff && buff.regen && hpOf(a) > 0) { const mx = monStats(a).maxHp, add = Math.min(mx - hpOf(a), Math.max(1, Math.round(mx * buff.regen))); if (add > 0) { healSide('a', add); msg(`${monName(a)} は ごちそうの ちからで かいふくした`); await sleep(600); } }
+    await settle(); if (result) return;
+    for (const k of liveA()) {
+      useA(k); const a = state.party[ai];
+      if (abilityOf(a.id) === 'regen') { const mx = monStats(a).maxHp, add = Math.min(mx - hpOf(a), Math.max(1, Math.round(mx / 12))); if (add > 0) { a.hp = hpOf(a) + add; draw(); pop('a', '+' + add, 'heal'); msg(`${monName(a)} は じこさいせいで かいふくした`); await sleep(600); } }
+      { const ho = holdOf(a); if (hpOf(a) > 0 && ho.regen) { const mx = monStats(a).maxHp, add = Math.min(mx - hpOf(a), Math.max(1, Math.round(mx / ho.regen))); if (add > 0) { a.hp = hpOf(a) + add; draw(); pop('a', '+' + add, 'heal'); msg(`${monName(a)} は ${ITEMS[a.held].name}で かいふくした`); await sleep(600); } } }
+      if (buff && buff.regen && hpOf(a) > 0) { const mx = monStats(a).maxHp, add = Math.min(mx - hpOf(a), Math.max(1, Math.round(mx * buff.regen))); if (add > 0) { healSide('a', add); msg(`${monName(a)} は ごちそうの ちからで かいふくした`); await sleep(600); } }
+    }
+    for (const j of liveE()) { useE(j); if (e.ab === 'regen') { const add = Math.min(e.maxHp - e.hp, Math.max(1, Math.round(e.maxHp / 12))); if (add > 0) { e.hp += add; draw(); pop('e', '+' + add, 'heal'); await sleep(500); } } }
     if (buff && --buff.turns <= 0) { msg('りょうりの こうかが きれた'); buff = null; draw(); await sleep(600); }
-  };
-  // 自分のモンスターが倒れたとき: 次を出す。全滅なら false
-  const afterAllyFaint = async () => {
-    const a = state.party[ai]; if (hpOf(a) > 0) return true;
-    msg(`${monName(a)} は たおれた…`); aImg.classList.add('faint'); await sleep(900);
-    const nx = state.party.findIndex(m => hpOf(m) > 0); if (nx < 0) return false;
-    let pick = nx;
-    if (state.party.filter(m => hpOf(m) > 0).length > 1) {
-      msg('つぎに だす なかまを えらんでね');
-      const rows = state.party.map((m, i) => ({ html: `${monName(m)} ${elemChip(GD.MONSTERS[m.id].element)}<small>Lv${m.lv} HP ${Math.max(0, hpOf(m))}/${monStats(m).maxHp}　${matchHint(GD.MONSTERS[m.id].element, def.element)}</small>`, v: i, off: hpOf(m) <= 0 }));
-      pick = await menu(rows); cmd.innerHTML = '';
-    }
-    if (sup && state.party[pick] === sup.m) { sup.box.remove(); sup = null; }
-    ai = pick; aImg.classList.remove('faint'); resetStg(); draw(); msg(`ゆけっ ${monName(state.party[ai])}!`); await sleep(800); return true;
   };
   // 新しい技: 4つに空きがあれば おぼえる。いっぱいなら どれと入れかえるか えらぶ
   const learnNew = async (a, before) => {
@@ -695,7 +756,8 @@ export async function runBattle(enemyId, opts = {}) {
   // バトルの けっか(ぜんいんの けいけんち・しょうきん・ドロップを まとめて ひょうじ)
   const resultPopup = () => new Promise(res => {
     const pop = document.createElement('div'); pop.className = 'bt-lu'; root.appendChild(pop);
-    const rows = xpLog.map(([n, g, bench]) => `<div class="lu-row"><span>${n}${bench ? ' (ひかえ)' : ''}</span><b>けいけんち +${g}</b></div>`).join('');
+    const agg = new Map(); for (const [n, g, bench] of xpLog) { const o = agg.get(n); if (o) { o[0] += g; o[1] = o[1] && bench; } else agg.set(n, [g, bench]); }
+    const rows = [...agg].map(([n, [g, bench]]) => `<div class="lu-row"><span>${n}${bench ? ' (ひかえ)' : ''}</span><b>けいけんち +${g}</b></div>`).join('');
     pop.innerHTML = `<div class="lu-box"><div class="lu-t">しょうり!</div>${rows}<div class="lu-row"><span>しょうきん</span><b>+${xpLog.money || 0} コイン</b></div>${xpLog.drops && xpLog.drops.length ? `<div class="lu-row"><span>てにいれた もの</span><b>${xpLog.drops.map(([id, n]) => ITEMS[id].name + '×' + n).join('、')}</b></div>` : ''}<div class="lu-tap">タップでつぎへ</div></div>`;
     pop.onclick = () => { sfx('ui'); pop.remove(); res(); };
   });
@@ -748,7 +810,7 @@ export async function runBattle(enemyId, opts = {}) {
     if (back) { const b = document.createElement('button'); b.className = 'back'; b.textContent = 'もどる'; b.onclick = () => { sfx('ui'); res('__back'); }; cmd.appendChild(b); }
   });
 
-  let result = null, acted0 = false;
+  let result = null;
   root.classList.add('nt'); playBgm(opts.boss && !opts.trainer ? 'boss' : 'battle'); draw(); void root.offsetWidth; requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('nt')));   // さいしょの HPバーは アニメなしで ぴったり表示
   // ---- バトルの はじまりの えんしゅつ(ふつう: アイリスワイプ / ぬし: とくべつな とうじょう) ----
   const introAnim = async () => {
@@ -759,102 +821,133 @@ export async function runBattle(enemyId, opts = {}) {
       : `<div class="sl s1"></div><div class="sl s2"></div><div class="sl s3"></div>${opts.trainer ? `<div class="ban t2"><small>VS</small><b>${opts.trainer}</b></div>` : ''}<div class="iris"></div>`;
     root.appendChild(ov); let skip = false; ov.onclick = () => { skip = true; };
     const wait = async (ms) => { const t0 = performance.now(); while (!skip && performance.now() - t0 < ms / battleSpeed()) await new Promise(r => setTimeout(r, 30)); };
-    eImg.style.visibility = 'hidden'; aImg.style.visibility = 'hidden';
+    eImgs.concat(aImgs).forEach(x => x.style.visibility = 'hidden');
     if (isBoss) {
       sfx('no'); fld.classList.add('quake'); await wait(500); sfx('quest'); await wait(1500);
       ov.classList.add('go'); sfx('quest'); await wait(260); eImg.style.visibility = ''; eImg.classList.add('enter-boss'); fld.classList.remove('quake');
       const ring = document.createElement('div'); ring.className = 'bt-ring'; ring.style.setProperty('--ec', col); const r = rectOf(eImg); ring.style.left = r.x + 'px'; ring.style.top = r.y + 'px'; fld.appendChild(ring);
       await wait(700); aImg.style.visibility = ''; aImg.classList.add('enter-a'); await wait(500); ring.remove(); eImg.classList.remove('enter-boss'); aImg.classList.remove('enter-a');
     } else {
-      const throwBall = async (el, fromRight) => {   // チモシーボールを なげて、わって なかまが とびだす
-        const fr = rectOf(el), tx = fr.x, ty = fr.y + fr.h * 0.15, fw = fld.getBoundingClientRect().width, sx = fromRight ? fw + 30 : -30, sy = fr.y + fr.h * 0.4, ball = document.createElement('img');
-        ball.className = 'capture-ball-anim'; ball.src = img('assets/capture/capture_ball_fly.webp'); ball.style.width = '78px'; ball.style.left = '0'; ball.style.top = '0'; fld.appendChild(ball); sfx('pick');
-        const kf = []; for (let i = 0; i <= 12; i++) { const t = i / 12; kf.push({ transform: `translate(${sx + (tx - sx) * t}px, ${sy + (ty - sy) * t - Math.sin(Math.PI * t) * fr.h * 0.75}px) translate(-50%, -50%) rotate(${(fromRight ? -1 : 1) * t * 540}deg)` }); }
-        const an = ball.animate(kf, { duration: 580 / battleSpeed(), easing: 'linear', fill: 'forwards' }); try { await an.finished; } catch (e) {}
-        ball.style.left = tx + 'px'; ball.style.top = ty + 'px'; an.cancel(); ball.src = img('assets/capture/capture_ball_squish.webp'); await wait(150);
-        ball.src = img('assets/capture/capture_ball_fail.webp'); ball.classList.add('pop-open'); sfx('quest'); el.style.visibility = ''; el.classList.add('summon'); await wait(650); ball.remove(); el.classList.remove('summon');
-      };
       sfx('pick'); await wait(opts.trainer ? 900 : 420); ov.classList.add('go');
-      if (opts.trainer) { msg(`${opts.trainer} は ${def.name} を くりだした!`); await wait(300); await throwBall(eImg, true); }   // トレーナーも ボールを なげる
-      else { eImg.style.visibility = ''; eImg.classList.add('enter-e'); await wait(800); eImg.classList.remove('enter-e'); }   // やせいは よこから スライドして だいざに つく
-      msg(`ゆけっ ${monName(state.party[ai])}!`); await wait(250); await throwBall(aImg, false);
+      const aNames = slotsA.filter(Boolean).map(sl => monName(state.party[sl.ai])).join(' と '), eNames = slotsE.filter(Boolean).map(f => f.def.name).join(' と ');
+      if (opts.trainer) {   // トレーナーも ボールを なげて、なかまを くりだす
+        msg(`${opts.trainer} は ${eNames} を くりだした!`); await wait(300);
+        await Promise.all(slotsE.map((f, k) => f ? (async () => { await new Promise(r => setTimeout(r, k * 280 / battleSpeed())); await sendOut(eImgs[k], ballPrefix(f.ball), true); })() : null));
+      } else { eImg.style.visibility = ''; eImg.classList.add('enter-e'); await wait(800); eImg.classList.remove('enter-e'); }   // やせいは よこから スライドして だいざに つく
+      msg(`ゆけっ ${aNames}!`); await wait(250);
+      await Promise.all(slotsA.map((sl, k) => sl ? (async () => { await new Promise(r => setTimeout(r, k * 280 / battleSpeed())); await sendOut(aImgs[k], ballOf(state.party[sl.ai]), false); })() : null));
     }
-    eImg.style.visibility = ''; aImg.style.visibility = ''; ov.remove();
+    eImgs.concat(aImgs).forEach(x => x.style.visibility = ''); ov.remove();
   };
-  try { await introAnim(); } catch (e) { eImg.style.visibility = ''; aImg.style.visibility = ''; }
-  if (opts.boss && assistOn()) {
-    const mi = state.party.findIndex((m, i) => i !== ai && hpOf(m) > 0);
-    if (mi >= 0) {
-      const m = state.party[mi], box = document.createElement('div'); box.className = 'bt-sup summon'; box.innerHTML = `<img alt=""><div class="hp"><i></i></div><small></small>`;
-      const im = $('img', box); im.src = img(GD.MONSTERS[m.id].image); box.querySelector('small').textContent = monName(m); fieldEl.appendChild(box); setTimeout(() => box.classList.remove('summon'), 700);
-      sup = { m, img: im, box }; fought.add(m); supDraw();
-    }
-  }
+  try { await introAnim(); } catch (err) { console.warn('intro failed', err); eImgs.concat(aImgs).forEach(x => x.style.visibility = ''); }
   msg(opts.trainer ? `トレーナーの ${opts.trainer} が しょうぶを しかけてきた!` : opts.boss ? `${def.name} が たちはだかった!` : `あっ! やせいの ${def.name} が とびだしてきた!`); sfx('quest'); await sleep(1300);
   if (opts.boss && !opts.trainer && !state.tips.boss) { state.tips.boss = 1; msg('ヒント: ぬしが「ちからを ためて」きたら、つぎの こうげきは とても つよいよ!'); await sleep(2200); }
   if (!state.tips.bt1) { state.tips.bt1 = 1; msg('ヒント: わざには PP(かいすう)が あるよ。ベッドで ねると ぜんかいふく!'); await sleep(2000); }
   { const et = envText(opts.wx, opts.hour); if (et) { msg(et); await sleep(1300); } }
-  msg(`ゆけっ ${monName(state.party[ai])}!`); await sleep(700);
+  await sleep(300);
 
-  while (!result) {
-    if (acted0) { acted0 = false; await roundEnd(); if (result) break; }
-    msg(`${monName(state.party[ai])} は どうする?`);
-    const top = await menu([{ html: 'わざ', v: 'skill' }, { html: 'どうぐ', v: 'item' }, { html: 'いれかえ', v: 'swap' }, { html: 'にげる', v: 'run' }]);
-    let acted = false, allyFirst = false;
-    if (top === 'skill') {
-      const a = state.party[ai], rows = movesOf(a).map(s => { const el = s.element || GD.MONSTERS[a.id].element; return { html: `${s.name} ${elemChip(el)}<small>${skillShort(s)}　PP ${ppOf(a, s)}/${ppMax(s)}${s.power > 0 ? '　' + matchHint(el, def.element) : ''}</small>`, v: s, off: ppOf(a, s) <= 0 }; });
-      let v; if (rows.every(r => r.off)) { msg('つかえる わざが ない! わるあがきを するしか ない…'); await sleep(1100); v = STRUGGLE; } else v = await menu(rows, true);
-      if (v === '__back') continue;
-      allyFirst = allyStats().spd >= enemySpd(); cmd.innerHTML = '';
-      if (v === '__guard') { guarding = true; msg(`${monName(a)} は みを まもっている!`); sfx('pick'); aImg.classList.add('glow'); await sleep(800); aImg.classList.remove('glow'); await enemyAttack(); if (e.hp <= 0) { result = 'win'; break; } if (!(await afterAllyFaint())) { result = 'lose'; break; } }
-      else if (allyFirst) { await allyAttack(v); if (e.hp <= 0) { result = 'win'; break; } await enemyAttack(); if (e.hp <= 0) { result = 'win'; break; } if (!(await afterAllyFaint())) { result = 'lose'; break; } }
-      else { await enemyAttack(); if (e.hp <= 0) { result = 'win'; break; } if (!(await afterAllyFaint())) { result = 'lose'; break; } await allyAttack(v); if (e.hp <= 0) { result = 'win'; break; } }
-      acted = true;
-    } else if (top === 'item') {
-      const capOut = !!(opts.cap && opts.cap.left <= 0), foods = capOut ? [] : Object.keys(MON_HEAL).filter(id => count(id) > 0), rows = foods.map(id => ({ html: `${itemIcon(id)}${ITEMS[id].name}<small>HP +${Math.round(MON_HEAL[id] * (hasBadge('grove') ? 1.5 : 1))}${BUFFS[id] ? ' / ' + buffText(BUFFS[id]) : ''} / ×${count(id)}${opts.cap ? ' / あと' + opts.cap.left + 'かい' : ''}</small>`, v: id }));
-      if (!opts.trainer) BALL_IDS.filter(id => count(id) > 0).reverse().forEach(id => rows.unshift({ html: `${itemIcon(id)}${ITEMS[id].name}<small>${ITEMS[id].ball.mult === Infinity ? 'かならず なかまに なる' : 'せいこうりつ ×' + ITEMS[id].ball.mult} / ×${count(id)}</small>`, v: id }));
-      Object.keys(ITEMS).filter(id => ITEMS[id].battle && count(id) > 0).forEach(id => rows.push({ html: `${itemIcon(id)}${ITEMS[id].name}<small>${ITEMS[id].desc || ''} / ×${count(id)}</small>`, v: id }));
-      if (!rows.length) { msg(capOut ? 'ここでは もう かいふくの たべものは つかえない!' : 'つかえる どうぐが ない… (牧場の やさいや りょうりで かいふくできるよ)'); await sleep(1400); continue; }
-      const v = await menu(rows, true); if (v === '__back') continue; cmd.innerHTML = '';
+  // ---- こうげきする あいてを えらぶ(あいてが 2ひきの ときだけ) ----
+  const hintOf = (el) => liveE().map(j => matchHint(el, slotsE[j].def.element)).join(' / ');
+  const pickTarget = async () => {
+    const L = liveE(); if (L.length <= 1) return L[0];
+    msg('だれを ねらう?'); const v = await menu(L.map(j => { const f = slotsE[j]; return { html: `${f.def.name} ${elemChip(f.def.element)}<small>Lv${f.e.lv}　HP ${f.e.hp}/${f.e.maxHp}${f.E.ail ? '　' + AIL[f.E.ail.k].name : ''}</small>`, v: j }; }), true); cmd.innerHTML = '';
+    return v;
+  };
+  // ---- 1ぴきぶんの こうどうを えらぶ。'prev' = ひとつ まえの なかまの せんたくへ もどる ----
+  const chooseAct = async (k, canBack) => {
+    useA(k); const a = state.party[ai], wild1 = !opts.trainer && !dbl && liveE().length === 1;
+    while (true) {
+      msg(`${monName(a)} は どうする?`);
+      const top = await menu([{ html: 'わざ', v: 'skill' }, { html: 'どうぐ', v: 'item' }, { html: 'いれかえ', v: 'swap' }, { html: 'にげる', v: 'run' }], canBack);
+      if (top === '__back') { cmd.innerHTML = ''; return 'prev'; }
+      if (top === 'skill') {
+        const rows = movesOf(a).map(sk => { const el = sk.element || GD.MONSTERS[a.id].element; return { html: `${sk.name} ${elemChip(el)}<small>${skillShort(sk)}　PP ${ppOf(a, sk)}/${ppMax(sk)}${sk.power > 0 ? '　' + hintOf(el) : ''}</small>`, v: sk, off: ppOf(a, sk) <= 0 }; });
+        let v; if (rows.every(r => r.off)) { msg('つかえる わざが ない! わるあがきを するしか ない…'); await sleep(1100); v = STRUGGLE; } else v = await menu(rows, true);
+        if (v === '__back') continue; cmd.innerHTML = '';
+        let t = liveE()[0];
+        if (v !== '__guard' && liveE().length > 1) { const fx = fxOf(v); if (v.power > 0 || (fx && (fx.foe || fx.st))) { const tv = await pickTarget(); if (tv === '__back') continue; t = tv; } }
+        return { k, kind: 'skill', sk: v, t };
+      }
+      if (top === 'item') {
+        const capOut = !!(opts.cap && opts.cap.left <= 0), foods = capOut ? [] : Object.keys(MON_HEAL).filter(id => count(id) > 0), rows = foods.map(id => ({ html: `${itemIcon(id)}${ITEMS[id].name}<small>HP +${Math.round(MON_HEAL[id] * (hasBadge('grove') ? 1.5 : 1))}${BUFFS[id] ? ' / ' + buffText(BUFFS[id]) : ''} / ×${count(id)}${opts.cap ? ' / あと' + opts.cap.left + 'かい' : ''}</small>`, v: id }));
+        if (wild1) BALL_IDS.filter(id => count(id) > 0).reverse().forEach(id => rows.unshift({ html: `${itemIcon(id)}${ITEMS[id].name}<small>${ITEMS[id].ball.mult === Infinity ? 'かならず なかまに なる' : 'せいこうりつ ×' + ITEMS[id].ball.mult} / ×${count(id)}</small>`, v: id }));
+        Object.keys(ITEMS).filter(id => ITEMS[id].battle && count(id) > 0).forEach(id => rows.push({ html: `${itemIcon(id)}${ITEMS[id].name}<small>${ITEMS[id].desc || ''} / ×${count(id)}</small>`, v: id }));
+        if (!rows.length) { msg(capOut ? 'ここでは もう かいふくの たべものは つかえない!' : 'つかえる どうぐが ない… (牧場の やさいや りょうりで かいふくできるよ)'); await sleep(1400); continue; }
+        const v = await menu(rows, true); if (v === '__back') continue; cmd.innerHTML = '';
+        return { k, kind: 'item', v };
+      }
+      if (top === 'swap') {
+        const fd = (slotsE.find(Boolean) || cur).def, rows = state.party.map((m, i) => ({ html: `${monName(m)} ${elemChip(GD.MONSTERS[m.id].element)}<small>Lv${m.lv} HP ${Math.max(0, hpOf(m))}/${monStats(m).maxHp}${slotsA.some(x => x && x.ai === i) ? ' (でている)' : ''}　${matchHint(GD.MONSTERS[m.id].element, fd.element)}</small>`, v: i, off: hpOf(m) <= 0 || slotsA.some(x => x && x.ai === i) }));
+        const v = await menu(rows, true); if (v === '__back') continue; cmd.innerHTML = '';
+        return { k, kind: 'swap', to: v };
+      }
+      if (top === 'run') {
+        cmd.innerHTML = '';
+        if (opts.boss) { msg(opts.trainer ? 'トレーナーとの しょうぶからは にげられない!' : 'ぬしからは にげられない!'); await sleep(900); continue; }
+        return { k, kind: 'run' };
+      }
+    }
+  };
+  // ---- 1ぴきぶんの こうどうを じっこうする ----
+  const doAct = async (x) => {
+    const sl = slotsA[x.k]; if (!sl || state.party[sl.ai] !== x.who || hpOf(x.who) <= 0) return;
+    useA(x.k); const a = state.party[ai]; let tj = x.t; if (tj == null || !slotsE[tj] || slotsE[tj].e.hp <= 0) tj = liveE()[0]; if (tj == null) return; useE(tj);
+    if (x.kind === 'skill') {
+      if (x.sk === '__guard') { sl.guard = true; msg(`${monName(a)} は みを まもっている!`); sfx('pick'); aImg.classList.add('glow'); await sleep(800); aImg.classList.remove('glow'); }
+      else await allyAttack(x.sk);
+    } else if (x.kind === 'item') {
+      const v = x.v;
       if (ITEMS[v] && ITEMS[v].ball) {
         const bl = ITEMS[v].ball; addItem(v, -1); msg(`${ITEMS[v].name}を なげた!`); sfx('pick');
-        const hpR = e.hp / e.maxHp, base = Math.min(0.9, 0.15 + (1 - hpR) * 0.6), luckB = monStats(state.party[ai]).luck * 0.004;
-        const chance = bl.mult === Infinity ? 1 : Math.min(1, base * bl.mult * (def.catchPenalty || 1) + luckB + (abilityOf(state.party[ai].id) === 'catcher' ? 0.06 : 0)), ok = Math.random() < chance;
+        const hpR = e.hp / e.maxHp, base = Math.min(0.9, 0.15 + (1 - hpR) * 0.6), luckB = monStats(a).luck * 0.004;
+        const chance = bl.mult === Infinity ? 1 : Math.min(1, base * bl.mult * (def.catchPenalty || 1) + luckB + (abilityOf(a.id) === 'catcher' ? 0.06 : 0)), ok = Math.random() < chance;
         await captureAnim(bl.anim, ok);
-        if (ok) { msg(`${def.name} を なかまに した!`); sfx('quest'); await sleep(1100); state.mdex[enemyId] = 2; if (state.party.length < 6) { const nmon = { id: enemyId, lv: e.lv, exp: 0, hp: null }; state.party.push(nmon); await askNick(nmon); } else {   // てもちが 6ぴきなら ぼくじょうへ おくる(むらで いれかえできる)
+        if (ok) { msg(`${def.name} を なかまに した!`); sfx('quest'); await sleep(1100); state.mdex[enemyId] = 2; if (state.party.length < 6) { const nmon = { id: enemyId, lv: e.lv, exp: 0, hp: null, ball: v }; state.party.push(nmon); await askNick(nmon); } else {   // てもちが 6ぴきなら ぼくじょうへ おくる(むらで いれかえできる)
           state.pasture = state.pasture || [];
-          if (state.pasture.length < 12) { const nmon = { id: enemyId, lv: e.lv, exp: 0, hp: null }; state.pasture.push(nmon); msg(`てもちが いっぱいなので ${def.name} は なかまの ぼくじょうに おくられた!`); await sleep(1500); msg('むらの ぼくじょうで てもちと いれかえられるよ'); await sleep(1500); }
+          if (state.pasture.length < 12) { const nmon = { id: enemyId, lv: e.lv, exp: 0, hp: null, ball: v }; state.pasture.push(nmon); msg(`てもちが いっぱいなので ${def.name} は なかまの ぼくじょうに おくられた!`); await sleep(1500); msg('むらの あずかりパソコンで てもちと いれかえられるよ'); await sleep(1500); }
           else { msg('ぼくじょうも いっぱいなので 野に かえした…'); await sleep(1100); }
-        } result = 'caught'; break; }
+        } result = 'caught'; return; }
         msg(`ああっ、${def.name} が とびだしてしまった!`); await sleep(900);
       } else if (ITEMS[v] && ITEMS[v].battle) {
-        const bu = ITEMS[v].battle, a = state.party[ai]; addItem(v, -1); sfx('feed'); msg(`${ITEMS[v].name}を つかった!`); await sleep(700);
+        const bu = ITEMS[v].battle; addItem(v, -1); sfx('feed'); msg(`${ITEMS[v].name}を つかった!`); await sleep(700);
         if (bu.cure) { const S = sd('a'); if (S.ail) { S.ail = null; draw(); msg(`${monName(a)} の じょうたいいじょうが なおった!`); } else msg('でも なにも おこらなかった…'); await sleep(900); }
         if (bu.stg) for (const [k, n] of Object.entries(bu.stg)) await changeStage('a', k, n);
         if (bu.pp) { a.pp = a.pp || {}; for (const sk of movesOf(a)) a.pp[sk.id] = Math.min(ppMax(sk), ppOf(a, sk) + bu.pp); msg(`${monName(a)} の わざの PPが かいふくした!`); await sleep(900); }
       } else {
-        const a = state.party[ai], st = monStats(a), before = hpOf(a); a.hp = Math.min(st.maxHp, before + Math.round(MON_HEAL[v] * (hasBadge('grove') ? 1.5 : 1))); addItem(v, -1); if (opts.cap) opts.cap.left--; sfx('feed'); sd('a').ail = null; if (BUFFS[v]) buff = { ...BUFFS[v] }; draw(); pop('a', '+' + (a.hp - before), 'heal'); msg(`${ITEMS[v].name}を たべて げんきに なった!`); await sleep(1000);
+        const st = monStats(a), before = hpOf(a); a.hp = Math.min(st.maxHp, before + Math.round(MON_HEAL[v] * (hasBadge('grove') ? 1.5 : 1))); addItem(v, -1); if (opts.cap) opts.cap.left--; sfx('feed'); sd('a').ail = null; if (BUFFS[v]) buff = { ...BUFFS[v] }; draw(); pop('a', '+' + (a.hp - before), 'heal'); msg(`${ITEMS[v].name}を たべて げんきに なった!`); await sleep(1000);
       }
-      await enemyAttack(); if (e.hp <= 0) { result = 'win'; break; } if (!(await afterAllyFaint())) { result = 'lose'; break; } acted = true;
-    } else if (top === 'swap') {
-      const rows = state.party.map((m, i) => ({ html: `${monName(m)} ${elemChip(GD.MONSTERS[m.id].element)}<small>Lv${m.lv} HP ${Math.max(0, hpOf(m))}/${monStats(m).maxHp}${i === ai ? ' (でている)' : ''}　${matchHint(GD.MONSTERS[m.id].element, def.element)}</small>`, v: i, off: i === ai || hpOf(m) <= 0 || (sup && m === sup.m) }));
-      const v = await menu(rows, true); if (v === '__back') continue; cmd.innerHTML = '';
-      ai = v; resetStg(); draw(); msg(`ゆけっ ${monName(state.party[ai])}!`); await sleep(800);
-      await enemyAttack(); if (e.hp <= 0) { result = 'win'; break; } if (!(await afterAllyFaint())) { result = 'lose'; break; } acted = true;
-    } else if (top === 'run') {
-      cmd.innerHTML = ''; const a = state.party[ai];
-      if (opts.boss) { msg(opts.trainer ? 'トレーナーとの しょうぶからは にげられない!' : 'ぬしからは にげられない!'); await sleep(900); continue; }
-      if (Math.random() < Math.min(0.95, 0.5 + (allyStats().spd - enemySpd()) * 0.03)) { msg('うまく にげきれた!'); await sleep(900); result = 'run'; break; }
-      msg('にげられなかった!'); await sleep(800); await enemyAttack(); if (e.hp <= 0) { result = 'win'; break; } if (!(await afterAllyFaint())) { result = 'lose'; break; }
-      acted = true;
+    } else if (x.kind === 'swap') {
+      await recall(aImg, ballOf(a), false);
+      sl.ai = x.to; sl.guard = false; ai = x.to; sdOf(state.party[x.to]).stg = { atk: 0, def: 0, spd: 0 }; draw();
+      msg(`ゆけっ ${monName(state.party[x.to])}!`); await sleep(400); await sendOut(aImg, ballOf(state.party[x.to]), false);
+    } else if (x.kind === 'run') {
+      if (Math.random() < Math.min(0.95, 0.5 + (allyStats().spd - enemySpd()) * 0.03)) { msg('うまく にげきれた!'); await sleep(900); result = 'run'; return; }
+      msg('にげられなかった!'); await sleep(800);
     }
-    acted0 = acted;
+  };
+  const doFoe = async (x) => {
+    const f = slotsE[x.j]; if (f !== x.foe || f.e.hp <= 0) return;
+    const L = liveA(); if (!L.length) return; const k = L[Math.floor(Math.random() * L.length)];
+    useE(x.j); useA(k); guarding = !!slotsA[k].guard; await enemyAttack();
+  };
+  let firstRound = true;
+  while (!result) {
+    if (!firstRound) { await roundEnd(); if (result) break; } firstRound = false;
+    // 1) こちらの なかまを 1ぴきずつ えらぶ
+    const ks = liveA(), plan = [];
+    for (let n = 0; n < ks.length;) { const act = await chooseAct(ks[n], n > 0); if (act === 'prev') { plan.length = Math.max(0, n - 1); n = Math.max(0, n - 1); continue; } act.who = state.party[slotsA[ks[n]].ai]; plan[n] = act; n++; }
+    cmd.innerHTML = '';
+    // 2) じゅんばん: どうぐ・いれかえ・にげる・ぼうぎょ が さき → あとは すばやさじゅん(おなじなら こちらが さき)
+    const acts = [];
+    for (const x of plan) { useA(x.k); acts.push({ side: 'a', x, pri: x.kind === 'skill' && x.sk !== '__guard' ? 0 : 1, spd: allyStats().spd }); }
+    for (const j of liveE()) { useE(j); acts.push({ side: 'e', x: { j, foe: slotsE[j] }, pri: 0, spd: enemySpd() }); }
+    acts.sort((p, q) => q.pri - p.pri || q.spd - p.spd || (p.side === 'a' ? -1 : 1) - (q.side === 'a' ? -1 : 1));
+    // 3) じっこう(1こうどうごとに、たおれた ものの しょりを する)
+    for (const it of acts) { if (result) break; if (it.side === 'a') await doAct(it.x); else await doFoe(it.x); if (result) break; await settle(); }
   }
   cmd.innerHTML = '';
-  if (result === 'win' || result === 'caught') {   // なかまに した = しょうり(けいけんちと しょうきんが もらえる)
-    if (result === 'win') { eImg.classList.add('faint'); msg(`${def.name} を たおした!`); jingle('win'); await sleep(1300); } else { jingle('win'); await sleep(500); }
-    await gainExp(); const money = Math.round(def.money * (hasBadge('ghost') ? 1.25 : 1) * (abilityOf(state.party[ai].id) === 'greedy' ? 1.15 : 1) * (holdOf(state.party[ai]).money || 1) * (1 + monStats(state.party[ai]).luck * 0.004)); state.coins += money; xpLog.money = money; addStat('win', 1); msg(`${money} コインを てにいれた!`); sfx('coin'); await sleep(1100);
-    { const dr = rollDrops(def, !!opts.boss && !opts.trainer), names = Object.entries(dr); if (names.length) { for (const [id, n] of names) addItem(id, n); xpLog.drops = names; msg(names.map(([id, n]) => `${ITEMS[id].name}×${n}`).join('、') + ' を てにいれた!'); sfx('pick'); await sleep(1400); } }
+  if (result === 'caught') { jingle('win'); await sleep(500); useA(firstA()); await payFoe(); }
+  if (result === 'win' || result === 'caught') {
     await resultPopup();
     if (opts.boss && opts.onBossWin) { await opts.onBossWin(msg, sleep); }
   }
