@@ -19,7 +19,7 @@ const MOTION_BY_NAME = { 'しのちょうふく': 'sweep', 'がんせきのち�
 // Geminiで つくった えんしゅつの コマ(くろはいけい=screen / しろはいけい=multiply で かさねる)
 const NEW_FX = {
   fire: ['fire_n1', 'fire_n2', 'fire_n3'], water: ['water_n1', 'water_n2', 'water_n3'], thunder: ['thunder_n1', 'thunder_n2', 'thunder_n3'], wind: ['wind_n1', 'wind_n2', 'wind_n3'], grass: ['grass_n1', 'grass_n2', 'grass_n3'],
-  heaven: ['heaven_n1', 'heaven_2', 'heaven_3'], earth: ['earth_n1', 'earth_2', 'earth_3'], dark: ['dark_n1', 'dark_2', 'dark_3'], magic: ['magic_n1', 'magic_2', 'magic_3'], beast: ['beast_n1', 'beast_2'],
+  heaven: ['heaven_n1', 'heaven_2', 'heaven_3'], earth: ['earth_n1', 'earth_2', 'earth_3', 'earth_n4', 'earth_n5'], dark: ['dark_n1', 'dark_2', 'dark_3', 'dark_n4', 'dark_n5'], magic: ['magic_n1', 'magic_2', 'magic_3', 'magic_n4', 'magic_n5'], beast: ['beast_n1', 'beast_2', 'beast_3', 'beast_4', 'beast_5'],
   kami: ['kami_1', 'kami_1b', 'kami_3', 'kami_4', 'kami_5'] };
 const SP_FX = { sp_jiware: 'sp_jiware', sp_tsunami: 'sp_tsunami', sp_fubuki: 'sp_fubuki', sp_taifuu: 'sp_taifuu' };   // せんようの わざえんしゅつ(4コマ)
 const FX_COMMON = ['fx_heal', 'fx_guard', 'fx_faint'];   // かいふく・ぼうぎょ・ひんし
@@ -28,7 +28,7 @@ const registerExtraFx = (G) => {
   if (G._fxExtra) return; G._fxExtra = true; G.ELEMENT_EFFECT_ANIM = G.ELEMENT_EFFECT_ANIM || {};
   for (const [el, names] of Object.entries(NEW_FX)) { const arr = (G.ELEMENT_EFFECT_ANIM[el] = G.ELEMENT_EFFECT_ANIM[el] || []); for (const n of names) arr.push([1, 2, 3, 4].map(k => `assets/effects/anim/${n}/f${k}.webp`)); }
 };
-const fxBlend = (u) => /\/anim\/(earth_(n1|2|3)|sp_jiware)\//.test(u) ? 'multiply' : /\/anim\/(kami_|ail_|fire_n|water_n|thunder_n|wind_n|grass_n|heaven_|dark_|magic_|beast_|fx_|sp_)/.test(u) ? 'screen' : '';
+const fxBlend = (u) => /\/anim\/(earth_(n1|2|3)|sp_jiware)\//.test(u) ? 'multiply' : /\/anim\/(kami_|ail_|fire_n|water_n|thunder_n|wind_n|grass_n|earth_n[45]|heaven_|dark_|magic_|beast_|fx_|sp_)/.test(u) ? 'screen' : '';
 const fxSeen = new Set();
 const preloadFx = (G) => { try { const L = [...Object.values(G.ELEMENT_EFFECTS || {}), ...Object.values(G.ELEMENT_EFFECT_ANIM || {}).flat(2), ...FX_PARTS.map(n => `assets/effects/parts/${n}.webp`), ...[...Object.values(SP_FX), ...FX_COMMON].flatMap(n => [1, 2, 3, 4].map(k => `assets/effects/anim/${n}/f${k}.webp`)), 'assets/effects/boss/boss_sun.webp', 'assets/effects/boss/boss_hole.webp']; for (const u of L) if (!fxSeen.has(u)) { fxSeen.add(u); const i = new Image(); i.src = 'quest/' + u; } } catch (e) {} };   // わざの えを さきに よみこむ(こうかいばんで おくれて でないように)
 export function questData() {
