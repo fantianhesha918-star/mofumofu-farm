@@ -171,7 +171,7 @@ let waterMesh = null; const lavaMeshes = [];
 const hBase = (x, z) => { const r = Math.hypot(x, z); return (Math.sin(x * 0.07 + 1.2) * Math.cos(z * 0.06) * 1.3 + Math.sin(x * 0.19 + z * 0.15) * 0.25) * Math.min(1, r / 24) * (F.relief || 1) + (F.hills ? (Math.sin(x * 0.032 + 2) * Math.cos(z * 0.028 + 1) + Math.sin(x * 0.05 - z * 0.04) * 0.5) * F.hills * Math.min(1, r / 34) : 0); };
 const PL = F.pool || null, LAVA = F.lava || [], LAVAY = LAVA.map(([cx, cz]) => hBase(cx, cz) - 0.5);
 const hAt = (x, z) => { let h = hBase(x, z); for (let i = 0; i < LAVA.length; i++) { const [cx, cz, r] = LAVA[i], d = Math.hypot(x - cx, z - cz); if (d < r + 4) { const t = THREE.MathUtils.smoothstep(r + 4 - d, 0, 4); h = h + (LAVAY[i] - h) * t; } } if (!LC) return h; const d = Math.hypot(x - LC.x, z - LC.z); if (d > LC.r + 7) return h; const t = Math.min(1, Math.max(0, (LC.r + 7 - d) / 12)); return h - t * t * (3 - 2 * t) * 3.4; };   // みずうみの くぼみ
-const isWater = (x, z) => (!!LC && hAt(x, z) < WATER_Y + 0.12) || LAVA.some(([cx, cz, r]) => Math.hypot(x - cx, z - cz) < r * 0.96);
+const isWater = (x, z) => (!!LC && Math.hypot(x - LC.x, z - LC.z) < LC.r + 14 && hAt(x, z) < WATER_Y + 0.12) || LAVA.some(([cx, cz, r]) => Math.hypot(x - cx, z - cz) < r * 0.96);
 const gtex = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'); g.fillStyle = F.g0; g.fillRect(0, 0, 256, 256);
   for (let i = 0; i < 2600; i++) { g.fillStyle = F.g1[i % 4]; g.globalAlpha = 0.5; g.fillRect(Math.random() * 256, Math.random() * 256, 3, 3 + Math.random() * 5); } g.globalAlpha = 1;
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(44, 44); t.anisotropy = 4; return t; })();
@@ -793,7 +793,7 @@ async function boot() {
   { const h = hourNow(), hints = [WX_HINT[WX], nightK(h) > 0.9 ? 'よるは やみや まほうの モンスターが でやすいよ' : (h >= 7 && h < 17 ? 'ひるまは てんや くさの モンスターが でやすいよ' : '')].filter(Boolean); if (WX !== 'clear' || hints.length) setTimeout(() => ui.toast(`てんき: ${WX_NAME[WX]} / ${timeName(h)}`, hints.join(' / ') || 'おだやかな ひだよ', '', 4200), 1500); } busy = false; fade(false); document.title = 'ready';
   if (first) ui.toast('なかまが できた!', 'まめちんちらが ついてきたよ', 'くさむらを あるくと モンスターが でてくるよ', 5200);
   else ui.toast(F.name, 'くさむらを あるくと モンスターが でてくるよ', FID === 'lake' ? 'ここの モンスターは すこし つよいよ' : '', 3600);
-  window.__f = { gymTeam, challengeBoss, shrines, challengeLegend, trainers, talkTrainer, talkBoss, cam, hAt, isWater, P, state, startEncounter, runBattle, scene, camera, renderer, goVillage, ZONES, count, addItem };
+  window.__f = { gymTeam, challengeBoss, shrines, challengeLegend, trainers, talkTrainer, talkBoss, cam, hAt, isWater, P, state, startEncounter, runBattle, scene, camera, renderer, goVillage, ZONES, count, addItem, circles };
 }
 unlockAudio(); frame(); boot();
 addEventListener('pagehide', () => { try { save(); } catch {} });
