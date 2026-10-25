@@ -1108,7 +1108,7 @@ function openGate() { if (!state.boss.forest) return goOut('forest'); ui.openPan
 bus.on('goField', (id) => goOut(id));
 function goOut(dest) {
   if (sleeping) return; sleeping = true; const f = $('#fade'); f.textContent = ''; f.classList.add('on'); sfx('quest');
-  setTimeout(() => { state.pos = { x: GATE.x, z: GATE.z + 3.6 }; save(); location.href = dest === 'lake' ? 'field.html?f=lake' : dest !== 'forest' && dest !== 'lake' ? 'field.html?f=' + dest : 'field.html'; }, 800);
+  setTimeout(() => { state.pos = { x: GATE.x, z: GATE.z + 3.6 }; save(); location.href = (dest === 'lake' ? 'field.html?f=lake' : dest !== 'forest' && dest !== 'lake' ? 'field.html?f=' + dest : 'field.html?f=forest') + '&_=' + Date.now(); }, 800);   // _= は ふるい ページの キャッシュを つかわせない ため
 }
 
 // ---------- 村づくり: 草を刈る・畑・いど・牛舎・鶏小屋を すきな ばしょに ----------
@@ -1468,10 +1468,16 @@ async function boot() {
   P.chin = makeChin(0.95); scene.add(P.chin.outer);
   // どれか1つの よみこみが こけても、ゲームは はじめられるように(スマホの キャッシュ食いちがい対策)
   const step = async (name, fn) => { try { return await fn(); } catch (e) { console.warn('boot step failed', name, e); try { window.__bootFail = (window.__bootFail || []).concat(name + ': ' + (e && e.message)); } catch {} } };
-  await step('npc', makeNPCs); await step('pasture', async () => { syncPasture(); refreshVillagers(); });
-  await step('models', () => world.attachModels(loader)); await step('farm', loadFarmModels); await step('ranch', loadRanchModels); await step('mushroom', loadMushroom); await step('props', loadProps); await step('swimfish', () => initSwimFish(villageRoot, loader)); await step('nori', async () => makeNori());
-  ROOMS.house = await step('house', buildHouseRoom);
+  // ぜんぶ いっぺんに よみこむ(1つずつ まつより はやい)。のりは くさモデルの あと
+  const [, , , , , , , , house] = await Promise.all([
+    step('npc', makeNPCs), step('pasture', async () => { syncPasture(); refreshVillagers(); }),
+    step('models', () => world.attachModels(loader)), step('farm', loadFarmModels), step('ranch', loadRanchModels), step('mushroom', loadMushroom),
+    step('props', loadProps).then(() => step('nori', async () => makeNori())), step('swimfish', () => initSwimFish(villageRoot, loader)),
+    step('house', buildHouseRoom),
+  ]);
+  ROOMS.house = house;
   $('#loading').classList.add('done');
+  { const v = (import.meta.url.match(/v=(\d+)/) || [])[1], d = document.createElement('div'); d.textContent = 'ばんごう ' + (v || '-'); d.style.cssText = 'position:fixed;left:8px;bottom:6px;font-size:11px;color:#ffffff90;z-index:5;pointer-events:none'; document.body.appendChild(d); }
   $('#btnNew').disabled = false; if (hasSave()) $('#btnContinue').hidden = false;
   if (params.has('resume') && hasSave()) setTimeout(() => startGame(false), 60);   // もりから もどってきたとき
   ui.nameables = () => [

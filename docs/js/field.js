@@ -502,7 +502,7 @@ function buildGate2() {
 }
 function goNext() {
   busy = true; fading = true; save(); fade(true);
-  setTimeout(() => { state.pos = { x: 0, z: 46 }; save(); location.href = 'field.html?f=' + NEXT; }, 800);
+  setTimeout(() => { state.pos = { x: 0, z: 46 }; save(); location.href = 'field.html?f=' + NEXT + '&_=' + Date.now(); }, 800);
 }
 
 // ---- 入力・移動 ----
@@ -553,7 +553,7 @@ async function startEncounter(forceId) {
 }
 function goVillage(lost) {
   busy = true; fading = true; save(); fade(true);
-  setTimeout(() => { if (lost) healParty(); state.pos = { x: 5, z: -34.4 }; save(); location.href = 'index.html?resume=1'; }, 800);
+  setTimeout(() => { if (lost) healParty(); state.pos = { x: 5, z: -34.4 }; save(); location.href = 'index.html?resume=1&_=' + Date.now(); }, 800);
 }
 
 // ---- ターゲット(ゲート) ----
