@@ -163,16 +163,46 @@ const TRACKS = {
       { i: 'choir', v: 0.11, r: 0.6, m: "1':2 1':2 1':2 3':2 5':4 3':2 1':2|1':3 1':1 3':2 5':2 1'':4 5':4|6':4 1'':2 6':2 3'':4 1'':4|7':4 2'':2 7':2 4'':4 2'':4|1'':4 5':2 3':2 1'':4 3'':4|4':4 6':2 4':2 1'':4 6':4|5':4 7#':2 2'':2 7#':4 5':4|1'':8 5':4 1'':4|6':2 1'':2 3'':4 1'':4 6':4|7':2 2'':2 4'':4 2'':4 7':4|1'':4 3'':2 5'':2 3'':4 1'':4|5':4 7#':4 2'':4 7#':4|4':4 6':4 1'':4 6':4|6':4 1'':4 3'':4 1'':4|5':2 7#':2 2'':2 7#':2 5'':4 2'':4|5':8 7#':4 2'':4" }],
     pad: { i: 'strings', v: 0.07 }, bass: { i: 'synbass', v: 0.24, p: '1.11.1.11.1.1.11' }, arp: { i: 'bell', v: 0.08, p: '0123210301232103', up: 12, r: 0.6 }, drums: { ...DR.boss, crash: 4 } },
 };
+// きょくの てんかい: sty=がっきの ならべかた / intro=イントロの しょうせつすう / lift=さいごの 8しょうせつで あげる はんおん / brk=いったん しずまる しょうせつ(つぎで ばくはつ) / riser=もりあげの ノイズ
+const PLAN = {
+  village: { sty: 'folk' }, f_forest: { sty: 'folk' }, f_lake: { sty: 'folk' }, f_grove: { sty: 'folk' }, f_sun: { sty: 'bright', lift: 2 }, f_sky: { sty: 'sacred' }, f_cosmos: { sty: 'sacred' }, f_temple: { sty: 'sacred', lift: 2 },
+  f_ghost: { sty: 'dark' }, f_castle: { sty: 'dark', lift: 2 }, f_volcano: { sty: 'dark', lift: 2 }, f_dragon: { sty: 'epic', lift: 2, riser: 1 }, f_end: { sty: 'epic', lift: 2, riser: 1, brk: 15 },
+  battle: { sty: 'epic', intro: 2, lift: 2, riser: 1 }, battle2: { sty: 'epic', intro: 2, lift: 2, riser: 1 }, battle3: { sty: 'epic', intro: 2, lift: 2, riser: 1 }, battle_trainer: { sty: 'epic', intro: 2, lift: 2, riser: 1 },
+  battle_legend: { sty: 'epic', sac: 1, intro: 2, lift: 2, riser: 1, brk: 15 }, boss: { sty: 'epic', intro: 2, lift: 2, riser: 1, brk: 15 }, boss2: { sty: 'epic', intro: 2, lift: 2, riser: 1, brk: 15 }, boss_final: { sty: 'epic', sac: 1, intro: 2, lift: 2, riser: 1, brk: 15 },
+};
+// がっきの そうび: スタイルごとに ストリングス・ホルン・ピアノ・ベルなどを かさねて あつみと かんしょうを だす
+function orchestrate(tr) {
+  const sty = tr.sty, add = (k, l) => tr['L_' + k].push(l);
+  if (sty === 'folk') {
+    add('pad', { i: 'cello', v: 0.07, up: -12, only: [0], pass: 2, r: 0.4 }); add('arp', { i: 'pizz', v: 0.11, p: '..0...1...2...1.', up: 12, pass: 2 });
+    add('arp', { i: 'glock', v: 0.07, p: '0.1.2.3.4.3.2.1.', up: 36, r: 0.5, pass: 3 }); add('pad', { i: 'horn', v: 0.05, pass: 3, r: 0.4 });
+  } else if (sty === 'bright') {
+    add('pad', { i: 'cello', v: 0.07, up: -12, only: [0], pass: 2 }); add('stab', { i: 'trumpet', v: 0.1, p: '..x...x...x...x.', up: 12, len: 1.6, pass: 2 }); add('arp', { i: 'glock', v: 0.07, p: '0.1.2.3.4.3.2.1.', up: 36, pass: 3 }); add('pad', { i: 'horn', v: 0.06, pass: 3 });
+  } else if (sty === 'sacred') {
+    add('pad', { i: 'choir', v: 0.05, pass: 2, r: 0.8 }); add('arp', { i: 'tubular', v: 0.09, p: '0...............', up: 12, r: 0.8, pass: 2 }); add('arp', { i: 'piano', v: 0.1, p: '0.1.2.3.2.1.0.1.', up: 12, pass: 2, r: 0.5 });
+    add('pad', { i: 'cello', v: 0.08, up: -12, only: [0, 2], pass: 3 }); add('arp', { i: 'celesta', v: 0.08, p: '..0.1.2.3.2.1.0.', up: 36, r: 0.6, pass: 3 }); add('pad', { i: 'horn', v: 0.06, pass: 3, r: 0.5 });
+  } else if (sty === 'dark') {
+    add('pad', { i: 'cello', v: 0.09, up: -12, only: [0, 1], r: 0.4 }); add('arp', { i: 'tubular', v: 0.08, p: '0...............', up: 12, r: 0.8, pass: 1 }); add('pad', { i: 'organ', v: 0.035, pass: 2, up: 0 });
+    add('stab', { i: 'brass', v: 0.11, p: 'x..x..x.........', up: 0, len: 1.4, pass: 3 }); add('pad', { i: 'choir', v: 0.06, pass: 3, r: 0.8 });
+  } else if (sty === 'epic') {
+    add('pad', { i: 'cello', v: 0.09, up: -12, only: [0, 1], r: 0.3 }); add('pad', { i: 'horn', v: 0.06, pass: 2, r: 0.4 }); add('stab', { i: 'brass', v: 0.12, p: '.x...x..x.x.....', up: 0, len: 1.5, pass: 2 });
+    add('stab', { i: 'trumpet', v: 0.1, p: 'x..x..x.x..x..x.', up: 12, len: 1.3, pass: 3 }); add('pad', { i: 'choir', v: 0.055, pass: 3, r: 0.7 }); add('arp', { i: 'piano', v: 0.09, p: '0.1.2.1.0.1.2.1.', up: 24, pass: 3 });
+    add('arp', { i: 'glock', v: 0.07, p: '..0.......1.....', up: 36, r: 0.5, pass: 3 });
+    if (tr.sac) { add('arp', { i: 'tubular', v: 0.09, p: '0...............', up: 12, r: 0.8, pass: 2 }); add('pad', { i: 'choir', v: 0.05, pass: 2, r: 0.8 }); }
+  }
+}
 const ALIAS = { field: null, battle: null };   // 'field' → いまの フィールドの きょく / 'battle' → ランダムに えらぶ
 let fieldTheme = 'f_forest', lastBattle = '';
 
 // ---------- じゅんび: 小節ごとに わける ----------
 for (const [name, tr] of Object.entries(TRACKS)) {
-  tr.n = Math.max(16, tr.chords.length); tr.ct = tr.chords.map(c => chordOf(tr, c));
-  for (const k of ['lead', 'pad', 'bass', 'arp', 'drums']) {
+  const pl = PLAN[name] || {}; tr.sty = pl.sty; tr.intro = pl.intro || 0; tr.lift = pl.lift || 0; tr.brk = pl.brk == null ? -1 : pl.brk; tr.riser = !!pl.riser; tr.sac = !!pl.sac;
+  tr.n = 24; tr.ct = tr.chords.map(c => chordOf(tr, c));   // 24しょうせつ: 16(ふつう) + 8(さいご: ひとつ うえの キーで もりあがる)
+  for (const k of ['lead', 'pad', 'bass', 'arp', 'drums', 'stab']) {
     let L = tr[k]; if (!L) { tr['L_' + k] = []; continue; } if (!Array.isArray(L)) L = [L]; tr['L_' + k] = L;
     for (const l of L) { if (l.m) l.bars_ = parseMel(l.m, tr, name); else if (l.notes) l.bars_ = splitLegacy(l.notes, tr.chords.length); }
   }
+  orchestrate(tr);
 }
 
 // ---------- オーディオ ----------
@@ -220,8 +250,20 @@ function voice(inst, f, t, dur, vol, o = {}) {
     case 'organ': { end = env(g, t, dur, vol, 0.012, 0.05, 0.95, 0.08); const fl = lp(3200); fl.connect(g); osc('square', f, t, end).connect(fl); [[0.5, 0.5, 'sine'], [2, 0.35, 'sine'], [3, 0.12, 'sine']].forEach(([m, a, ty]) => { const x = osc(ty, f * m, t, end), xg = ac.createGain(); xg.gain.value = a; x.connect(xg); xg.connect(fl); }); outTo(g, r ?? 0.4, dl); break; }
     case 'bass': { end = env(g, t, dur, vol, 0.008, 0.1, 0.7, 0.06); const fl = lp(650); fl.connect(g); osc('sawtooth', f, t, end).connect(fl); const sb = osc('sine', f, t, end), sg = ac.createGain(); sg.gain.value = 0.9; sb.connect(sg); sg.connect(g); outTo(g, 0, 0); break; }
     case 'synbass': { end = env(g, t, dur, vol, 0.005, 0.08, 0.6, 0.05); const fl = lp(520); fl.connect(g); osc('square', f, t, end).connect(fl); const sb = osc('sine', f, t, end), sg = ac.createGain(); sg.gain.value = 0.8; sb.connect(sg); sg.connect(g); outTo(g, 0, 0); break; }
+    case 'piano': { const e = t + Math.max(dur, 0.25) + 0.9; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.004); g.gain.exponentialRampToValueAtTime(vol * 0.35, t + 0.25); g.gain.exponentialRampToValueAtTime(0.0001, e); end = e + 0.05; [[1, 1, 'triangle'], [2, 0.4, 'sine'], [3, 0.16, 'sine'], [4, 0.07, 'sine']].forEach(([m, a, ty]) => { const x = osc(ty, f * m, t, end), xg = ac.createGain(); xg.gain.value = a; x.connect(xg); xg.connect(g); }); outTo(g, r ?? 0.4, dl); break; }
+    case 'celesta': { const e = t + 1.1; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, e); end = e + 0.05; osc('sine', f, t, end).connect(g); const h = osc('sine', f * 3.99, t, end), hg = ac.createGain(); hg.gain.value = 0.28; h.connect(hg); hg.connect(g); outTo(g, r ?? 0.6, dl); break; }
+    case 'glock': { const e = t + 0.7; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, e); end = e + 0.05; osc('sine', f, t, end).connect(g); const h = osc('sine', f * 2.76, t, end), hg = ac.createGain(); hg.gain.value = 0.35; h.connect(hg); hg.connect(g); outTo(g, r ?? 0.5, dl); break; }
+    case 'tubular': { const e = t + 2.6; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, e); end = e + 0.05; [[1, 1], [2, 0.5], [3, 0.3], [4.2, 0.14], [5.4, 0.08]].forEach(([m, a]) => { const x = osc('sine', f * m, t, end), xg = ac.createGain(); xg.gain.value = a; x.connect(xg); xg.connect(g); }); outTo(g, r ?? 0.8, dl); break; }
+    case 'pizz': { const e = t + 0.3; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, e); end = e + 0.05; const fl = lp(2200); fl.connect(g); osc('triangle', f, t, end).connect(fl); const sw = osc('sawtooth', f, t, end), sg = ac.createGain(); sg.gain.value = 0.25; sw.connect(sg); sg.connect(fl); outTo(g, r ?? 0.3, dl); break; }
+    case 'horn': { end = env(g, t, dur, vol, 0.14, 0.2, 0.85, 0.3); const fl = lp(1200); fl.connect(g); [-4, 4].forEach(d => osc('sawtooth', f, t, end, d, true).connect(fl)); const tr2 = osc('triangle', f, t, end), tg = ac.createGain(); tg.gain.value = 0.5; tr2.connect(tg); tg.connect(fl); outTo(g, r ?? 0.45, dl); break; }
+    case 'trumpet': { end = env(g, t, dur, vol, 0.02, 0.1, 0.85, 0.08); const fl = lp(900); fl.frequency.setValueAtTime(900, t); fl.frequency.linearRampToValueAtTime(Math.min(5200, f * 6), t + 0.08); fl.connect(g); [-6, 6].forEach(d => osc('sawtooth', f, t, end, d, true).connect(fl)); const sq = osc('square', f, t, end), sg = ac.createGain(); sg.gain.value = 0.3; sq.connect(sg); sg.connect(fl); outTo(g, r ?? 0.25, dl); break; }
+    case 'cello': { end = env(g, t, dur, vol, 0.2, 0.2, 0.9, 0.35); const fl = lp(Math.min(1500, f * 6)); fl.connect(g); [-6, 6].forEach(d => osc('sawtooth', f, t, end, d, true).connect(fl)); osc('sine', f, t, end).connect(g); outTo(g, r ?? 0.35, dl); break; }
     default: return;
   }
+}
+function riser(t, dur, vol = 0.12) {   // もりあげの ヒューーッ
+  const n = noiseSrc(), f = ac.createBiquadFilter(), g = ac.createGain(); n.loop = true; f.type = 'bandpass'; f.Q.value = 1.2; f.frequency.setValueAtTime(300, t); f.frequency.exponentialRampToValueAtTime(7500, t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + dur * 0.96); g.gain.linearRampToValueAtTime(0.0001, t + dur + 0.04); n.connect(f); f.connect(g); outTo(g, 0.3); n.start(t); n.stop(t + dur + 0.1);
 }
 let noiseBuf = null, noiseCtx = null;
 function noiseSrc() { if (noiseCtx !== ac) { noiseCtx = ac; noiseBuf = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.6), ac.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; } const n = ac.createBufferSource(); n.buffer = noiseBuf; return n; }
@@ -236,33 +278,47 @@ function perc(kind, t, vol, pitch = 1) {
     if (kind === 's') { const o = ac.createOscillator(), g2 = ac.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(220, t); o.frequency.exponentialRampToValueAtTime(110, t + 0.08); g2.gain.setValueAtTime(vol * 0.5, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.1); o.connect(g2); outTo(g2, 0.1); o.start(t); o.stop(t + 0.12); }
   }
 }
-const on = (l, bar) => !l.pass || l.pass === (bar % 16 < 8 ? 1 : 2);
+const passOf = (bar) => bar >= 16 ? 3 : bar % 16 < 8 ? 1 : 2;   // 1=まえはん 2=こうはん 3=さいごの もりあがり
+const on = (l, P) => !l.pass || l.pass === P || (P === 3 && l.pass === 2);
 const ch = (p, st) => p[st % p.length];
+function scheduleIntro(tr, s, t, sd) {   // イントロ: ひくい ストリングス+ティンパニ→スネアロール→ブラスの いっぱつ
+  const ct = tr.ct[0], bi = Math.floor(s / 16), st = s % 16, last = bi === tr.intro - 1, g = tr.g;
+  if (st === 0) { for (const m of ct) voice(bi === 0 ? 'strings' : 'choir', mtof(m), t, sd * 16, 0.06 * g, { r: 0.6 }); voice('cello', mtof(ct[0] - 12), t, sd * 16, 0.1 * g, {}); if (bi === 0) perc('boom', t, 0.5 * g); if (tr.sty === 'epic') riser(t, sd * 16 * tr.intro, 0.1 * g); }
+  if (last) { if ([0, 4, 8, 10, 12, 13, 14, 15].includes(st)) perc('t', t, (0.25 + st * 0.02) * g, 1 + (15 - st) * 0.03); if (st >= 8) perc('s', t, (0.05 + (st - 8) * 0.04) * g); if (st === 15) { for (const m of ct) voice('brass', mtof(m + 12), t, sd * 2, 0.1 * g, {}); } }
+  else if (st % 4 === 0) perc('t', t, 0.22 * g, 1.2 - (st / 16) * 0.2);
+}
 function scheduleStep(tr, s, t, sd) {
-  const bar = Math.floor(s / 16) % tr.n, st = s % 16, ct = tr.ct[bar % tr.ct.length];
-  for (const l of tr.L_lead) { if (!on(l, bar)) continue; const nb = l.bars_.length, notes = l.bars_[bar % nb] || []; for (const [ms, m, len] of notes) if (ms === st) voice(l.i, mtof(m + 12 * (l.oct || 0)), t, sd * len * (l.leg || 0.93), l.v * tr.g, l); }
-  for (const l of tr.L_pad) { if (!on(l, bar) || st !== 0) continue; for (const m of ct) voice(l.i, mtof(m + (l.up || 0)), t, sd * 16 * 0.98, l.v * tr.g, l); }
-  for (const l of tr.L_bass) { if (!on(l, bar)) continue; const c = ch(l.p, st); if (c === '.') continue; let len = 1; while (len < 16 && ch(l.p, st + len) === '.') len++; voice(l.i, mtof(ct[0] - 12 + (c === '5' ? 7 : c === '8' ? 12 : c === '3' ? ct[1] - ct[0] : 0)), t, sd * len * 0.9, l.v * tr.g, l); }
-  for (const l of tr.L_arp) { if (!on(l, bar)) continue; const c = ch(l.p, st); if (c === '.') continue; const ix = +c, nm = ct[ix % ct.length] + 12 * Math.floor(ix / ct.length) + (l.up ?? 24); voice(l.i, mtof(nm), t, sd * (l.len || 1.6), l.v * tr.g, l); }
-  for (const d of tr.L_drums) {
-    if (!on(d, bar)) continue; const v = d.v || 1, a = (c, base) => c === 'X' ? base * 1.3 : c === 'g' ? base * 0.5 : base, fillNow = d.fill && bar % 4 === 3 && st >= 12;
-    for (const kk of ['k', 's', 'h', 'o', 'c']) { const p = d[kk]; if (!p) continue; const c = p[st]; if (!c || c === '.') continue; if (kk === 's' && fillNow) continue; perc(kk, t, a(c, { k: 0.5, s: 0.3, h: 0.1, o: 0.09, c: 0.2 }[kk]) * v * tr.g); }
-    if (d.t && d.t[st] && d.t[st] !== '.') perc('t', t, 0.4 * v * tr.g, 1 + (3 - (+d.t[st])) * 0.18);
-    if (d.boom && st === 0 && bar % 2 === 0) perc('boom', t, 0.45 * v * tr.g);
-    if (d.crash && st === 0 && bar % d.crash === 0) perc('crash', t, 0.2 * v * tr.g);
-    if (fillNow) perc('s', t, (0.12 + (st - 12) * 0.05) * v * tr.g);
+  if (s < 0) { scheduleIntro(tr, s + tr.intro * 16, t, sd); return; }
+  const bar = Math.floor(s / 16) % tr.n, st = s % 16, ext = bar >= 16, sb = ext ? 8 + (bar - 16) : bar, P = passOf(bar), trp = ext ? tr.lift : 0, ct = tr.ct[sb % tr.ct.length], gg = tr.g, brk = bar === tr.brk;
+  if (tr.riser && (bar === 7 || bar === 23 || brk) && st === 0) riser(t, sd * 16, 0.11 * gg);
+  if (brk) { if (st >= 8) perc('s', t, (0.05 + (st - 8) * 0.045) * gg); if (st % 4 === 0) perc('t', t, 0.2 * gg, 1.1 - st * 0.02); }
+  if (tr.brk >= 0 && bar === tr.brk + 1 && st === 0) { perc('crash', t, 0.3 * gg); perc('boom', t, 0.55 * gg); }
+  if (!brk) {
+    for (const l of tr.L_lead) { if (!on(l, P)) continue; const nb = l.bars_.length, notes = l.bars_[sb % nb] || []; for (const [ms, m, len] of notes) if (ms === st) voice(l.i, mtof(m + 12 * (l.oct || 0) + trp), t, sd * len * (l.leg || 0.93), l.v * gg, l); }
+    for (const l of tr.L_bass) { if (!on(l, P)) continue; const c = ch(l.p, st); if (c === '.') continue; let len = 1; while (len < 16 && ch(l.p, st + len) === '.') len++; voice(l.i, mtof(ct[0] - 12 + trp + (c === '5' ? 7 : c === '8' ? 12 : c === '3' ? ct[1] - ct[0] : 0)), t, sd * len * 0.9, l.v * gg, l); }
+    for (const l of tr.L_arp) { if (!on(l, P)) continue; const c = ch(l.p, st); if (c === '.') continue; const ix = +c, nm = ct[ix % ct.length] + 12 * Math.floor(ix / ct.length) + (l.up ?? 24) + trp; voice(l.i, mtof(nm), t, sd * (l.len || 1.6), l.v * gg, l); }
+    for (const l of tr.L_stab) { if (!on(l, P)) continue; if (ch(l.p, st) !== 'x') continue; for (const m of ct) voice(l.i, mtof(m + (l.up ?? 12) + trp), t, sd * (l.len || 1.5), l.v * gg * 0.7, l); }
+    for (const d of tr.L_drums) {
+      if (!on(d, P)) continue; const v = d.v || 1, a = (c, base) => c === 'X' ? base * 1.3 : c === 'g' ? base * 0.5 : base, fillNow = d.fill && sb % 4 === 3 && st >= 12;
+      for (const kk of ['k', 's', 'h', 'o', 'c']) { const p = d[kk]; if (!p) continue; const c = p[st]; if (!c || c === '.') continue; if (kk === 's' && fillNow) continue; perc(kk, t, a(c, { k: 0.5, s: 0.3, h: 0.1, o: 0.09, c: 0.2 }[kk]) * v * gg); }
+      if (d.t && d.t[st] && d.t[st] !== '.') perc('t', t, 0.4 * v * gg, 1 + (3 - (+d.t[st])) * 0.18);
+      if (d.boom && st === 0 && sb % 2 === 0) perc('boom', t, 0.45 * v * gg);
+      if (d.crash && st === 0 && (sb % d.crash === 0 || (ext && sb % 2 === 0))) perc('crash', t, 0.2 * v * gg);
+      if (fillNow) { perc('s', t, (0.12 + (st - 12) * 0.05) * v * gg); if (ext && st % 2 === 0) perc('t', t, 0.3 * v * gg, 1.2 - (st - 12) * 0.1); }
+    }
   }
+  for (const l of tr.L_pad) { if (!on(l, P) || st !== 0) continue; ct.forEach((m, ix) => { if (l.only && !l.only.includes(ix)) return; voice(l.i, mtof(m + (l.up || 0) + trp), t, sd * 16 * 0.98, l.v * gg, l); }); }
 }
 function tick() {
   if (!ac || !cur) return; const tr = TRACKS[cur], sd = 60 / tr.bpm / 4;
   if (nextT < ac.currentTime) nextT = ac.currentTime + 0.05;
-  while (nextT < ac.currentTime + 0.35) { scheduleStep(tr, step, nextT, sd); step = (step + 1) % (tr.n * 16); nextT += sd; }
+  while (nextT < ac.currentTime + 0.35) { scheduleStep(tr, step, nextT, sd); step++; if (step >= tr.n * 16) step = 0; nextT += sd; }
 }
 function fadeOut(tb) { if (!tb) return; const now = ac.currentTime; try { tb.mix.gain.cancelScheduledValues(now); tb.mix.gain.setValueAtTime(tb.mix.gain.value, now); tb.mix.gain.linearRampToValueAtTime(0, now + 0.4); tb.send.gain.setValueAtTime(tb.send.gain.value, now); tb.send.gain.linearRampToValueAtTime(0, now + 0.4); tb.dsend.gain.linearRampToValueAtTime(0, now + 0.4); } catch {} setTimeout(() => { try { tb.mix.disconnect(); tb.send.disconnect(); tb.dsend.disconnect(); } catch {} }, 4200); }
 function startNow(name) {
   clearInterval(timer); timer = null; fadeOut(tbus); tbus = null;
   if (!cfg.bgm || !name || !TRACKS[name]) { cur = null; return; }
-  cur = name; step = 0; nextT = 0; tbus = trackBus(); timer = setInterval(tick, 80); tick();
+  cur = name; step = -(TRACKS[name].intro || 0) * 16; nextT = 0; tbus = trackBus(); timer = setInterval(tick, 80); tick();
 }
 function resolve(name) {
   if (name === 'field') return fieldTheme;
@@ -301,7 +357,7 @@ export async function __bgmTest(names, secs = 20) {
   for (const name of names || Object.keys(TRACKS)) {
     try {
       const off = new OfflineAudioContext(2, 44100 * secs, 44100); ac = off; G = buildChain(off); G.out.gain.value = 0.85 * 0.6; G.out.connect(off.destination); tbus = trackBus();
-      const tr = TRACKS[name], sd = 60 / tr.bpm / 4; let s = 0, t = 0; while (t < secs - 1.5) { scheduleStep(tr, s, t, sd); s = (s + 1) % (tr.n * 16); t += sd; }
+      const tr = TRACKS[name], sd = 60 / tr.bpm / 4; let s = -(tr.intro || 0) * 16, t = 0; while (t < secs - 1.5) { scheduleStep(tr, s, t, sd); s++; if (s >= tr.n * 16) s = 0; t += sd; }
       const buf = await off.startRendering(), d0 = buf.getChannelData(0), d1 = buf.getChannelData(1); let pk = 0, sq = 0; for (let i = 0; i < d0.length; i++) { const a = Math.max(Math.abs(d0[i]), Math.abs(d1[i])); if (a > pk) pk = a; sq += d0[i] * d0[i]; }
       res[name] = { peak: +pk.toFixed(3), rms: +(20 * Math.log10(Math.sqrt(sq / d0.length) + 1e-9)).toFixed(1), bars: tr.n };
     } catch (e) { res[name] = { err: String(e && e.message || e) }; }
