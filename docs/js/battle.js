@@ -20,7 +20,7 @@ const MOTION_BY_NAME = { 'しのちょうふく': 'sweep', 'がんせきのち�
 const NEW_FX = {
   fire: ['fire_n1', 'fire_n2', 'fire_n3'], water: ['water_n1', 'water_n2', 'water_n3'], thunder: ['thunder_n1', 'thunder_n2', 'thunder_n3'], wind: ['wind_n1', 'wind_n2', 'wind_n3'], grass: ['grass_n1', 'grass_n2', 'grass_n3'],
   heaven: ['heaven_n1', 'heaven_2', 'heaven_3'], earth: ['earth_n1', 'earth_2', 'earth_3', 'earth_n4', 'earth_n5'], dark: ['dark_n1', 'dark_2', 'dark_3', 'dark_n4', 'dark_n5'], magic: ['magic_n1', 'magic_2', 'magic_3', 'magic_n4', 'magic_n5'], beast: ['beast_n1', 'beast_2', 'beast_3', 'beast_4', 'beast_5'],
-  kami: ['kami_1', 'kami_1b', 'kami_3', 'kami_4', 'kami_5'] };
+  kami: ['kami_1', 'kami_1b', 'kami_2', 'kami_3', 'kami_4', 'kami_5'] };
 const SP_FX = { sp_jiware: 'sp_jiware', sp_tsunami: 'sp_tsunami', sp_fubuki: 'sp_fubuki', sp_taifuu: 'sp_taifuu' };   // せんようの わざえんしゅつ(4コマ)
 const FX_COMMON = ['fx_heal', 'fx_guard', 'fx_faint'];   // かいふく・ぼうぎょ・ひんし
 const FX_PARTS = ['part_slash_1', 'part_slash_2', 'part_claw', 'part_bite', 'part_crescent', 'part_ring', 'part_burst', 'part_swirl', 'part_sparkle', 'part_pillar', 'part_beam'];
@@ -30,7 +30,7 @@ const registerExtraFx = (G) => {
 };
 const fxBlend = (u) => /\/anim\/(earth_(n1|2|3)|sp_jiware)\//.test(u) ? 'multiply' : /\/anim\/(kami_|ail_|fire_n|water_n|thunder_n|wind_n|grass_n|earth_n[45]|heaven_|dark_|magic_|beast_|fx_|sp_)/.test(u) ? 'screen' : '';
 const fxSeen = new Set();
-const preloadFx = (G) => { try { const L = [...Object.values(G.ELEMENT_EFFECTS || {}), ...Object.values(G.ELEMENT_EFFECT_ANIM || {}).flat(2), ...FX_PARTS.map(n => `assets/effects/parts/${n}.webp`), ...[...Object.values(SP_FX), ...FX_COMMON].flatMap(n => [1, 2, 3, 4].map(k => `assets/effects/anim/${n}/f${k}.webp`)), 'assets/effects/boss/boss_sun.webp', 'assets/effects/boss/boss_hole.webp']; for (const u of L) if (!fxSeen.has(u)) { fxSeen.add(u); const i = new Image(); i.src = 'quest/' + u; } } catch (e) {} };   // わざの えを さきに よみこむ(こうかいばんで おくれて でないように)
+const preloadFx = (G) => { try { const L = [...Object.values(G.ELEMENT_EFFECTS || {}), ...Object.values(G.ELEMENT_EFFECT_ANIM || {}).flat(2), ...FX_PARTS.map(n => `assets/effects/parts/${n}.webp`), ...[...Object.values(SP_FX), ...FX_COMMON].flatMap(n => [1, 2, 3, 4].map(k => `assets/effects/anim/${n}/f${k}.webp`)), 'assets/effects/boss/boss_sun.webp', 'assets/effects/boss/boss_hole.webp', 'assets/effects/boss/boss_eclipse.webp']; for (const u of L) if (!fxSeen.has(u)) { fxSeen.add(u); const i = new Image(); i.src = 'quest/' + u; } } catch (e) {} };   // わざの えを さきに よみこむ(こうかいばんで おくれて でないように)
 export function questData() {
   return new Promise((res, rej) => {
     if (window.GAME_DATA) { GD = window.GAME_DATA; installStatus(GD); installExtraSkills(GD); installExtraMons(GD); registerExtraFx(GD); setTimeout(() => preloadFx(GD), 2500); return res(GD); }
@@ -503,9 +503,8 @@ export async function runBattle(enemyId0, opts = {}) {
       converge(b, '#c8a0ff', 'dot', 22, 190, 760, 900); converge(b, '#ffffff', 'star', 8, 150, 700, 600); await sleep(900); flash(b, '#a050ff', hitSz * 1.8); impact(2.4); await sleep(350); },
     boss_eclipse: async ({ b, hitSz, impact }) => {   // エクリプス: たいようと ブラックホールが かさなる
       dim(.6, 1900);
-      const sunCss = `width:340px;height:340px;border-radius:0;background:url(${img('assets/effects/boss/boss_sun.webp')}) center/100% 100% no-repeat;mix-blend-mode:screen`;
-      disc({ x: b.x, y: b.y - 40 }, sunCss, [{ opacity: 0, transform: 'translate(-50%,-50%) scale(.3)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: .25 }, { opacity: 1, offset: .7 }, { opacity: 0, transform: 'translate(-50%,-50%) scale(2.4)' }], { duration: 1500 });
-      disc({ x: b.x + 170, y: b.y - 40 }, 'width:190px;height:190px;background:radial-gradient(circle,#000 0 62%,#2a0a50 70%,transparent 76%)', [{ opacity: 0, transform: 'translate(-50%,-50%) scale(.6)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: .25 }, { opacity: 1, transform: 'translate(calc(-50% - 170px),-50%) scale(1.05)', offset: .65 }, { opacity: 1, transform: 'translate(calc(-50% - 170px),-50%) scale(1.05)', offset: .78 }, { opacity: 0, transform: 'translate(calc(-50% - 170px),-50%) scale(2.2)' }], { duration: 1500, easing: 'ease-in-out' });
+      const ecl = `width:420px;height:420px;border-radius:0;background:url(${img('assets/effects/boss/boss_eclipse.webp')}) center/100% 100% no-repeat;mix-blend-mode:screen`;
+      disc({ x: b.x, y: b.y - 40 }, ecl, [{ opacity: 0, transform: 'translate(-50%,-50%) scale(.2) rotate(-40deg)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1) rotate(0deg)', offset: .3 }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.1) rotate(20deg)', offset: .75 }, { opacity: 0, transform: 'translate(-50%,-50%) scale(2.6) rotate(40deg)' }], { duration: 1700 });
       rays({ x: b.x, y: b.y - 40 }, '#ffd870', 460, 1300); converge(b, '#ffffff', 'star', 14, 200, 900, 720); await sleep(1000);
       for (let k = 0; k < 4; k++) ring(b, ['#ffffff', '#ffd060', '#a050ff', '#ff7a20'][k], hitSz * 2.2, k * 110); tint('#ffffff'); rays(b, '#ffffff', hitSz * 3, 900); await sleep(320); impact(3); await sleep(500); },
   };
