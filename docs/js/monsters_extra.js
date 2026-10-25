@@ -129,12 +129,12 @@ export const EXTRA_APPEAR = {
   kurage_ko: { lake: 2 }, kurage_ko_2: { lake: 1, cosmos: 1 }, houki_ko: { forest: 1, temple: 1 }, houki_ko_2: { castle: 1, temple: 1 }, suzu_sei: { temple: 1, castle: 1 }, omocha_mahou: { castle: 1, temple: 1 },
   denchi_risu: { forest: 1, sky: 1 }, denchi_risu_2: { grove: 1, dragon: 1 }, hoshi_usagi: { sun: 1, sky: 1 }, hoshi_usagi_2: { sun: 1, cosmos: 1 }, niji_hato: { sky: 1, sun: 1 }, kantera_bito: { temple: 1, cosmos: 1 },
   furin_ko: { sky: 1, forest: 1 }, furin_ko_2: { sky: 1, dragon: 1 }, tako_ko: { sky: 1, forest: 1 }, donguri_robo: { forest: 1, volcano: 1 }, donguri_robo_2: { volcano: 1, grove: 1 }, suna_kai: { forest: 1, grove: 1 },
-  chin_kusa: { grove: 1 }, chin_kusa_2: { grove: 1 }, furebu_mizu: { lake: 1 }, furebu_mizu_2: { lake: 1 }, mike_hi: { volcano: 1 }, mike_hi_2: { volcano: 1 },
+  chin_kusa: { forest: 2, grove: 1 }, chin_kusa_2: { grove: 1 }, furebu_mizu: { lake: 1 }, furebu_mizu_2: { lake: 1 }, mike_hi: { volcano: 1 }, mike_hi_2: { volcano: 1 },
   hono_tanuki: { forest: 1, volcano: 2 }, hono_tanuki_2: { volcano: 2 }, hono_tanuki_3: { volcano: 1 }, ringo_ko: { forest: 2, grove: 1 }, ringo_ko_2: { grove: 2 }, dango_mushi: { forest: 1, grove: 1 }, dango_mushi_2: { volcano: 1, grove: 1 },
   kitsune_ko: { forest: 1, sun: 1 }, kitsune_ko_2: { sun: 1, sky: 1 }, kitsune_ko_3: { temple: 1 }, denki_neko: { forest: 1, sky: 1 }, denki_neko_2: { grove: 1, dragon: 1 }, kagami_ko: { temple: 1, castle: 1 }, fuusen_ko: { sky: 2, forest: 1 }, hikari_kame: { sun: 1, sky: 1, lake: 1 },
-  raimushi: { forest: 2 }, raimushi_2: { grove: 1, volcano: 1 }, raimushi_3: { dragon: 1, volcano: 1 }, biriunagi: { lake: 2 }, biriunagi_2: { lake: 1, grove: 1 }, biriunagi_3: { dragon: 1 }, raichou_ko: { forest: 1, sky: 1 },
+  raimushi: { volcano: 1, sky: 1 }, raimushi_2: { grove: 1, volcano: 1 }, raimushi_3: { dragon: 1, volcano: 1 }, biriunagi: { lake: 2 }, biriunagi_2: { lake: 1, grove: 1 }, biriunagi_3: { dragon: 1 }, raichou_ko: { sky: 1, volcano: 1 },
   majo_chin: { castle: 1, temple: 1 }, majutsusho: { temple: 1, castle: 1 }, majutsusho_2: { temple: 1, castle: 1 }, lamp_no_sei: { temple: 2, cosmos: 1 },
-  watage: { forest: 1, sky: 1 }, watage_2: { grove: 1 }, tsubame_ko: { sky: 1, forest: 1 }, kaze_chou: { sky: 1, grove: 1, dragon: 1 },
+  watage: { forest: 1, sky: 1 }, watage_2: { grove: 1 }, tsubame_ko: { sky: 1, lake: 1 }, kaze_chou: { sky: 1, grove: 1, dragon: 1 },
   kumo_hitsuji: { sky: 1, sun: 1 }, kumo_hitsuji_2: { temple: 1, sun: 1 }, tenshi_chin: { temple: 1, sun: 1 },
 };
 export function installExtraMons(GD) {

@@ -1,4 +1,5 @@
-// BGM(外部音源なし。WebAudioで鳴らす ちいさなシーケンサー。本番では音源に差し替え可)
+// BGM(外部音源なし。WebAudioで鳴らす シーケンサー+シンセ。リバーブ・ストリングス・ブラス・ドラムなどで ぶあつく ならす)
+// 曲は「コード進行(度数)」+「メロディ(度数の文字列)」+「楽器レイヤー」で書く。tools/ には なにも いらない。
 import { unlockAudio, audioCtx } from './audio.js';
 
 const KEY = 'chinchilla-ranch-audio';
@@ -7,145 +8,304 @@ export const audioConfig = cfg;
 const saveCfg = () => { try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch {} };
 
 const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
-// コードは [根音, 3度, 5度](MIDI)。1小節=16ステップ(16分音符)
-const C = { C: [48, 52, 55], Am: [45, 48, 52], F: [41, 45, 48], G: [43, 47, 50], Em: [40, 43, 47], D: [50, 54, 57], Dm: [50, 53, 57], Bb: [46, 50, 53], A: [45, 49, 52], Cc: [48, 52, 55], Gm: [43, 46, 50], E: [40, 44, 47], Edim: [40, 43, 46] };
-const mel = (...a) => a;   // [ステップ, 音, ながさ]
+const SCALES = { major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10], dorian: [0, 2, 3, 5, 7, 9, 10], lydian: [0, 2, 4, 6, 7, 9, 11], mixo: [0, 2, 4, 5, 7, 9, 10], phrygian: [0, 1, 3, 5, 7, 8, 10] };
+const PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+// 度数 → MIDI。deg=1〜(7を こえても OK)、oct=オクターブ、acc=半音
+const degMidi = (tr, deg, oct = 0, acc = 0) => { const i = deg - 1, sc = SCALES[tr.mode || 'major']; return tr.key + sc[((i % 7) + 7) % 7] + 12 * (Math.floor(i / 7) + oct) + acc; };
 
-const TRACKS = {
-  // のんびり(むら)
-  village: { bpm: 88, bars: ['C', 'Am', 'F', 'G', 'C', 'Am', 'F', 'G'], arp: { wave: 'triangle', vol: 0.07, pat: [0, 1, 2, 1, 0, 1, 2, 1], up: 12, every: 2 }, bass: { wave: 'sine', vol: 0.13, steps: [0, 8] },
-    mel: { wave: 'sine', vol: 0.1, notes: [
-      mel(0, 76, 4), mel(4, 79, 2), mel(6, 76, 2), mel(8, 74, 4), mel(12, 72, 4),
-      mel(0, 69, 4), mel(4, 72, 4), mel(8, 76, 6), mel(14, 74, 2),
-      mel(0, 72, 4), mel(4, 69, 2), mel(6, 72, 2), mel(8, 74, 4), mel(12, 72, 4),
-      mel(0, 71, 6), mel(6, 74, 2), mel(8, 79, 8),
-      mel(0, 76, 4), mel(4, 79, 4), mel(8, 81, 4), mel(12, 79, 4),
-      mel(0, 76, 6), mel(6, 72, 2), mel(8, 69, 8),
-      mel(0, 77, 4), mel(4, 76, 2), mel(6, 74, 2), mel(8, 72, 8),
-      mel(0, 74, 4), mel(4, 71, 4), mel(8, 67, 8)] } },
-  // ぼうけん(もり)
-  field: { bpm: 112, bars: ['Am', 'F', 'C', 'G', 'Am', 'F', 'G', 'Am'], arp: { wave: 'square', vol: 0.035, pat: [0, 2, 1, 2, 0, 2, 1, 2], up: 12, every: 2 }, bass: { wave: 'triangle', vol: 0.16, steps: [0, 6, 8, 14] },
-    mel: { wave: 'triangle', vol: 0.12, notes: [
-      mel(0, 69, 2), mel(2, 72, 2), mel(4, 76, 4), mel(8, 74, 2), mel(10, 72, 2), mel(12, 69, 4),
-      mel(0, 72, 2), mel(2, 69, 2), mel(4, 77, 4), mel(8, 76, 4), mel(12, 72, 4),
-      mel(0, 76, 4), mel(4, 79, 2), mel(6, 76, 2), mel(8, 72, 4), mel(12, 76, 4),
-      mel(0, 74, 4), mel(4, 71, 2), mel(6, 74, 2), mel(8, 79, 8),
-      mel(0, 69, 2), mel(2, 72, 2), mel(4, 76, 4), mel(8, 81, 4), mel(12, 79, 4),
-      mel(0, 77, 4), mel(4, 76, 2), mel(6, 72, 2), mel(8, 69, 8),
-      mel(0, 74, 4), mel(4, 79, 4), mel(8, 78, 4), mel(12, 74, 4),
-      mel(0, 69, 8), mel(8, 72, 4), mel(12, 76, 4)] } },
-  // バトル(ドラム・パッド・ぶあついリードで、きんぱくした たたかいの ふんいき)
-  battle: { bpm: 164, bars: ['Am', 'Am', 'F', 'G', 'Am', 'F', 'Dm', 'E'],
-    arp: { wave: 'triangle', vol: 0.03, pat: [0, 1, 2, 1, 2, 1, 0, 1], up: 12, every: 2, lp: 2200 },
-    bass: { wave: 'sawtooth', vol: 0.11, steps: [0, 2, 3, 4, 6, 8, 10, 11, 12, 14], lp: 520 },
-    pad: { wave: 'sawtooth', vol: 0.022, lp: 1100 },
-    drums: { k: [0, 6, 8, 11], s: [4, 12], h: [0, 2, 4, 6, 8, 10, 12, 14], hv: 0.5 },
-    mel: { wave: 'sawtooth', vol: 0.05, lp: 3200, det: 9, notes: [
-      mel(0, 81, 2), mel(2, 76, 2), mel(4, 72, 2), mel(6, 76, 2), mel(8, 81, 4), mel(12, 79, 2), mel(14, 76, 2),
-      mel(0, 77, 2), mel(2, 76, 2), mel(4, 72, 2), mel(6, 69, 2), mel(8, 72, 8),
-      mel(0, 77, 2), mel(2, 81, 2), mel(4, 84, 2), mel(6, 81, 2), mel(8, 77, 4), mel(12, 81, 4),
-      mel(0, 83, 2), mel(2, 79, 2), mel(4, 74, 2), mel(6, 79, 2), mel(8, 83, 6), mel(14, 81, 2),
-      mel(0, 81, 2), mel(2, 84, 2), mel(4, 88, 4), mel(8, 86, 2), mel(10, 84, 2), mel(12, 81, 4),
-      mel(0, 84, 2), mel(2, 81, 2), mel(4, 77, 2), mel(6, 81, 2), mel(8, 84, 8),
-      mel(0, 86, 2), mel(2, 81, 2), mel(4, 77, 2), mel(6, 74, 2), mel(8, 77, 4), mel(12, 81, 4),
-      mel(0, 80, 2), mel(2, 83, 2), mel(4, 88, 4), mel(8, 87, 2), mel(10, 83, 2), mel(12, 80, 2), mel(14, 83, 2)] } },
-  // ボス(16小節。前半=ひくい ギャロップで せまってくる / 後半=ブラスが うたう ちょうてん。さいごは スネアロールで ひきこむ)
-  boss: { bpm: 170, bars: ['Dm', 'Dm', 'Bb', 'A', 'Dm', 'Gm', 'Edim', 'A', 'Bb', 'F', 'Gm', 'Dm', 'Bb', 'F', 'A', 'A'],
-    arp: { wave: 'sawtooth', vol: 0.024, pat: [0, 1, 2, 1, 0, 2, 1, 2], up: 12, every: 1, lp: 2000 },
-    bass: { wave: 'sawtooth', vol: 0.14, steps: [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 14, 15], lp: 480 },
-    pad: { wave: 'sawtooth', vol: 0.032, lp: 900 },
-    drums: { k: [0, 3, 6, 8, 10, 11, 14], s: [4, 12], h: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], hv: 0.45, boom: [0], crash: [0, 8], roll: [7, 15] },
-    mel: { wave: 'sawtooth', vol: 0.058, lp: 3600, det: 12, att: 0.03, notes: [
-      mel(0, 86, 3), mel(3, 85, 1), mel(4, 86, 2), mel(6, 89, 2), mel(8, 88, 4), mel(12, 86, 2), mel(14, 85, 2),
-      mel(0, 81, 2), mel(2, 82, 2), mel(4, 81, 2), mel(6, 77, 2), mel(8, 74, 8),
-      mel(0, 89, 3), mel(3, 86, 1), mel(4, 82, 4), mel(8, 86, 2), mel(10, 89, 2), mel(12, 91, 4),
-      mel(0, 88, 3), mel(3, 85, 1), mel(4, 81, 4), mel(8, 85, 2), mel(10, 88, 2), mel(12, 85, 4),
-      mel(0, 86, 2), mel(2, 89, 2), mel(4, 93, 4), mel(8, 91, 2), mel(10, 89, 2), mel(12, 86, 4),
-      mel(0, 91, 3), mel(3, 89, 1), mel(4, 86, 4), mel(8, 82, 2), mel(10, 86, 2), mel(12, 89, 4),
-      mel(0, 88, 2), mel(2, 85, 2), mel(4, 82, 2), mel(6, 79, 2), mel(8, 76, 4), mel(12, 79, 4),
-      mel(0, 85, 2), mel(2, 88, 2), mel(4, 91, 2), mel(6, 88, 2), mel(8, 85, 4), mel(12, 81, 4),
-      mel(0, 82, 4), mel(4, 86, 4), mel(8, 89, 8),
-      mel(0, 89, 4), mel(4, 88, 2), mel(6, 86, 2), mel(8, 84, 8),
-      mel(0, 82, 4), mel(4, 86, 4), mel(8, 91, 4), mel(12, 89, 4),
-      mel(0, 86, 8), mel(8, 89, 4), mel(12, 86, 4),
-      mel(0, 89, 4), mel(4, 93, 4), mel(8, 91, 4), mel(12, 89, 4),
-      mel(0, 88, 4), mel(4, 89, 4), mel(8, 93, 8),
-      mel(0, 91, 2), mel(2, 88, 2), mel(4, 85, 2), mel(6, 88, 2), mel(8, 91, 2), mel(10, 93, 2), mel(12, 91, 4),
-      mel(0, 85, 4), mel(4, 88, 4), mel(8, 81, 8)] } },
+// メロディ文字列: 'こうぞう= 度数[#|b][\'|,]*:ながさ' を スペースで つなぎ、小節は | で くぎる。1小節=16。r=やすみ
+function parseMel(str, tr, name) {
+  return str.split('|').map((bar, bi) => {
+    const out = []; let s = 0;
+    for (const tok of bar.trim().split(/\s+/)) {
+      if (!tok) continue; const m = /^([r1-9])([#b]?)([',]*):(\d+)$/.exec(tok); if (!m) throw new Error(`${name}: bad token ${tok}`);
+      const len = +m[4];
+      if (m[1] !== 'r') { const up = (m[3].match(/'/g) || []).length - (m[3].match(/,/g) || []).length; out.push([s, degMidi(tr, +m[1], up, m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0), len]); }
+      s += len;
+    }
+    if (s !== 16) (window.__bgmWarn || (window.__bgmWarn = [])).push(`${name} bar${bi + 1} = ${s}`);
+    return out;
+  });
+}
+function splitLegacy(notes, n) {   // [ステップ, MIDI, ながさ] を ステップが もどるごとに 小節へ わける
+  const bars = []; let bar = 0, last = -1;
+  for (const nt of notes) { if (nt[0] <= last) bar++; last = nt[0]; (bars[bar] || (bars[bar] = [])).push(nt); }
+  for (let i = 0; i < Math.max(n, bars.length); i++) bars[i] = bars[i] || []; return bars;
+}
+// コード: 数字(度数)+しゅうしょく[M=メジャー m=マイナー d=ディミニッシュ s=sus4 7 9 5=パワー] か、'Am' 'Bb' などの なまえ
+function chordOf(tr, tok) {
+  const nm = /^([A-G])([#b]?)(.*)$/.exec(tok);
+  if (nm) {
+    const pc = (PC[nm[1]] + (nm[2] === '#' ? 1 : nm[2] === 'b' ? -1 : 0) + 12) % 12, r = 40 + ((pc - 4 + 12) % 12), q = nm[3];
+    const th = q.startsWith('dim') || (q.startsWith('m') && !q.startsWith('maj')) ? r + 3 : q.startsWith('sus') ? r + 5 : r + 4, fi = q.startsWith('dim') ? r + 6 : r + 7, ct = [r, th, fi];
+    if (q.includes('7')) ct.push(r + (q.includes('maj') ? 11 : 10)); return ct;
+  }
+  const m = /^(\d)(.*)$/.exec(tok), d = +m[1], q = m[2], root = degMidi(tr, d, -2); let third = degMidi(tr, d + 2, -2), fifth = degMidi(tr, d + 4, -2);
+  if (q.includes('M')) third = root + 4; if (q.includes('m')) third = root + 3; if (q.includes('d')) { third = root + 3; fifth = root + 6; } if (q.includes('s')) third = root + 5;
+  const ct = q.includes('5') ? [root, root + 7] : [root, third, fifth]; if (q.includes('7')) ct.push(degMidi(tr, d + 6, -2)); if (q.includes('9')) ct.push(degMidi(tr, d + 8, -2)); return ct;
+}
+const up = (s) => s.replace(/(\d[#b]?)([',]*):/g, (a, d, o) => d + o + "':");   // メロディを 1オクターブ うえへ
+
+// ドラムの パターン(16ステップ。x=ふつう X=つよい g=ゴースト)
+const DR = {
+  soft: { h: '..x...x...x...x.', v: 0.5 },
+  walk: { k: 'x.......x.......', s: '....x.......x...', h: 'x.x.x.x.x.x.x.x.', v: 0.7 },
+  pop: { k: 'x.....x.x.......', s: '....x.......x...', h: 'x.x.x.x.x.x.x.x.', o: '..............x.', v: 0.85 },
+  four: { k: 'x...x...x...x...', s: '....x.......x...', h: '..x...x...x...x.', o: '..x...x...x...x.', v: 0.9 },
+  rock: { k: 'x.....x.x.x.....', s: '....x.......x...', h: 'x.x.x.x.x.x.x.x.', o: '..............x.', v: 1, fill: 1, crash: 8 },
+  gallop: { k: 'x..xx..xx..xx.x.', s: '....x.......x...', h: 'x.x.x.x.x.x.x.x.', v: 1, fill: 1, crash: 8 },
+  march: { k: 'x...x...x...x...', s: 'x.x.X.x.x.x.X.xx', h: '................', v: 0.95, fill: 1, crash: 8 },
+  taiko: { k: 'x.......x.......', t: '..1...2...1.2.3.', v: 0.9, boom: 1, crash: 8 },
+  epic: { k: 'x...x...x...x...', s: '....x.......x...', h: 'x.x.x.x.x.x.x.x.', t: '..............12', v: 1, fill: 1, crash: 4, boom: 1 },
+  heart: { k: 'x..x............', v: 0.55 },
+  boss: { k: 'x..x..x.x.xx..x.', s: '....x.......x...', h: 'xxxxxxxxxxxxxxxx', o: '..............x.', v: 1, fill: 1, crash: 8, boom: 1 },
 };
 
-let ac = null, bus = null, timer = null, cur = null, want = null, nextT = 0, step = 0;
-function ensure() {
-  const a = audioCtx(); if (!a.ac) return false;
-  if (ac !== a.ac) { ac = a.ac; bus = ac.createGain(); bus.connect(ac.destination); }
-  bus.gain.value = cfg.bgm * 0.8; return true;
-}
-function note(wave, freq, t, dur, vol, lp, det, att) {
-  const o = ac.createOscillator(), g = ac.createGain(); o.type = wave; o.frequency.value = freq; if (det) o.detune.value = det;
-  let out = g; if (lp) { const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; g.connect(f); out = f; }
-  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + (att || 0.015)); g.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(0.06, dur));
-  o.connect(g); out.connect(bus); o.start(t); o.stop(t + dur + 0.06);
-}
-function padNote(wave, freq, t, dur, vol, lp) {   // のばす おと(ふくらんで、さいごに きえる)
-  const o = ac.createOscillator(), g = ac.createGain(), f = ac.createBiquadFilter(); o.type = wave; o.frequency.value = freq; f.type = 'lowpass'; f.frequency.value = lp || 1200;
-  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.18); g.gain.setValueAtTime(vol, t + dur - 0.12); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(f); f.connect(g); g.connect(bus); o.start(t); o.stop(t + dur + 0.05);
-}
-let noiseBuf = null;
-function noiseSrc() { if (!noiseBuf || noiseBuf.sampleRate !== ac.sampleRate) { noiseBuf = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.4), ac.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; } const n = ac.createBufferSource(); n.buffer = noiseBuf; return n; }
-function perc(kind, t, vol) {   // ドラム(キック/スネア/ハイハット/ひくい ドーン)
-  if (kind === 'k' || kind === 'boom') {
-    const o = ac.createOscillator(), g = ac.createGain(), lo = kind === 'boom' ? 38 : 48; o.type = 'sine'; o.frequency.setValueAtTime(kind === 'boom' ? 110 : 160, t); o.frequency.exponentialRampToValueAtTime(lo, t + (kind === 'boom' ? 0.25 : 0.1));
-    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + (kind === 'boom' ? 0.5 : 0.18)); o.connect(g); g.connect(bus); o.start(t); o.stop(t + 0.55);
-  } else {
-    const n = noiseSrc(), f = ac.createBiquadFilter(), g = ac.createGain(); f.type = 'highpass'; f.frequency.value = kind === 's' ? 1400 : kind === 'crash' ? 4500 : 7000;
-    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + (kind === 's' ? 0.16 : kind === 'crash' ? 0.38 : 0.045)); n.connect(f); f.connect(g); g.connect(bus); n.start(t); n.stop(t + 0.42);
-    if (kind === 's') { const o = ac.createOscillator(), g2 = ac.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(220, t); o.frequency.exponentialRampToValueAtTime(110, t + 0.08); g2.gain.setValueAtTime(vol * 0.5, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.1); o.connect(g2); g2.connect(bus); o.start(t); o.stop(t + 0.12); }
+const TRACKS = {
+  // ---------- むら ----------
+  village: { bpm: 88, key: 60, mode: 'major', g: 1.0, chords: ['1', '6', '4', '5', '1', '6', '4', '5'],
+    lead: [{ i: 'flute', v: 0.2, oct: 1, pass: 1, r: 0.35, m: "5:4 3:2 1:2 3:4 5:4|6:4 5:2 3:2 1:4 3:4|4:4 6:2 4:2 1:4 6,:4|5:6 4:2 2:4 7,:4|3:4 5:2 6:2 5:4 3:4|6:6 5:2 3:4 1:4|4:4 4:2 5:2 6:4 1':4|2':4 1':2 7:2 5:8" },
+      { i: 'bell', v: 0.16, oct: 1, pass: 2, r: 0.5, m: "5:4 3:2 1:2 3:4 5:4|6:4 5:2 3:2 1:4 3:4|4:4 6:2 4:2 1:4 6,:4|5:6 4:2 2:4 7,:4|3:4 5:2 6:2 5:4 3:4|6:6 5:2 3:4 1:4|4:4 4:2 5:2 6:4 1':4|2':4 1':2 7:2 5:8" },
+      { i: 'flute', v: 0.1, oct: 0, pass: 2, r: 0.35, m: "3:8 1:8|1:8 6,:8|1:8 4,:8|2:8 5,:8|1:8 3:8|3:8 1:8|1:8 6,:8|7,:8 5,:8" }],
+    pad: { i: 'strings', v: 0.05, r: 0.5 }, bass: { i: 'bass', v: 0.2, p: '1.......5.......' }, arp: { i: 'harp', v: 0.1, p: '0.1.2.1.0.1.2.1.', up: 12, r: 0.4 }, drums: DR.soft },
+  // ---------- フィールド(12) ----------
+  f_forest: { bpm: 112, key: 67, mode: 'major', g: 1.0, chords: ['1', '5', '6', '4', '1', '5', '4', '5'],
+    lead: [{ i: 'flute', v: 0.2, pass: 1, r: 0.3, m: "1:2 3:2 5:4 3:2 1:2 3:4|2:2 4:2 5:4 4:2 2:2 5,:4|3:2 5:2 6:4 5:2 3:2 6:2 5:2|4:4 6:2 4:2 1':4 6:4|5:4 3:2 5:2 1':4 5:4|2':4 1':2 7:2 5:4 2:4|6:2 6:2 1':4 3':4 1':2 6:2|5:8 7:2 5:2 2:4" },
+      { i: 'lead', v: 0.11, pass: 2, r: 0.3, m: "1:2 3:2 5:4 3:2 1:2 3:4|2:2 4:2 5:4 4:2 2:2 5,:4|3:2 5:2 6:4 5:2 3:2 6:2 5:2|4:4 6:2 4:2 1':4 6:4|5:4 3:2 5:2 1':4 5:4|2':4 1':2 7:2 5:4 2:4|6:2 6:2 1':4 3':4 1':2 6:2|5:8 7:2 5:2 2:4" },
+      { i: 'flute', v: 0.13, pass: 2, r: 0.3, m: "1:2 3:2 5:4 3:2 1:2 3:4|2:2 4:2 5:4 4:2 2:2 5,:4|3:2 5:2 6:4 5:2 3:2 6:2 5:2|4:4 6:2 4:2 1':4 6:4|5:4 3:2 5:2 1':4 5:4|2':4 1':2 7:2 5:4 2:4|6:2 6:2 1':4 3':4 1':2 6:2|5:8 7:2 5:2 2:4" }],
+    pad: { i: 'strings', v: 0.045, pass: 2 }, bass: { i: 'bass', v: 0.2, p: '1.....5.1.....5.' }, arp: { i: 'pluck', v: 0.1, p: '0.1.2.1.0.1.2.1.', up: 12 },
+    drums: [{ ...DR.walk, pass: 1 }, { ...DR.pop, pass: 2 }] },
+  f_lake: { bpm: 76, key: 65, mode: 'major', g: 1.0, chords: ['1', '6', '2', '5', '4', '1', '2', '5'],
+    lead: [{ i: 'flute', v: 0.2, pass: 1, r: 0.5, m: "5:6 3:2 1:4 3:4|6:4 1':2 6:2 3':8|2':4 4':2 2':2 6:4 4:4|5:4 7:4 2':4 7:4|4:4 6:2 1':2 4':4 1':4|3':4 1':2 5:2 1':8|2':4 4':4 2':4 6:4|5:2 7:2 2':4 5':2 2':2 7:4" },
+      { i: 'bell', v: 0.17, pass: 2, r: 0.6, m: "5:6 3:2 1:4 3:4|6:4 1':2 6:2 3':8|2':4 4':2 2':2 6:4 4:4|5:4 7:4 2':4 7:4|4:4 6:2 1':2 4':4 1':4|3':4 1':2 5:2 1':8|2':4 4':4 2':4 6:4|5:2 7:2 2':4 5':2 2':2 7:4" }],
+    pad: { i: 'strings', v: 0.05, r: 0.6 }, bass: { i: 'bass', v: 0.17, p: '1.......5.......' }, arp: { i: 'harp', v: 0.12, p: '0.1.2.3.2.1.0.1.', up: 12, r: 0.5 }, drums: { ...DR.soft, pass: 2 } },
+  f_volcano: { bpm: 126, key: 62, mode: 'phrygian', g: 1.0, chords: ['1', '2', '1', '7', '1', '2', '7', '2'],
+    lead: [{ i: 'brass', v: 0.2, pass: 1, r: 0.25, m: "1:3 1:1 3:2 1:2 5:4 3:2 1:2|2:3 2:1 4:2 2:2 6:4 4:2 2:2|1:2 3:2 5:2 3:2 1':4 5:4|7,:4 2:2 4:2 7:4 4:4|5:3 5:1 3:2 1:2 3:4 5:4|6:3 6:1 4:2 2:2 4:4 6:4|7:4 5:2 4:2 2:4 4:4|2:2 4:2 6:4 2':8" },
+      { i: 'brass', v: 0.2, pass: 2, r: 0.25, m: "1:3 1:1 3:2 1:2 5:4 3:2 1:2|2:3 2:1 4:2 2:2 6:4 4:2 2:2|1:2 3:2 5:2 3:2 1':4 5:4|7,:4 2:2 4:2 7:4 4:4|5:3 5:1 3:2 1:2 3:4 5:4|6:3 6:1 4:2 2:2 4:4 6:4|7:4 5:2 4:2 2:4 4:4|2:2 4:2 6:4 2':8" },
+      { i: 'lead', v: 0.1, oct: 1, pass: 2, r: 0.25, m: "1:3 1:1 3:2 1:2 5:4 3:2 1:2|2:3 2:1 4:2 2:2 6:4 4:2 2:2|1:2 3:2 5:2 3:2 1':4 5:4|7,:4 2:2 4:2 7:4 4:4|5:3 5:1 3:2 1:2 3:4 5:4|6:3 6:1 4:2 2:2 4:4 6:4|7:4 5:2 4:2 2:4 4:4|2:2 4:2 6:4 2':8" }],
+    pad: { i: 'strings', v: 0.05 }, bass: { i: 'synbass', v: 0.22, p: '1.1.1.1.1.1.1.1.' }, arp: { i: 'pluck', v: 0.07, p: '0.....1.0.....2.', up: 12, pass: 2 },
+    drums: [{ ...DR.taiko, pass: 1 }, { ...DR.epic, pass: 2 }] },
+  f_ghost: { bpm: 70, key: 64, mode: 'minor', g: 1.0, chords: ['1', '2d', '1', '7', '1', '6', '2d', '5M'],
+    lead: [{ i: 'bell', v: 0.18, pass: 1, r: 0.7, m: "1':6 r:2 5:4 3:4|2':4 r:4 4':4 2':4|1':4 3':4 1':4 7:4|7:8 2':4 7:4|5,:8 3,:4 1,:4|6,:6 5,:2 3,:4 5,:4|2:4 4:4 6:4 4:4|5:4 7#:4 2':4 5:4" },
+      { i: 'flute', v: 0.12, pass: 2, r: 0.7, m: "1':6 r:2 5:4 3:4|2':4 r:4 4':4 2':4|1':4 3':4 1':4 7:4|7:8 2':4 7:4|5,:8 3,:4 1,:4|6,:6 5,:2 3,:4 5,:4|2:4 4:4 6:4 4:4|5:4 7#:4 2':4 5:4" }],
+    pad: { i: 'choir', v: 0.06, r: 0.7 }, bass: { i: 'bass', v: 0.14, p: '1...............' }, arp: { i: 'bell', v: 0.07, p: '0...1...2...1...', up: 12, r: 0.7, pass: 2 }, drums: DR.heart },
+  f_sky: { bpm: 92, key: 60, mode: 'major', g: 1.0, chords: ['1', '5', '6', '3', '4', '1', '4', '5'],
+    lead: [{ i: 'flute', v: 0.2, oct: 1, pass: 1, r: 0.5, m: "5:4 3:2 5:2 1':4 5:4|2':4 7:2 5:2 7:4 2':4|3':4 1':2 6:2 3':4 6:4|7:4 5:2 3:2 5:8|4:4 6:2 4:2 1':4 4':4|3':4 1':2 5:2 1':8|6:4 4':4 1':4 6:4|2':4 7:2 2':2 5:8" },
+      { i: 'bell', v: 0.15, oct: 1, pass: 2, r: 0.6, m: "5:4 3:2 5:2 1':4 5:4|2':4 7:2 5:2 7:4 2':4|3':4 1':2 6:2 3':4 6:4|7:4 5:2 3:2 5:8|4:4 6:2 4:2 1':4 4':4|3':4 1':2 5:2 1':8|6:4 4':4 1':4 6:4|2':4 7:2 2':2 5:8" },
+      { i: 'flute', v: 0.12, oct: 0, pass: 2, r: 0.5, m: "3:8 1:8|2:8 5,:8|1:8 6,:8|3:8 5,:8|1:8 4,:8|1:8 3:8|4,:8 6,:8|2:8 7,:8" }],
+    pad: { i: 'choir', v: 0.06, r: 0.6 }, bass: { i: 'bass', v: 0.15, p: '1.......5.......' }, arp: { i: 'harp', v: 0.12, p: '0.1.2.3.4.3.2.1.', up: 12, r: 0.5 }, drums: { ...DR.walk, v: 0.55, pass: 2 } },
+  f_sun: { bpm: 118, key: 62, mode: 'major', g: 1.0, chords: ['1', '5', '6', '4', '1', '5', '4', '5'],
+    lead: [{ i: 'lead', v: 0.16, pass: 1, r: 0.25, m: "1':2 1':2 3':2 5':2 3':4 1':4|7:2 7:2 5:2 7:2 2':8|6:4 1':2 3':2 6':4 3':4|4':4 6:2 1':2 4':4 1':4|1':2 3':2 5':4 3':2 1':2 5:4|7':2 5':2 2':4 7':2 5':2 7':4|4':2 6':2 1'':4 6':2 4':2 6':4|5':8 7':2 5':2 2':4" },
+      { i: 'brass', v: 0.17, pass: 2, r: 0.25, m: "1':2 1':2 3':2 5':2 3':4 1':4|7:2 7:2 5:2 7:2 2':8|6:4 1':2 3':2 6':4 3':4|4':4 6:2 1':2 4':4 1':4|1':2 3':2 5':4 3':2 1':2 5:4|7':2 5':2 2':4 7':2 5':2 7':4|4':2 6':2 1'':4 6':2 4':2 6':4|5':8 7':2 5':2 2':4" }],
+    pad: { i: 'strings', v: 0.045, pass: 2 }, bass: { i: 'bass', v: 0.2, p: '1.1.5.1.1.1.5.1.' }, arp: { i: 'pluck', v: 0.09, p: '0.1.2.1.0.1.2.1.', up: 12 }, drums: [{ ...DR.walk, pass: 1 }, { ...DR.pop, pass: 2 }] },
+  f_cosmos: { bpm: 80, key: 65, mode: 'lydian', g: 1.0, chords: ['1', '2', '3', '2', '1', '2', '5', '2'],
+    lead: [{ i: 'bell', v: 0.18, pass: 1, r: 0.8, m: "5:4 1':4 3':4 5:4|2':8 4':4 2':4|3':4 1':4 6:4 3:4|2':4 7:4 5:4 7:4|1':8 5:4 1':4|4':4 2':4 4':4 6':4|5':8 3':4 5:4|2':4 4':4 7:4 5:4" },
+      { i: 'choir', v: 0.1, pass: 2, r: 0.8, m: "5:4 1':4 3':4 5:4|2':8 4':4 2':4|3':4 1':4 6:4 3:4|2':4 7:4 5:4 7:4|1':8 5:4 1':4|4':4 2':4 4':4 6':4|5':8 3':4 5:4|2':4 4':4 7:4 5:4" }],
+    pad: { i: 'choir', v: 0.055, r: 0.8 }, bass: { i: 'bass', v: 0.14, p: '1...............' }, arp: { i: 'bell', v: 0.09, p: '0.1.2.1.0.1.2.3.', up: 12, r: 0.8, delay: 1 }, drums: { ...DR.soft, v: 0.4, pass: 2 } },
+  f_grove: { bpm: 90, key: 62, mode: 'major', g: 1.0, chords: ['1', '6', '2', '5', '1', '3', '4', '5'],
+    lead: [{ i: 'flute', v: 0.2, pass: 1, r: 0.45, m: "1':4 3':2 5':2 3':4 1':4|6:4 1':2 3':2 1':4 6:4|2':4 4':2 6:2 4':4 2':4|5:4 7:2 2':2 7:4 5:4|3':4 5':2 3':2 1':4 3':4|3':4 5':4 7':4 5':4|4':4 6:2 4':2 1':4 4':4|5:4 7:4 2':4 5:4" },
+      { i: 'marimba', v: 0.17, pass: 2, r: 0.4, m: "1':4 3':2 5':2 3':4 1':4|6:4 1':2 3':2 1':4 6:4|2':4 4':2 6:2 4':4 2':4|5:4 7:2 2':2 7:4 5:4|3':4 5':2 3':2 1':4 3':4|3':4 5':4 7':4 5':4|4':4 6:2 4':2 1':4 4':4|5:4 7:4 2':4 5:4" }],
+    pad: { i: 'strings', v: 0.045, r: 0.5 }, bass: { i: 'bass', v: 0.16, p: '1.....5.1.....5.' }, arp: { i: 'marimba', v: 0.11, p: '0.1.2.1.0.1.2.1.', up: 12 }, drums: [{ ...DR.soft, pass: 1 }, { ...DR.walk, v: 0.55, pass: 2 }] },
+  f_castle: { bpm: 104, key: 60, mode: 'minor', g: 1.0, chords: ['1', '4', '5M', '1', '6', '4', '5M', '5M'],
+    lead: [{ i: 'organ', v: 0.17, pass: 1, r: 0.5, m: "1':4 3':2 5':2 3':4 1':4|4':4 6':2 4':2 1':8|5':4 7#':2 2'':2 7#':4 5':4|1'':4 5':2 3':2 1':8|6':4 1'':2 6':2 3':4 1'':4|4':4 6':4 1'':4 6':4|5':4 7#':4 2'':4 7#':4|5':8 7#':4 5':4" },
+      { i: 'brass', v: 0.18, pass: 2, r: 0.4, m: "1':4 3':2 5':2 3':4 1':4|4':4 6':2 4':2 1':8|5':4 7#':2 2'':2 7#':4 5':4|1'':4 5':2 3':2 1':8|6':4 1'':2 6':2 3':4 1'':4|4':4 6':4 1'':4 6':4|5':4 7#':4 2'':4 7#':4|5':8 7#':4 5':4" }],
+    pad: { i: 'strings', v: 0.06, r: 0.6 }, bass: { i: 'bass', v: 0.2, p: '1.....1.5.....1.' }, arp: { i: 'harp', v: 0.1, p: '0.1.2.1.0.1.2.1.', up: 12, r: 0.5 }, drums: [{ ...DR.heart, v: 0.7, pass: 1 }, { ...DR.march, v: 0.6, pass: 2 }] },
+  f_temple: { bpm: 88, key: 64, mode: 'dorian', g: 1.0, chords: ['1', '7', '4', '1', '1', '7', '4', '5'],
+    lead: [{ i: 'flute', v: 0.2, pass: 1, r: 0.6, m: "5:4 1':4 3':4 1':4|7:4 2':4 4':4 2':4|6':4 4':4 1':4 6:4|5:8 1':4 5:4|3':4 5':4 3':4 1':4|7':4 4':4 2':4 7:4|4':4 6':4 1'':4 6':4|5':8 7':4 5':4" },
+      { i: 'choir', v: 0.1, pass: 2, r: 0.7, m: "5:4 1':4 3':4 1':4|7:4 2':4 4':4 2':4|6':4 4':4 1':4 6:4|5:8 1':4 5:4|3':4 5':4 3':4 1':4|7':4 4':4 2':4 7:4|4':4 6':4 1'':4 6':4|5':8 7':4 5':4" }],
+    pad: { i: 'choir', v: 0.06, r: 0.7 }, bass: { i: 'bass', v: 0.16, p: '1.......1.......' }, arp: { i: 'harp', v: 0.1, p: '0.1.2.3.2.1.0.1.', up: 12, r: 0.6 }, drums: [{ ...DR.taiko, v: 0.6, pass: 2 }] },
+  f_dragon: { bpm: 120, key: 62, mode: 'minor', g: 1.0, chords: ['1', '6', '7', '1', '1', '6', '5M', '5M'],
+    lead: [{ i: 'brass', v: 0.19, pass: 1, r: 0.3, m: "1':4 3':2 5':2 5':4 3':4|6:4 1':2 3':2 6':4 3':4|7:4 2':2 4':2 7':4 4':4|1':8 5:4 1':4|5':4 3':2 5':2 1'':4 5':4|6':4 3':2 6':2 1'':4 6':4|5':4 7#':4 2'':4 7#':4|5':8 7#':4 5':4" },
+      { i: 'brass', v: 0.19, pass: 2, r: 0.3, m: "1':4 3':2 5':2 5':4 3':4|6:4 1':2 3':2 6':4 3':4|7:4 2':2 4':2 7':4 4':4|1':8 5:4 1':4|5':4 3':2 5':2 1'':4 5':4|6':4 3':2 6':2 1'':4 6':4|5':4 7#':4 2'':4 7#':4|5':8 7#':4 5':4" },
+      { i: 'lead', v: 0.09, pass: 2, r: 0.3, m: "1':4 3':2 5':2 5':4 3':4|6:4 1':2 3':2 6':4 3':4|7:4 2':2 4':2 7':4 4':4|1':8 5:4 1':4|5':4 3':2 5':2 1'':4 5':4|6':4 3':2 6':2 1'':4 6':4|5':4 7#':4 2'':4 7#':4|5':8 7#':4 5':4" }],
+    pad: { i: 'strings', v: 0.06 }, bass: { i: 'synbass', v: 0.22, p: '1.1.1.1.1.1.1.1.' }, arp: { i: 'pluck', v: 0.07, p: '0.1.2.1.0.1.2.1.', up: 12, pass: 2 },
+    drums: [{ ...DR.rock, pass: 1 }, { ...DR.epic, pass: 2 }] },
+  f_end: { bpm: 100, key: 71, mode: 'minor', g: 1.0, chords: ['1', '6', '3', '7', '1', '6', '4', '5M'],
+    lead: [{ i: 'choir', v: 0.17, pass: 1, r: 0.8, m: "1:4 3:4 5:4 3:4|6:4 1':4 3':4 1':4|3':4 5:4 7:4 5:4|7:4 2':4 4':4 2':4|5:6 3:2 1:4 3:4|6:4 4:4 6:4 1':4|4:4 6:4 1':4 6:4|5:4 7#:4 2':4 7#:4" },
+      { i: 'brass', v: 0.17, pass: 2, r: 0.5, m: "1:4 3:4 5:4 3:4|6:4 1':4 3':4 1':4|3':4 5:4 7:4 5:4|7:4 2':4 4':4 2':4|5:6 3:2 1:4 3:4|6:4 4:4 6:4 1':4|4:4 6:4 1':4 6:4|5:4 7#:4 2':4 7#:4" },
+      { i: 'bell', v: 0.12, pass: 2, r: 0.8, m: "1:4 3:4 5:4 3:4|6:4 1':4 3':4 1':4|3':4 5:4 7:4 5:4|7:4 2':4 4':4 2':4|5:6 3:2 1:4 3:4|6:4 4:4 6:4 1':4|4:4 6:4 1':4 6:4|5:4 7#:4 2':4 7#:4" }],
+    pad: { i: 'choir', v: 0.065, r: 0.8 }, bass: { i: 'bass', v: 0.2, p: '1.....1.5.....1.' }, arp: { i: 'bell', v: 0.1, p: '0.1.2.3.4.3.2.1.', up: 12, r: 0.8, delay: 1 },
+    drums: [{ ...DR.walk, v: 0.5, pass: 1 }, { ...DR.epic, pass: 2 }] },
+  // ---------- バトル ----------
+  battle: { bpm: 164, key: 57, mode: 'minor', g: 1.0, chords: ['Am', 'Am', 'F', 'G', 'Am', 'F', 'Dm', 'E'],
+    lead: [{ i: 'lead', v: 0.15, r: 0.2, notes: [[0, 81, 2], [2, 76, 2], [4, 72, 2], [6, 76, 2], [8, 81, 4], [12, 79, 2], [14, 76, 2], [0, 77, 2], [2, 76, 2], [4, 72, 2], [6, 69, 2], [8, 72, 8], [0, 77, 2], [2, 81, 2], [4, 84, 2], [6, 81, 2], [8, 77, 4], [12, 81, 4], [0, 83, 2], [2, 79, 2], [4, 74, 2], [6, 79, 2], [8, 83, 6], [14, 81, 2], [0, 81, 2], [2, 84, 2], [4, 88, 4], [8, 86, 2], [10, 84, 2], [12, 81, 4], [0, 84, 2], [2, 81, 2], [4, 77, 2], [6, 81, 2], [8, 84, 8], [0, 86, 2], [2, 81, 2], [4, 77, 2], [6, 74, 2], [8, 77, 4], [12, 81, 4], [0, 80, 2], [2, 83, 2], [4, 88, 4], [8, 87, 2], [10, 83, 2], [12, 80, 2], [14, 83, 2]] },
+      { i: 'brass', v: 0.1, r: 0.2, pass: 2, notes: [[0, 81, 2], [2, 76, 2], [4, 72, 2], [6, 76, 2], [8, 81, 4], [12, 79, 2], [14, 76, 2], [0, 77, 2], [2, 76, 2], [4, 72, 2], [6, 69, 2], [8, 72, 8], [0, 77, 2], [2, 81, 2], [4, 84, 2], [6, 81, 2], [8, 77, 4], [12, 81, 4], [0, 83, 2], [2, 79, 2], [4, 74, 2], [6, 79, 2], [8, 83, 6], [14, 81, 2], [0, 81, 2], [2, 84, 2], [4, 88, 4], [8, 86, 2], [10, 84, 2], [12, 81, 4], [0, 84, 2], [2, 81, 2], [4, 77, 2], [6, 81, 2], [8, 84, 8], [0, 86, 2], [2, 81, 2], [4, 77, 2], [6, 74, 2], [8, 77, 4], [12, 81, 4], [0, 80, 2], [2, 83, 2], [4, 88, 4], [8, 87, 2], [10, 83, 2], [12, 80, 2], [14, 83, 2]] }],
+    pad: { i: 'strings', v: 0.05, r: 0.3 }, bass: { i: 'synbass', v: 0.22, p: '1.11.1.11.1.1.1.' }, arp: { i: 'pluck', v: 0.06, p: '0.1.2.1.2.1.0.1.', up: 12 }, drums: DR.gallop },
+  battle2: { bpm: 154, key: 64, mode: 'minor', g: 1.0, chords: ['1', '7', '6', '7', '1', '4', '5M', '1'],
+    lead: [{ i: 'lead', v: 0.16, r: 0.2, pass: 1, m: "1':2 1':2 3':2 5':2 3':4 1':2 7:2|7':2 7':2 2':2 4':2 2':4 7':4|6':2 6':2 1':2 3':2 1':4 6':4|7':4 2':2 4':2 2':4 4':4|1':2 3':2 5':2 3':2 1':2 5':2 3':2 1':2|4':4 6':2 1':2 4':4 6':4|5':4 7#':2 2'':2 7#':4 5':4|1':8 3':4 5':4" },
+      { i: 'brass', v: 0.17, r: 0.2, pass: 2, m: "1':2 1':2 3':2 5':2 3':4 1':2 7:2|7':2 7':2 2':2 4':2 2':4 7':4|6':2 6':2 1':2 3':2 1':4 6':4|7':4 2':2 4':2 2':4 4':4|1':2 3':2 5':2 3':2 1':2 5':2 3':2 1':2|4':4 6':2 1':2 4':4 6':4|5':4 7#':2 2'':2 7#':4 5':4|1':8 3':4 5':4" },
+      { i: 'lead', v: 0.08, r: 0.2, pass: 2, m: "1':2 1':2 3':2 5':2 3':4 1':2 7:2|7':2 7':2 2':2 4':2 2':4 7':4|6':2 6':2 1':2 3':2 1':4 6':4|7':4 2':2 4':2 2':4 4':4|1':2 3':2 5':2 3':2 1':2 5':2 3':2 1':2|4':4 6':2 1':2 4':4 6':4|5':4 7#':2 2'':2 7#':4 5':4|1':8 3':4 5':4" }],
+    pad: { i: 'strings', v: 0.05 }, bass: { i: 'synbass', v: 0.22, p: '1.1.1.1.1.1.1.1.' }, arp: { i: 'pluck', v: 0.06, p: '0.1.2.1.2.1.0.1.', up: 12 }, drums: DR.rock },
+  battle3: { bpm: 158, key: 62, mode: 'dorian', g: 1.0, chords: ['1', '4', '1', '4', '1', '4', '7', '5'],
+    lead: [{ i: 'lead', v: 0.16, r: 0.2, pass: 1, m: "1':2 3':2 5':2 3':2 1':4 5:4|4':2 6:2 1':2 6:2 4':4 1':4|1':2 3':2 5':2 6':2 5':4 3':4|4':2 6':2 4':2 1':2 6:4 4:4|5':4 3':2 5':2 6':4 5':4|6':4 4':2 6':2 4':4 1':4|7':2 7':2 2':2 4':2 7':4 4':4|5':4 7':4 5':4 3':4" },
+      { i: 'brass', v: 0.17, r: 0.2, pass: 2, m: "1':2 3':2 5':2 3':2 1':4 5:4|4':2 6:2 1':2 6:2 4':4 1':4|1':2 3':2 5':2 6':2 5':4 3':4|4':2 6':2 4':2 1':2 6:4 4:4|5':4 3':2 5':2 6':4 5':4|6':4 4':2 6':2 4':4 1':4|7':2 7':2 2':2 4':2 7':4 4':4|5':4 7':4 5':4 3':4" }],
+    pad: { i: 'strings', v: 0.05 }, bass: { i: 'synbass', v: 0.22, p: '1.1.1.1.1.1.1.1.' }, arp: { i: 'pluck', v: 0.06, p: '0.2.1.2.0.2.1.2.', up: 12 }, drums: DR.gallop },
+  battle_trainer: { bpm: 168, key: 60, mode: 'minor', g: 1.0, chords: ['1', '1', '4', '5M', '1', '6', '4', '5M'],
+    lead: [{ i: 'brass', v: 0.19, r: 0.2, m: "1':3 1':1 3':2 5':2 3':2 1':2 5:4|1':3 1':1 3':2 5':2 1'':4 5':4|4':3 4':1 6':2 1'':2 6':4 4':4|5':3 5':1 7#':2 2'':2 7#':4 5':4|1':2 3':2 5':2 3':2 1'':4 5':4|6':4 1'':2 6':2 3':4 1':4|4':2 6':2 1'':2 6':2 4':4 6':4|5':2 5':2 7#':2 2'':2 7#':4 5':4" },
+      { i: 'lead', v: 0.1, r: 0.2, pass: 2, m: "1':3 1':1 3':2 5':2 3':2 1':2 5:4|1':3 1':1 3':2 5':2 1'':4 5':4|4':3 4':1 6':2 1'':2 6':4 4':4|5':3 5':1 7#':2 2'':2 7#':4 5':4|1':2 3':2 5':2 3':2 1'':4 5':4|6':4 1'':2 6':2 3':4 1':4|4':2 6':2 1'':2 6':2 4':4 6':4|5':2 5':2 7#':2 2'':2 7#':4 5':4" }],
+    pad: { i: 'strings', v: 0.055 }, bass: { i: 'synbass', v: 0.22, p: '1.11.1.11.1.1.1.' }, arp: { i: 'pluck', v: 0.06, p: '0.1.2.1.0.1.2.1.', up: 12 }, drums: DR.march },
+  battle_legend: { bpm: 148, key: 66, mode: 'minor', g: 1.0, chords: ['1', '6', '3', '7', '1', '6', '4', '5M'],
+    lead: [{ i: 'choir', v: 0.17, r: 0.6, pass: 1, m: "1':4 3':2 5':2 3':4 1':4|6:4 1':2 3':2 6':4 3':4|3':4 5':2 7:2 5':4 3':4|7:4 2':2 4':2 2':4 7:4|5':4 3':2 5':2 3':4 1':4|6':4 3':2 6':2 3':4 1':4|4':4 6':2 1':2 6:4 4:4|5':4 7#':4 5':4 7#':4" },
+      { i: 'brass', v: 0.19, r: 0.4, pass: 2, m: "1':4 3':2 5':2 3':4 1':4|6:4 1':2 3':2 6':4 3':4|3':4 5':2 7:2 5':4 3':4|7:4 2':2 4':2 2':4 7:4|5':4 3':2 5':2 3':4 1':4|6':4 3':2 6':2 3':4 1':4|4':4 6':2 1':2 6:4 4:4|5':4 7#':4 5':4 7#':4" },
+      { i: 'choir', v: 0.1, r: 0.6, pass: 2, m: "1':4 3':2 5':2 3':4 1':4|6:4 1':2 3':2 6':4 3':4|3':4 5':2 7:2 5':4 3':4|7:4 2':2 4':2 2':4 7:4|5':4 3':2 5':2 3':4 1':4|6':4 3':2 6':2 3':4 1':4|4':4 6':2 1':2 6:4 4:4|5':4 7#':4 5':4 7#':4" }],
+    pad: { i: 'strings', v: 0.06, r: 0.5 }, bass: { i: 'synbass', v: 0.22, p: '1.1.1.1.1.1.1.1.' }, arp: { i: 'bell', v: 0.09, p: '0.1.2.3.2.1.0.1.', up: 12, r: 0.7 }, drums: DR.epic },
+  // ---------- ボス ----------
+  boss: { bpm: 170, key: 62, mode: 'minor', g: 1.0, chords: ['Dm', 'Dm', 'Bb', 'A', 'Dm', 'Gm', 'Edim', 'A', 'Bb', 'F', 'Gm', 'Dm', 'Bb', 'F', 'A', 'A'],
+    lead: [{ i: 'brass', v: 0.2, r: 0.25, notes: [[0, 86, 3], [3, 85, 1], [4, 86, 2], [6, 89, 2], [8, 88, 4], [12, 86, 2], [14, 85, 2], [0, 81, 2], [2, 82, 2], [4, 81, 2], [6, 77, 2], [8, 74, 8], [0, 89, 3], [3, 86, 1], [4, 82, 4], [8, 86, 2], [10, 89, 2], [12, 91, 4], [0, 88, 3], [3, 85, 1], [4, 81, 4], [8, 85, 2], [10, 88, 2], [12, 85, 4], [0, 86, 2], [2, 89, 2], [4, 93, 4], [8, 91, 2], [10, 89, 2], [12, 86, 4], [0, 91, 3], [3, 89, 1], [4, 86, 4], [8, 82, 2], [10, 86, 2], [12, 89, 4], [0, 88, 2], [2, 85, 2], [4, 82, 2], [6, 79, 2], [8, 76, 4], [12, 79, 4], [0, 85, 2], [2, 88, 2], [4, 91, 2], [6, 88, 2], [8, 85, 4], [12, 81, 4], [0, 82, 4], [4, 86, 4], [8, 89, 8], [0, 89, 4], [4, 88, 2], [6, 86, 2], [8, 84, 8], [0, 82, 4], [4, 86, 4], [8, 91, 4], [12, 89, 4], [0, 86, 8], [8, 89, 4], [12, 86, 4], [0, 89, 4], [4, 93, 4], [8, 91, 4], [12, 89, 4], [0, 88, 4], [4, 89, 4], [8, 93, 8], [0, 91, 2], [2, 88, 2], [4, 85, 2], [6, 88, 2], [8, 91, 2], [10, 93, 2], [12, 91, 4], [0, 85, 4], [4, 88, 4], [8, 81, 8]] },
+      { i: 'lead', v: 0.09, r: 0.25, pass: 2, notes: [[0, 86, 3], [3, 85, 1], [4, 86, 2], [6, 89, 2], [8, 88, 4], [12, 86, 2], [14, 85, 2], [0, 81, 2], [2, 82, 2], [4, 81, 2], [6, 77, 2], [8, 74, 8], [0, 89, 3], [3, 86, 1], [4, 82, 4], [8, 86, 2], [10, 89, 2], [12, 91, 4], [0, 88, 3], [3, 85, 1], [4, 81, 4], [8, 85, 2], [10, 88, 2], [12, 85, 4], [0, 86, 2], [2, 89, 2], [4, 93, 4], [8, 91, 2], [10, 89, 2], [12, 86, 4], [0, 91, 3], [3, 89, 1], [4, 86, 4], [8, 82, 2], [10, 86, 2], [12, 89, 4], [0, 88, 2], [2, 85, 2], [4, 82, 2], [6, 79, 2], [8, 76, 4], [12, 79, 4], [0, 85, 2], [2, 88, 2], [4, 91, 2], [6, 88, 2], [8, 85, 4], [12, 81, 4], [0, 82, 4], [4, 86, 4], [8, 89, 8], [0, 89, 4], [4, 88, 2], [6, 86, 2], [8, 84, 8], [0, 82, 4], [4, 86, 4], [8, 91, 4], [12, 89, 4], [0, 86, 8], [8, 89, 4], [12, 86, 4], [0, 89, 4], [4, 93, 4], [8, 91, 4], [12, 89, 4], [0, 88, 4], [4, 89, 4], [8, 93, 8], [0, 91, 2], [2, 88, 2], [4, 85, 2], [6, 88, 2], [8, 91, 2], [10, 93, 2], [12, 91, 4], [0, 85, 4], [4, 88, 4], [8, 81, 8]] }],
+    pad: { i: 'strings', v: 0.06 }, bass: { i: 'synbass', v: 0.24, p: '1.11.1.11.1.1.11' }, arp: { i: 'pluck', v: 0.06, p: '0123012301230123', up: 12 }, drums: DR.boss },
+  boss2: { bpm: 176, key: 59, mode: 'minor', g: 1.0, chords: ['1', '1', '6', '5M', '1', '4', '7', '5M', '6', '4', '1', '5M', '6', '7', '5M', '5M'],
+    lead: [{ i: 'brass', v: 0.2, r: 0.3, m: "1':3 1':1 3':2 5':2 1'':4 5':4|3':3 3':1 5':2 3':2 1':8|6':3 6':1 1'':2 6':2 3'':4 1'':4|5':4 7#':2 2'':2 7#':4 5':4|1'':4 5':2 3':2 1'':4 5':4|4':4 6':2 4':2 1'':4 6':4|7':3 7':1 2'':2 7':2 4'':4 2'':4|5':4 7#':4 2'':4 5':4|6':4 1'':4 3'':4 1'':4|4':4 6':4 1'':4 6':4|1'':4 3'':2 1'':2 5':4 1'':4|5':8 7#':4 2'':4|6':4 3'':4 1'':4 6':4|7':4 4'':4 2'':4 7':4|5':2 7#':2 2'':2 7#':2 2'':4 7#':4|5':8 7#':4 5':4" },
+      { i: 'choir', v: 0.1, r: 0.6, pass: 2, m: "1':3 1':1 3':2 5':2 1'':4 5':4|3':3 3':1 5':2 3':2 1':8|6':3 6':1 1'':2 6':2 3'':4 1'':4|5':4 7#':2 2'':2 7#':4 5':4|1'':4 5':2 3':2 1'':4 5':4|4':4 6':2 4':2 1'':4 6':4|7':3 7':1 2'':2 7':2 4'':4 2'':4|5':4 7#':4 2'':4 5':4|6':4 1'':4 3'':4 1'':4|4':4 6':4 1'':4 6':4|1'':4 3'':2 1'':2 5':4 1'':4|5':8 7#':4 2'':4|6':4 3'':4 1'':4 6':4|7':4 4'':4 2'':4 7':4|5':2 7#':2 2'':2 7#':2 2'':4 7#':4|5':8 7#':4 5':4" }],
+    pad: { i: 'strings', v: 0.065 }, bass: { i: 'synbass', v: 0.24, p: '1.11.1.11.1.1.11' }, arp: { i: 'pluck', v: 0.06, p: '0123012301230123', up: 12 }, drums: DR.boss },
+  boss_final: { bpm: 180, key: 57, mode: 'minor', g: 1.0, chords: ['1', '1', '6', '7', '1', '4', '5M', '1', '6', '7', '1', '5M', '4', '6', '5M', '5M'],
+    lead: [{ i: 'brass', v: 0.2, r: 0.3, m: "1':2 1':2 1':2 3':2 5':4 3':2 1':2|1':3 1':1 3':2 5':2 1'':4 5':4|6':4 1'':2 6':2 3'':4 1'':4|7':4 2'':2 7':2 4'':4 2'':4|1'':4 5':2 3':2 1'':4 3'':4|4':4 6':2 4':2 1'':4 6':4|5':4 7#':2 2'':2 7#':4 5':4|1'':8 5':4 1'':4|6':2 1'':2 3'':4 1'':4 6':4|7':2 2'':2 4'':4 2'':4 7':4|1'':4 3'':2 5'':2 3'':4 1'':4|5':4 7#':4 2'':4 7#':4|4':4 6':4 1'':4 6':4|6':4 1'':4 3'':4 1'':4|5':2 7#':2 2'':2 7#':2 5'':4 2'':4|5':8 7#':4 2'':4" },
+      { i: 'choir', v: 0.11, r: 0.6, m: "1':2 1':2 1':2 3':2 5':4 3':2 1':2|1':3 1':1 3':2 5':2 1'':4 5':4|6':4 1'':2 6':2 3'':4 1'':4|7':4 2'':2 7':2 4'':4 2'':4|1'':4 5':2 3':2 1'':4 3'':4|4':4 6':2 4':2 1'':4 6':4|5':4 7#':2 2'':2 7#':4 5':4|1'':8 5':4 1'':4|6':2 1'':2 3'':4 1'':4 6':4|7':2 2'':2 4'':4 2'':4 7':4|1'':4 3'':2 5'':2 3'':4 1'':4|5':4 7#':4 2'':4 7#':4|4':4 6':4 1'':4 6':4|6':4 1'':4 3'':4 1'':4|5':2 7#':2 2'':2 7#':2 5'':4 2'':4|5':8 7#':4 2'':4" }],
+    pad: { i: 'strings', v: 0.07 }, bass: { i: 'synbass', v: 0.24, p: '1.11.1.11.1.1.11' }, arp: { i: 'bell', v: 0.08, p: '0123210301232103', up: 12, r: 0.6 }, drums: { ...DR.boss, crash: 4 } },
+};
+const ALIAS = { field: null, battle: null };   // 'field' → いまの フィールドの きょく / 'battle' → ランダムに えらぶ
+let fieldTheme = 'f_forest', lastBattle = '';
+
+// ---------- じゅんび: 小節ごとに わける ----------
+for (const [name, tr] of Object.entries(TRACKS)) {
+  tr.n = Math.max(16, tr.chords.length); tr.ct = tr.chords.map(c => chordOf(tr, c));
+  for (const k of ['lead', 'pad', 'bass', 'arp', 'drums']) {
+    let L = tr[k]; if (!L) { tr['L_' + k] = []; continue; } if (!Array.isArray(L)) L = [L]; tr['L_' + k] = L;
+    for (const l of L) { if (l.m) l.bars_ = parseMel(l.m, tr, name); else if (l.notes) l.bars_ = splitLegacy(l.notes, tr.chords.length); }
   }
 }
-function scheduleStep(tr, s, t, sd) {
-  const bar = Math.floor(s / 16) % tr.bars.length, st = s % 16, ch = C[tr.bars[bar]];
-  if (tr.bass.steps.includes(st)) note(tr.bass.wave, mtof(ch[0] - 12 + (st % 4 === 2 && tr.bass.steps.length > 4 ? 12 : 0)), t, sd * (tr.bass.steps.length > 4 ? 1.6 : 6), tr.bass.vol, tr.bass.lp);
-  if (st % tr.arp.every === 0) { const i = tr.arp.pat[(st / tr.arp.every) % tr.arp.pat.length]; note(tr.arp.wave, mtof(ch[i % 3] + tr.arp.up), t, sd * 1.8, tr.arp.vol, tr.arp.lp); }
-  for (const [ms, m, len] of tr.mel.notes_[bar]) if (ms === st) { note(tr.mel.wave, mtof(m), t, sd * len * 0.95, tr.mel.vol, tr.mel.lp, tr.mel.det ? -tr.mel.det : 0, tr.mel.att); if (tr.mel.det) note(tr.mel.wave, mtof(m), t, sd * len * 0.95, tr.mel.vol, tr.mel.lp, tr.mel.det, tr.mel.att); }
-  if (tr.pad && st === 0) for (const m of ch) padNote(tr.pad.wave, mtof(m), t, sd * 16, tr.pad.vol, tr.pad.lp);
-  if (tr.drums) { const d = tr.drums; if (d.k.includes(st)) perc('k', t, 0.5); if (d.s.includes(st)) perc('s', t, 0.3); if (d.h.includes(st)) perc('h', t, 0.1 * (d.hv || 1) * (st % 4 === 0 ? 1.4 : 1)); if (d.boom && d.boom.includes(st) && bar % 2 === 0) perc('boom', t, 0.45); if (d.crash && d.crash.includes(bar) && st === 0) perc('crash', t, 0.22); if (d.roll && d.roll.includes(bar) && st >= 8) perc('s', t, 0.1 + (st - 8) * 0.035); }
+
+// ---------- オーディオ ----------
+let ac = null, G = null, timer = null, cur = null, want = null, nextT = 0, step = 0, tbus = null;
+function makeIR(ctx, sec = 2.4) {
+  const n = Math.floor(ctx.sampleRate * sec), b = ctx.createBuffer(2, n, ctx.sampleRate);
+  for (let ch = 0; ch < 2; ch++) { const d = b.getChannelData(ch); let lp = 0; for (let i = 0; i < n; i++) { const x = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.6); lp += (x - lp) * 0.35; d[i] = lp; } }
+  return b;
 }
-// メロディを小節ごとに分けておく(1小節=16ステップ)
-for (const tr of Object.values(TRACKS)) {
-  tr.mel.notes_ = tr.bars.map(() => []); let bar = 0, last = -1;
-  for (const n of tr.mel.notes) { if (n[0] <= last) bar++; last = n[0]; (tr.mel.notes_[bar] || (tr.mel.notes_[bar] = [])).push(n); }
+function buildChain(ctx) {   // コンプレッサー → ぜんたいの ボリューム → スピーカー。リバーブと ビブラートの きょうつう ぶひん
+  const out = ctx.createGain(), comp = ctx.createDynamicsCompressor(); comp.threshold.value = -16; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.006; comp.release.value = 0.2;
+  const rev = ctx.createConvolver(); rev.buffer = makeIR(ctx); const wet = ctx.createGain(); wet.gain.value = 0.5; rev.connect(wet); wet.connect(comp); comp.connect(out);
+  const dl = ctx.createDelay(1); dl.delayTime.value = 0.28; const fb = ctx.createGain(); fb.gain.value = 0.32; const dfl = ctx.createBiquadFilter(); dfl.type = 'lowpass'; dfl.frequency.value = 2400; dl.connect(dfl); dfl.connect(fb); fb.connect(dl); const dw = ctx.createGain(); dw.gain.value = 0.5; dfl.connect(dw); dw.connect(comp);
+  const lfo = ctx.createOscillator(), vib = ctx.createGain(); lfo.frequency.value = 5.3; vib.gain.value = 9; lfo.connect(vib); lfo.start();
+  return { out, comp, rev, dl, vib, ctx };
+}
+function trackBus() {   // きょくごとの ミキサー(きりかえの とき ふんわり けす)
+  const mix = ac.createGain(), send = ac.createGain(), dsend = ac.createGain(); mix.connect(G.comp); send.connect(G.rev); dsend.connect(G.dl); send.gain.value = 1; dsend.gain.value = 1; return { mix, send, dsend };
+}
+function ensure() {
+  const a = audioCtx(); if (!a.ac) return false;
+  if (ac !== a.ac) { ac = a.ac; G = buildChain(ac); G.out.connect(ac.destination); }
+  G.out.gain.value = cfg.bgm * 0.55; return true;
+}
+const outTo = (node, r = 0.25, dly = 0) => {
+  node.connect(tbus.mix);
+  if (r > 0) { const s = ac.createGain(); s.gain.value = r; node.connect(s); s.connect(tbus.send); }
+  if (dly > 0) { const s = ac.createGain(); s.gain.value = dly; node.connect(s); s.connect(tbus.dsend); }
+};
+const osc = (type, f, t, end, det = 0, vib = false) => { const o = ac.createOscillator(); o.type = type; o.frequency.value = f; if (det) o.detune.value = det; if (vib) G.vib.connect(o.detune); o.start(t); o.stop(end); return o; };
+function env(g, t, dur, vol, a, d, s, r) { const e = t + Math.max(dur, a + d + 0.02); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + a); g.gain.linearRampToValueAtTime(vol * s, t + a + d); g.gain.setValueAtTime(vol * s, e); g.gain.exponentialRampToValueAtTime(0.0001, e + r); return e + r + 0.05; }
+const lp = (f, q = 0.7) => { const x = ac.createBiquadFilter(); x.type = 'lowpass'; x.frequency.value = f; x.Q.value = q; return x; };
+function voice(inst, f, t, dur, vol, o = {}) {
+  const g = ac.createGain(), r = o.r, dl = o.delay ? 0.45 : 0; let end;
+  switch (inst) {
+    case 'lead': { end = env(g, t, dur, vol, 0.015, 0.12, 0.75, 0.1); const fl = lp(Math.min(5200, f * 5 + 900)); fl.connect(g); const m = ac.createGain(); m.gain.value = 0.5; [osc('sawtooth', f, t, end, -8, true), osc('sawtooth', f, t, end, 8, true)].forEach(x => x.connect(m)); const s = osc('square', f, t, end, 0, true), sg = ac.createGain(); sg.gain.value = 0.25; s.connect(sg); sg.connect(fl); m.connect(fl); outTo(g, r ?? 0.22, dl); break; }
+    case 'brass': { end = env(g, t, dur, vol, 0.035, 0.15, 0.85, 0.1); const fl = lp(700); fl.frequency.setValueAtTime(600, t); fl.frequency.linearRampToValueAtTime(Math.min(3600, f * 4), t + 0.12); fl.connect(g); [-5, 5].forEach(d => osc('sawtooth', f, t, end, d, true).connect(fl)); outTo(g, r ?? 0.22, dl); break; }
+    case 'flute': { end = env(g, t, dur, vol, 0.06, 0.1, 0.8, 0.15); const a = osc('sine', f, t, end, 0, true), b = osc('triangle', f, t, end, 3, true), c = osc('sine', f * 2, t, end, 0, true), cg = ac.createGain(), bg = ac.createGain(); bg.gain.value = 0.3; cg.gain.value = 0.08; a.connect(g); b.connect(bg); bg.connect(g); c.connect(cg); cg.connect(g); outTo(g, r ?? 0.35, dl); break; }
+    case 'bell': { const e = t + Math.max(dur, 0.2) + 0.9; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, e); end = e + 0.05; [[1, 1], [2.76, 0.32], [5.4, 0.1]].forEach(([m, a]) => { const x = osc('sine', f * m, t, end), xg = ac.createGain(); xg.gain.value = a; x.connect(xg); xg.connect(g); }); outTo(g, r ?? 0.55, dl); break; }
+    case 'pluck': { const e = t + Math.max(dur, 0.1); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, e + 0.12); end = e + 0.2; const fl = lp(4500); fl.frequency.setValueAtTime(4500, t); fl.frequency.exponentialRampToValueAtTime(600, t + 0.22); fl.connect(g); osc('sawtooth', f, t, end).connect(fl); const tr2 = osc('triangle', f, t, end, 6), tg = ac.createGain(); tg.gain.value = 0.5; tr2.connect(tg); tg.connect(fl); outTo(g, r ?? 0.25, dl); break; }
+    case 'harp': { const e = t + 1.1; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, e); end = e + 0.05; osc('triangle', f, t, end).connect(g); const h = osc('sine', f * 2, t, end), hg = ac.createGain(); hg.gain.value = 0.25; h.connect(hg); hg.connect(g); outTo(g, r ?? 0.45, dl); break; }
+    case 'marimba': { const e = t + 0.38; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, e); end = e + 0.05; osc('sine', f, t, end).connect(g); const h = osc('sine', f * 4, t, end), hg = ac.createGain(); hg.gain.value = 0.22; h.connect(hg); hg.connect(g); outTo(g, r ?? 0.3, dl); break; }
+    case 'strings': { end = env(g, t, dur, vol, 0.35, 0.2, 0.85, 0.5); const fl = lp(Math.min(2400, f * 5)); fl.connect(g); [-9, 9].forEach(d => osc('sawtooth', f, t, end, d, true).connect(fl)); outTo(g, r ?? 0.5, dl); break; }
+    case 'choir': { end = env(g, t, dur, vol, 0.5, 0.25, 0.85, 0.7); const sum = ac.createGain(); [[700, 1.2], [1150, 1.2]].forEach(([fr, q]) => { const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = fr; bp.Q.value = q; sum.connect(bp); bp.connect(g); }); osc('sawtooth', f, t, end, -6, true).connect(sum); osc('sawtooth', f, t, end, 6, true).connect(sum); const tr2 = osc('triangle', f, t, end, 0, true), tg = ac.createGain(); tg.gain.value = 0.6; tr2.connect(tg); tg.connect(g); outTo(g, r ?? 0.65, dl); break; }
+    case 'organ': { end = env(g, t, dur, vol, 0.012, 0.05, 0.95, 0.08); const fl = lp(3200); fl.connect(g); osc('square', f, t, end).connect(fl); [[0.5, 0.5, 'sine'], [2, 0.35, 'sine'], [3, 0.12, 'sine']].forEach(([m, a, ty]) => { const x = osc(ty, f * m, t, end), xg = ac.createGain(); xg.gain.value = a; x.connect(xg); xg.connect(fl); }); outTo(g, r ?? 0.4, dl); break; }
+    case 'bass': { end = env(g, t, dur, vol, 0.008, 0.1, 0.7, 0.06); const fl = lp(650); fl.connect(g); osc('sawtooth', f, t, end).connect(fl); const sb = osc('sine', f, t, end), sg = ac.createGain(); sg.gain.value = 0.9; sb.connect(sg); sg.connect(g); outTo(g, 0, 0); break; }
+    case 'synbass': { end = env(g, t, dur, vol, 0.005, 0.08, 0.6, 0.05); const fl = lp(520); fl.connect(g); osc('square', f, t, end).connect(fl); const sb = osc('sine', f, t, end), sg = ac.createGain(); sg.gain.value = 0.8; sb.connect(sg); sg.connect(g); outTo(g, 0, 0); break; }
+    default: return;
+  }
+}
+let noiseBuf = null, noiseCtx = null;
+function noiseSrc() { if (noiseCtx !== ac) { noiseCtx = ac; noiseBuf = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.6), ac.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; } const n = ac.createBufferSource(); n.buffer = noiseBuf; return n; }
+function perc(kind, t, vol, pitch = 1) {
+  if (kind === 'k' || kind === 'boom' || kind === 't') {
+    const o = ac.createOscillator(), g = ac.createGain(), boom = kind === 'boom', tom = kind === 't';
+    o.type = 'sine'; o.frequency.setValueAtTime(boom ? 110 : tom ? 200 * pitch : 160, t); o.frequency.exponentialRampToValueAtTime(boom ? 38 : tom ? 90 * pitch : 48, t + (boom ? 0.28 : tom ? 0.22 : 0.1));
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + (boom ? 0.6 : tom ? 0.32 : 0.18)); o.connect(g); outTo(g, boom || tom ? 0.25 : 0); o.start(t); o.stop(t + 0.65);
+  } else {
+    const n = noiseSrc(), f = ac.createBiquadFilter(), g = ac.createGain(); f.type = 'highpass'; f.frequency.value = kind === 's' ? 1400 : kind === 'c' ? 2500 : kind === 'crash' ? 4200 : kind === 'o' ? 6500 : 7500;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + (kind === 's' ? 0.17 : kind === 'crash' ? 0.9 : kind === 'o' ? 0.18 : kind === 'c' ? 0.12 : 0.045)); n.connect(f); f.connect(g); outTo(g, kind === 'crash' ? 0.5 : kind === 's' || kind === 'c' ? 0.2 : 0); n.start(t); n.stop(t + 0.95);
+    if (kind === 's') { const o = ac.createOscillator(), g2 = ac.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(220, t); o.frequency.exponentialRampToValueAtTime(110, t + 0.08); g2.gain.setValueAtTime(vol * 0.5, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.1); o.connect(g2); outTo(g2, 0.1); o.start(t); o.stop(t + 0.12); }
+  }
+}
+const on = (l, bar) => !l.pass || l.pass === (bar % 16 < 8 ? 1 : 2);
+const ch = (p, st) => p[st % p.length];
+function scheduleStep(tr, s, t, sd) {
+  const bar = Math.floor(s / 16) % tr.n, st = s % 16, ct = tr.ct[bar % tr.ct.length];
+  for (const l of tr.L_lead) { if (!on(l, bar)) continue; const nb = l.bars_.length, notes = l.bars_[bar % nb] || []; for (const [ms, m, len] of notes) if (ms === st) voice(l.i, mtof(m + 12 * (l.oct || 0)), t, sd * len * (l.leg || 0.93), l.v * tr.g, l); }
+  for (const l of tr.L_pad) { if (!on(l, bar) || st !== 0) continue; for (const m of ct) voice(l.i, mtof(m + (l.up || 0)), t, sd * 16 * 0.98, l.v * tr.g, l); }
+  for (const l of tr.L_bass) { if (!on(l, bar)) continue; const c = ch(l.p, st); if (c === '.') continue; let len = 1; while (len < 16 && ch(l.p, st + len) === '.') len++; voice(l.i, mtof(ct[0] - 12 + (c === '5' ? 7 : c === '8' ? 12 : c === '3' ? ct[1] - ct[0] : 0)), t, sd * len * 0.9, l.v * tr.g, l); }
+  for (const l of tr.L_arp) { if (!on(l, bar)) continue; const c = ch(l.p, st); if (c === '.') continue; const ix = +c, nm = ct[ix % ct.length] + 12 * Math.floor(ix / ct.length) + (l.up ?? 24); voice(l.i, mtof(nm), t, sd * (l.len || 1.6), l.v * tr.g, l); }
+  for (const d of tr.L_drums) {
+    if (!on(d, bar)) continue; const v = d.v || 1, a = (c, base) => c === 'X' ? base * 1.3 : c === 'g' ? base * 0.5 : base, fillNow = d.fill && bar % 4 === 3 && st >= 12;
+    for (const kk of ['k', 's', 'h', 'o', 'c']) { const p = d[kk]; if (!p) continue; const c = p[st]; if (!c || c === '.') continue; if (kk === 's' && fillNow) continue; perc(kk, t, a(c, { k: 0.5, s: 0.3, h: 0.1, o: 0.09, c: 0.2 }[kk]) * v * tr.g); }
+    if (d.t && d.t[st] && d.t[st] !== '.') perc('t', t, 0.4 * v * tr.g, 1 + (3 - (+d.t[st])) * 0.18);
+    if (d.boom && st === 0 && bar % 2 === 0) perc('boom', t, 0.45 * v * tr.g);
+    if (d.crash && st === 0 && bar % d.crash === 0) perc('crash', t, 0.2 * v * tr.g);
+    if (fillNow) perc('s', t, (0.12 + (st - 12) * 0.05) * v * tr.g);
+  }
 }
 function tick() {
   if (!ac || !cur) return; const tr = TRACKS[cur], sd = 60 / tr.bpm / 4;
   if (nextT < ac.currentTime) nextT = ac.currentTime + 0.05;
-  while (nextT < ac.currentTime + 0.35) { scheduleStep(tr, step, nextT, sd); step = (step + 1) % (tr.bars.length * 16); nextT += sd; }
+  while (nextT < ac.currentTime + 0.35) { scheduleStep(tr, step, nextT, sd); step = (step + 1) % (tr.n * 16); nextT += sd; }
 }
+function fadeOut(tb) { if (!tb) return; const now = ac.currentTime; try { tb.mix.gain.cancelScheduledValues(now); tb.mix.gain.setValueAtTime(tb.mix.gain.value, now); tb.mix.gain.linearRampToValueAtTime(0, now + 0.4); tb.send.gain.setValueAtTime(tb.send.gain.value, now); tb.send.gain.linearRampToValueAtTime(0, now + 0.4); tb.dsend.gain.linearRampToValueAtTime(0, now + 0.4); } catch {} setTimeout(() => { try { tb.mix.disconnect(); tb.send.disconnect(); tb.dsend.disconnect(); } catch {} }, 4200); }
 function startNow(name) {
-  cur = name; step = 0; nextT = 0; clearInterval(timer);
-  if (!cfg.bgm || !name) { cur = null; return; }
-  timer = setInterval(tick, 80); tick();
+  clearInterval(timer); timer = null; fadeOut(tbus); tbus = null;
+  if (!cfg.bgm || !name || !TRACKS[name]) { cur = null; return; }
+  cur = name; step = 0; nextT = 0; tbus = trackBus(); timer = setInterval(tick, 80); tick();
+}
+function resolve(name) {
+  if (name === 'field') return fieldTheme;
+  if (name === 'battle') { const pool = ['battle', 'battle2', 'battle3'].filter(x => x !== lastBattle); lastBattle = pool[Math.floor(Math.random() * pool.length)]; return lastBattle; }
+  return name;
 }
 export function playBgm(name) {
-  want = name; if (name === cur && timer) return;
-  if (!ensure()) return;   // まだ音が使えない(タッチしたら はじまる)
-  startNow(name);
+  want = name; if (!ensure()) return;   // まだ音が使えない(タッチしたら はじまる)
+  const to = resolve(name); if (to === cur && timer) return; startNow(to);
 }
-export function stopBgm() { want = null; cur = null; clearInterval(timer); timer = null; }
+export function setFieldBgm(fid) { fieldTheme = 'f_' + fid; if (!TRACKS[fieldTheme]) fieldTheme = 'f_forest'; playBgm('field'); }
+export function stopBgm() { want = null; cur = null; clearInterval(timer); timer = null; fadeOut(tbus); tbus = null; }
 export function setVolumes(bgm, sfx) {
   if (bgm != null) cfg.bgm = bgm; if (sfx != null) cfg.sfx = sfx; saveCfg();
   const a = audioCtx(); if (a.master) a.master.gain.value = 0.35 * cfg.sfx * 1.6;
-  if (bus) bus.gain.value = cfg.bgm * 0.8;
-  if (cfg.bgm && want && !timer) { if (ensure()) startNow(want); } else if (!cfg.bgm) { clearInterval(timer); timer = null; cur = null; }
+  if (G) G.out.gain.value = cfg.bgm * 0.55;
+  if (cfg.bgm && want && !timer) { if (ensure()) startNow(resolve(want)); } else if (!cfg.bgm) { clearInterval(timer); timer = null; cur = null; }
 }
 // 短いファンファーレ
 export function jingle(kind = 'win') {
-  if (!ensure()) return; const t = ac.currentTime + 0.05, seq = kind === 'catch' ? [[67, 0, .12], [72, .13, .12], [76, .26, .12], [79, .39, .3], [76, .78, .12], [79, .92, .12], [84, 1.06, .2], [83, 1.34, .12], [84, 1.48, .8], [79, 1.48, .8], [76, 1.48, .8]] : kind === 'win' ? [[72, 0, .14], [72, .16, .14], [72, .32, .14], [76, .5, .3], [72, .86, .14], [76, 1.02, .14], [79, 1.2, .5]] : [[79, 0, .12], [76, .12, .12], [72, .24, .12], [67, .36, .4]];
-  const was = cur; if (was) { clearInterval(timer); timer = null; }
-  for (const [m, d, l] of seq) note('square', mtof(m), t + d, l, 0.07); for (const [m, d, l] of seq) note('triangle', mtof(m - 12), t + d, l, 0.1);
-  if (was) setTimeout(() => { if (want === was) startNow(was); }, 2100);
+  if (!ensure()) return; const was = cur, t = ac.currentTime + 0.05, seq = kind === 'catch' ? [[67, 0, .12], [72, .13, .12], [76, .26, .12], [79, .39, .3], [76, .78, .12], [79, .92, .12], [84, 1.06, .2], [83, 1.34, .12], [84, 1.48, .8], [79, 1.48, .8], [76, 1.48, .8]] : kind === 'win' ? [[72, 0, .14], [72, .16, .14], [72, .32, .14], [76, .5, .3], [72, .86, .14], [76, 1.02, .14], [79, 1.2, .5]] : [[79, 0, .12], [76, .12, .12], [72, .24, .12], [67, .36, .4]];
+  if (was) { clearInterval(timer); timer = null; fadeOut(tbus); tbus = null; }
+  const jb = trackBusTmp(); for (const [m, d, l] of seq) { voiceTmp('lead', mtof(m), t + d, l, 0.16, jb); voiceTmp('bell', mtof(m + 12), t + d, l, 0.08, jb); voiceTmp('bass', mtof(m - 12), t + d, l, 0.14, jb); }
+  if (was) setTimeout(() => { if (want) startNow(resolve(want === 'battle' ? was : want)); }, 2100);
 }
+function trackBusTmp() { const b = trackBus(); tbus = b; return b; }
+function voiceTmp(i, f, t, d, v, b) { tbus = b; voice(i, f, t, d, v, {}); }
 // さいしょの タッチで 音を ゆるす(ページを開きなおしても ならせる)
-const unlock = () => { unlockAudio(); const a = audioCtx(); if (a.master) a.master.gain.value = 0.35 * cfg.sfx * 1.6; if (want && !timer) { if (ensure()) startNow(want); } };
+const unlock = () => { unlockAudio(); const a = audioCtx(); if (a.master) a.master.gain.value = 0.35 * cfg.sfx * 1.6; if (want && !timer) { if (ensure()) startNow(resolve(want)); } };
 ['pointerdown', 'touchend', 'keydown'].forEach(ev => addEventListener(ev, unlock, { once: false, passive: true }));
 document.addEventListener('visibilitychange', () => { const a = audioCtx(); if (!a.ac) return; if (document.hidden) a.ac.suspend(); else a.ac.resume(); });
+
+// ---------- テスト用: オフラインで 曲を レンダリングして 音のおおきさ・エラーを しらべる ----------
+export async function __bgmTest(names, secs = 20) {
+  const res = {}, saveAc = ac, saveG = G, saveTb = tbus, saveCur = cur;
+  for (const name of names || Object.keys(TRACKS)) {
+    try {
+      const off = new OfflineAudioContext(2, 44100 * secs, 44100); ac = off; G = buildChain(off); G.out.gain.value = 0.85 * 0.6; G.out.connect(off.destination); tbus = trackBus();
+      const tr = TRACKS[name], sd = 60 / tr.bpm / 4; let s = 0, t = 0; while (t < secs - 1.5) { scheduleStep(tr, s, t, sd); s = (s + 1) % (tr.n * 16); t += sd; }
+      const buf = await off.startRendering(), d0 = buf.getChannelData(0), d1 = buf.getChannelData(1); let pk = 0, sq = 0; for (let i = 0; i < d0.length; i++) { const a = Math.max(Math.abs(d0[i]), Math.abs(d1[i])); if (a > pk) pk = a; sq += d0[i] * d0[i]; }
+      res[name] = { peak: +pk.toFixed(3), rms: +(20 * Math.log10(Math.sqrt(sq / d0.length) + 1e-9)).toFixed(1), bars: tr.n };
+    } catch (e) { res[name] = { err: String(e && e.message || e) }; }
+  }
+  ac = saveAc; G = saveG; tbus = saveTb; cur = saveCur; return { res, warn: window.__bgmWarn || [] };
+}
+export const __tracks = () => Object.fromEntries(Object.entries(TRACKS).map(([k, t]) => [k, { bpm: t.bpm, lead: t.L_lead.map(l => { let lo = 999, hi = 0; for (const b of l.bars_ || []) for (const n of b) { const m = n[1] + 12 * (l.oct || 0); lo = Math.min(lo, m); hi = Math.max(hi, m); } return [l.i, lo, hi]; }) }]));

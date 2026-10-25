@@ -1219,12 +1219,18 @@ async function rebuildPlaced() {
   await buildCasino(false);
 }
 // かった どうぶつに なまえを つける(うし・ペットの ちんちら。あとから メニューでも かえられる)
+const RAND_NAMES = {
+  'ちんちら': ['もふ', 'ふわ', 'くるみ', 'こむぎ', 'あずき', 'まろん', 'ココ', 'ミルク', 'ポム', 'ルル', 'ハナ', 'ソラ', 'モカ', 'ラテ', 'ぽんず', 'きなこ', 'ゆず', 'もち', 'ピコ', 'ナッツ'],
+  'うし': ['モー', 'ぶち', 'ミルキー', 'ハナコ', 'まだら', 'ホルン', 'クリーム', 'ももこ', 'ベル', 'ふくちゃん', 'チョコ', 'モモ', 'ラムネ', 'ゆきこ', 'ぼたん'],
+  'ニワトリ': ['ピヨ', 'コッコ', 'とさか', 'ひなた', 'ぴーちゃん', 'たまご', 'ゴロー', 'ココ', 'サニー', 'ふくこ', 'ケロ', 'こめ', 'ポコ', 'ちゃぼ', 'あさひ'],
+};
 function askAnimalName(label, base) {
   return new Promise(res => {
     const m = document.createElement('div'); m.id = 'namemodal'; m.style.zIndex = 200;
-    m.innerHTML = `<div class="box"><h3>${label}の なまえは?</h3><p>なかまに なった ${label}に なまえを つけよう(8もじまで)</p><input id="anIn" type="text" maxlength="8" value="${base}" autocomplete="off"><button id="anOk" class="pill">これで きまり</button></div>`;
+    m.innerHTML = `<div class="box"><h3>${label}の なまえは?</h3><p>なかまに なった ${label}に なまえを つけよう(8もじまで)</p><input id="anIn" type="text" maxlength="8" value="${base}" autocomplete="off"><div class="anbtns"><button id="anRnd" class="pill alt">ランダム</button><button id="anOk" class="pill">これで きまり</button></div></div>`;
     document.body.appendChild(m); const inp = m.querySelector('#anIn'); setTimeout(() => { try { inp.focus(); inp.select(); } catch {} }, 100);
     const ok = () => { const v = inp.value.trim().slice(0, 8) || base; m.remove(); res(v); };
+    const pool = RAND_NAMES[label] || RAND_NAMES['ちんちら']; m.querySelector('#anRnd').onclick = () => { let v; do { v = pool[Math.floor(Math.random() * pool.length)]; } while (v === inp.value && pool.length > 1); inp.value = v; sfx('ui'); };
     m.querySelector('#anOk').onclick = ok; inp.addEventListener('keydown', e => { if (e.key === 'Enter') ok(); });
   });
 }

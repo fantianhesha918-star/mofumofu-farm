@@ -7,7 +7,7 @@ import { ECO, state, load, save, bus, count, addItem } from './state.js';
 import { sfx, unlockAudio } from './audio.js';
 import { lawnKit } from './world.js';
 import { BADGES, DAY_SECONDS, DROP_BY_ELEMENT, ITEMS, HEAL, EVO_STONES } from './data.js';
-import { playBgm } from './bgm.js';
+import { playBgm, setFieldBgm } from './bgm.js';
 import { runBattle, markCaught, giveStarter, giveMon, healParty, questData, assistOn } from './battle.js';
 
 const $ = (s) => document.querySelector(s);
@@ -27,7 +27,7 @@ const FIELDS = {
     sky: '#b9d8d0', g0: '#5f9a44', g1: ['#4f8a3a', '#79ad52', '#6a9e46', '#8dbb5c'], bg: 'battle_forest.webp',
     zones: [[-16, -6, 8], [14, -22, 9], [-8, -34, 8], [22, 4, 7], [-6, -44, 8]],
     trees: [['pine_far', 110, 170, [4.6, 7], 14, 78], ['birch', 24, 40, [3.0, 4.4], 14, 70]],
-    wild: [['slime', 3], ['aodori', 3], ['dokukinoko', 2], ['mogura', 3], ['komori', 3], ['hinotama', 2], ['saboten', 2], ['katatsumuri', 1], ['fukurou_ko', 1], ['mitsubachi', 1], ['mame_chin', 1], ['hone_kenshi', 1], ['koyurei', 1], ['raichou_ko', 1], ['watage', 1], ['tsubame_ko', 1], ['raimushi', 2]],
+    wild: [['dokukinoko', 4], ['saboten', 4], ['chin_kusa', 4], ['ringo_ko', 4], ['wakagi_shika', 2], ['slime', 1], ['aodori', 1], ['mogura', 1], ['komori', 1], ['hinotama', 1], ['mitsubachi', 1], ['katatsumuri', 1], ['mame_chin', 1], ['watage', 1]],
     boss: { key: 'forest', x: 0, z: -58, id: 'shokujinsou_2', sprite: 'shokujinsou_2', patch: 'boss_patch', patchW: 15, name: 'もりの ぬし', over: { name: 'もりの ぬし', image: 'assets/bosses/forest.webp', level: 11, hp: 105, atk: 22, def: 15, spd: 9, exp: 110, money: 160 }, model: 'boss_forest', h: 5.0, lines: ['……ここは わたしの もりだ。', 'くさむらで きたえた なかまと いっしょなら、わたしを みとめよう。', 'さあ、かかってこい! HPと かいふくの たべものは じゅんびできたか?'], coins: 300, win: 'もりの ぬしが みとめてくれた! なかまボール×5 と 300コインを もらった!', after: 'もりに へいわが もどったよ' },
   },
   volcano: {
@@ -90,7 +90,7 @@ const FIELDS = {
     light: { hemi: [0xf0ffe0, 0x7a9a60, 1.5], sun: [0xf4ffd0, 2.3] }, zd: ['#5a9a3acc', '#4a8a36aa', '#4a8a3600'], tint: [[0.8, 1.0], [1.0, 1.15], [0.8, 1.0]],
     zones: [[10, -6, 8], [22, -32, 9], [-8, -42, 8], [30, 10, 7], [-34, 0, 7], [2, 26, 7]],
     trees: [['deco_pillar_vine', 22, 32, [1.8, 3.2], 12, 74], ['deco_ruin_arch', 8, 12, [3.6, 5.0], 16, 74, null, { fit: true }], ['deco_pillar_broken', 14, 22, [2.0, 3.0], 14, 74, null, { fit: true }], ['deco_pearl_shell', 14, 22, [1.2, 2.0], 12, 70, null, { fit: true }]],
-    wild: [['dokukinoko_3', 2], ['saboten_3', 2], ['shokujinsou_2', 2], ['legend_kyoshin', 1], ['mame_chin_grass', 2], ['shinju_hakurou', 1], ['kodai_tengu', 2], ['biriunagi_2', 1], ['watage_2', 1], ['kaze_chou', 1], ['raimushi_2', 1], ['ringo_ko', 1], ['ringo_ko_2', 2], ['dango_mushi', 1], ['dango_mushi_2', 1], ['denki_neko_2', 1], ['mame_chin', 1], ['chin_kusa', 1], ['chin_kusa_2', 1], ['denchi_risu_2', 1], ['donguri_robo_2', 1], ['suna_kai', 1], ['iwagoro', 1], ['mitsugo_hebi', 1], ['nebosuke_kyo', 1], ['wakagi_shika', 1], ['mori_shika', 1], ['shinju_taiboku', 1], ['nari_kami', 1], ['toki_no_yousei', 1]], scale: { lv: 4, hp: 1.4, atk: 1.4, def: 1.4, spd: 1.2, exp: 2, money: 2 },
+    wild: [['dokukinoko_3', 3], ['saboten_3', 3], ['shokujinsou_2', 3], ['legend_kyoshin', 1], ['mame_chin_grass', 2], ['ringo_ko', 1], ['ringo_ko_2', 3], ['chin_kusa', 1], ['chin_kusa_2', 2], ['wakagi_shika', 2], ['mori_shika', 2], ['shinju_taiboku', 1], ['toki_no_yousei', 1], ['shinju_hakurou', 1], ['kodai_tengu', 1], ['watage_2', 1], ['kaze_chou', 1], ['raimushi_2', 1], ['dango_mushi_2', 1], ['donguri_robo_2', 1], ['mame_chin', 1], ['nebosuke_kyo', 1]], scale: { lv: 4, hp: 1.4, atk: 1.4, def: 1.4, spd: 1.2, exp: 2, money: 2 },
     boss: { key: 'grove', x: 0, z: -58, id: 'kami_ryokuya', name: 'しんじゅの ぬし', deco: { model: 'deco_pillar_vine', n: 9, r: 7.8, w: 3.6 }, over: { name: 'しんじゅの ぬし', image: 'assets/bosses/grove.webp', level: 60, hp: 874, atk: 121, def: 73, spd: 34, exp: 1300, money: 1500 }, model: 'boss_goddess', h: 6.4, lines: ['……ようこそ、ちいさき ものよ。', 'この いせきは もりの いのちを みまもる ばしょ。', 'きずなの つよさを、みせてもらいましょう。'], coins: 5000, win: 'しんじゅの ぬしが みとめてくれた! なかまボール×5 と 5000コインを もらった!', after: 'いせきに みどりの ひかりが もどったよ' },
   },
   castle: {
@@ -420,7 +420,9 @@ async function gymTeam() {
   const ids = [...new Set((F.wild || []).map(([id]) => id))].filter(id => !['yume_no_ko', 'toki_no_yousei'].includes(id) && GD.MONSTERS[id]);
   const pool = ids.map(id => GD.MONSTERS[id]).sort((a, b) => b.level - a.level).slice(0, Math.max(n + 2, 5));
   for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
-  return pool.slice(0, n).sort((a, b) => a.level - b.level).map((b) => ({ id: b.id, name: b.name, over: { level: b.level + k.lv + 3, hp: Math.round(b.hp * k.hp * 1.15), atk: Math.round(b.atk * k.atk * 1.05), def: Math.round(b.def * k.def * 1.05), spd: Math.round(b.spd * k.spd), exp: Math.round(b.exp * k.exp), money: Math.round(b.money * k.money) } }));
+  // てしたの レベルは ぬしより ひくく(さいごの こほど ぬしに ちかい)。ひくく したぶん ステータスも すこし おとす
+  const bossLv = (F.boss && F.boss.over && F.boss.over.level) || 99;
+  return pool.slice(0, n).sort((a, b) => a.level - b.level).map((b, i, arr) => { const lv0 = b.level + k.lv + 3, lv = Math.max(2, Math.min(lv0, bossLv - 2 - (arr.length - 1 - i))), r = lv < lv0 ? Math.max(0.55, lv / lv0) : 1; return ({ id: b.id, name: b.name, over: { level: lv, hp: Math.round(b.hp * k.hp * 1.15 * r), atk: Math.round(b.atk * k.atk * 1.05 * r), def: Math.round(b.def * k.def * 1.05 * r), spd: Math.round(b.spd * k.spd), exp: Math.round(b.exp * k.exp), money: Math.round(b.money * k.money) } }); });
 }
 async function hallOfFame() {
   const GD = await questData(); state.hof = state.hof || { day: state.day || 1, party: state.party.map(m => m.id) }; save();
@@ -860,11 +862,11 @@ async function boot() {
   await questData(); const first = giveStarter(); save();
   ui.setCoins(); ui.setClock && ui.setClock(); ui.setLevel && ui.setLevel();
   P.pos.set(0, hAt(0, SPZ), SPZ); cam.yaw = 0; cam.pitch = 0.36; updateCamera(0, true);
-  playBgm('field'); $('#loading2').classList.add('done'); updateWxLabel();
+  setFieldBgm(FID); $('#loading2').classList.add('done'); updateWxLabel();
   { const h = hourNow(), hints = [WX_HINT[WX], nightK(h) > 0.9 ? 'よるは やみや まほうの モンスターが でやすいよ' : (h >= 7 && h < 17 ? 'ひるまは てんや くさの モンスターが でやすいよ' : '')].filter(Boolean); if (WX !== 'clear' || hints.length) setTimeout(() => ui.toast(`てんき: ${WX_NAME[WX]} / ${timeName(h)}`, hints.join(' / ') || 'おだやかな ひだよ', '', 4200), 1500); } busy = false; fade(false); document.title = 'ready';
   if (first) ui.toast('なかまが できた!', 'まめちんちらが ついてきたよ', 'くさむらを あるくと モンスターが でてくるよ', 5200);
   else ui.toast(F.name, 'くさむらを あるくと モンスターが でてくるよ', FID === 'lake' ? 'ここの モンスターは すこし つよいよ' : '', 3600);
-  window.__f = { gymTeam, challengeBoss, shrines, challengeLegend, trainers, talkTrainer, talkBoss, cam, hAt, isWater, P, state, startEncounter, runBattle, scene, camera, renderer, goVillage, ZONES, count, addItem, circles };
+  window.__f = { BOSS, gymTeam, challengeBoss, shrines, challengeLegend, trainers, talkTrainer, talkBoss, cam, hAt, isWater, P, state, startEncounter, runBattle, scene, camera, renderer, goVillage, ZONES, count, addItem, circles };
 }
 unlockAudio(); frame(); boot();
 addEventListener('pagehide', () => { try { save(); } catch {} });

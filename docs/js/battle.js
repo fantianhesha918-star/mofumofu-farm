@@ -273,6 +273,8 @@ export async function runBattle(enemyId0, opts = {}) {
   const slotsE = [foeList[0], dbl ? foeList[1] : null], reserveE = foeList.slice(dbl ? 2 : 1);
   let cur = slotsE[0], curE = 0, def = cur.def, e = cur.e, E = cur.E, eLv = def.level;
   enemyId = cur.id;
+  // バトルの きょく: ふつう=ランダム / トレーナー / でんせつ / ぬし(さいしゅうは とくべつ)
+  const bgmFor = (boss) => { const isBoss = boss || (opts.boss && !opts.trainer); if (isBoss) return opts.bg === 'battle_end.webp' ? 'boss_final' : ['battle_cosmos.webp', 'battle_grove.webp', 'battle_castle.webp', 'battle_temple.webp', 'battle_dragon.webp'].includes(opts.bg) ? 'boss2' : 'boss'; if (opts.legend) return 'battle_legend'; if (opts.trainer) return 'battle_trainer'; return 'battle'; };
   const bossNow = (f = cur) => f.isBoss !== undefined ? !!f.isBoss : (!!opts.boss && !opts.trainer);   // いま たたかっている あいてが ぬしか(てしたと れんせんの ときは さいごだけ ぬし)
   const useE = (k) => { cur = slotsE[k]; curE = k; eImg = eImgs[k]; enemyId = cur.id; def = cur.def; e = cur.e; E = cur.E; eLv = def.level; };
   let buff = null, aFort = false;
@@ -299,7 +301,7 @@ export async function runBattle(enemyId0, opts = {}) {
   document.body.appendChild(root);
   root.querySelectorAll('.bt-eimg').forEach(x => eImgs.push(x)); root.querySelectorAll('.bt-aimg').forEach(x => aImgs.push(x)); root.querySelectorAll('.bt-e').forEach(x => cardsE.push(x)); root.querySelectorAll('.bt-a').forEach(x => cardsA.push(x)); aImg = aImgs[0]; eImg = eImgs[0];
   try { startSky($('.bt-field', root), opts.bg || 'battle_grass.webp'); } catch (e) { console.warn('sky failed', e); }
-  { const bw = battleWx(opts.wx); if (bw !== 'clear') { const wxEl = document.createElement('div'); wxEl.className = 'wxov wx-' + bw; wxEl.style.backgroundImage = `url(${img(`assets/effects/wx/${bw}.webp`)})`; $('.bt-field', root).appendChild(wxEl); } }
+  { const bw = battleWx(opts.wx); if (bw !== 'clear') { const wxEl = document.createElement('div'); wxEl.className = 'wxov wx-' + bw; wxEl.style.backgroundImage = `url(${img(`assets/effects/wx/${bw}.webp`)})`; $('.bt-field', root).appendChild(wxEl); setTimeout(() => sfx('wx_' + bw), 700); } }
   // 背景の「丸い台」にモンスターの足もとを合わせる(背景は cover 表示なので、表示倍率からピクセル位置を計算)
   const layout = () => {
     const f = $('.bt-field', root), w = f.clientWidth, h = f.clientHeight; if (!w || !h) return;
@@ -315,7 +317,7 @@ export async function runBattle(enemyId0, opts = {}) {
   };
   layout(); const onR = () => layout(); addEventListener('resize', onR); setTimeout(layout, 60); const ro = new ResizeObserver(layout); ro.observe($('.bt-field', root));
   const msg = (t) => { $('.bt-msg', root).textContent = t; };
-  const pop = (side, txt, cls) => { if (cls === 'heal') playStrip('fx_heal', imgOf(side), 1.6, 150); const p = $('.bt-pop', root), r = rectOf(imgOf(side)); p.className = 'bt-pop ' + (cls || '') + ' ' + side; p.style.left = r.x + 'px'; p.style.top = (r.y - r.h * 0.25) + 'px'; p.textContent = txt; void p.offsetWidth; p.classList.add('on'); };
+  const pop = (side, txt, cls) => { if (cls === 'heal') { playStrip('fx_heal', imgOf(side), 1.6, 150); sfx('heal'); } const p = $('.bt-pop', root), r = rectOf(imgOf(side)); p.className = 'bt-pop ' + (cls || '') + ' ' + side; p.style.left = r.x + 'px'; p.style.top = (r.y - r.h * 0.25) + 'px'; p.textContent = txt; void p.offsetWidth; p.classList.add('on'); };
   // ステータス(とくせい・りょうりバフ こみ)
   const allyStats = () => {
     const a = state.party[ai], st = { ...monStats(a) }, ab = abilityOf(a.id);
@@ -332,6 +334,7 @@ export async function runBattle(enemyId0, opts = {}) {
   const AIL_FX = { freeze: { seq: [1, 2, 4], sc: 1.0, op: .65 }, confuse: { seq: [1, 2, 3, 4], sc: 1.15, op: 1 }, paralyze: { seq: [1, 2, 3, 4], sc: 1.15, op: .8 } };
   const playAil = async (side, kind, loops = 1) => {
     const im = side && imgOf(side); if (!im || !kind) return;
+    sfx('ail_' + kind);
     try {
       const c = AIL_FX[kind] || { seq: [1, 2, 3, 4], sc: 1.15, op: 1 }, r = rectOf(im), w = Math.max(r.w, r.h) * c.sc;
       for (let l = 0; l < loops; l++) for (const k of c.seq) { const i = fxImg(`assets/effects/anim/ail_${kind}/f${k}.webp`, r, w); i.style.opacity = c.op; await ready(i); await sleep(loops > 1 ? 190 : 170); i.remove(); }
@@ -426,7 +429,7 @@ export async function runBattle(enemyId0, opts = {}) {
     }
     if (el === 'wind') crescent({ x: b.x - 60, y: b.y }, { x: b.x + 60, y: b.y }, col, 70, 0);
   };
-  const impactAt = (el, b, col, pw, hitSz, big, sh = 1) => { sfx('el_' + el); flash(b, col, hitSz * .8); part('part_burst', b, hitSz * 1.7, hitSz * 1.7, col, [{ opacity: .95, transform: TR(0, 0, Math.random() * 30, .3) }, { opacity: 0, transform: TR(0, 0, 40 + Math.random() * 30, 1.15) }], { duration: 440, easing: 'ease-out' }); if (big) part('part_sparkle', b, hitSz * 1.9, hitSz * 1.9, '#ffffff', [{ opacity: 0, transform: TR(0, 0, 0, .5) }, { opacity: 1, offset: .4, transform: TR(0, 0, 8, 1) }, { opacity: 0, transform: TR(0, 0, 16, 1.1) }], { duration: 600 }); burst(b, col, Math.round(5 + pw * 5), pw); scatter(el, b, col, pw); shake((2 + pw * 3) * sh); if (big) tint(col); };
+  const impactAt = (el, b, col, pw, hitSz, big, sh = 1) => { sfx('el_' + el); setTimeout(() => sfx('ex_' + el), 60); flash(b, col, hitSz * .8); part('part_burst', b, hitSz * 1.7, hitSz * 1.7, col, [{ opacity: .95, transform: TR(0, 0, Math.random() * 30, .3) }, { opacity: 0, transform: TR(0, 0, 40 + Math.random() * 30, 1.15) }], { duration: 440, easing: 'ease-out' }); if (big) part('part_sparkle', b, hitSz * 1.9, hitSz * 1.9, '#ffffff', [{ opacity: 0, transform: TR(0, 0, 0, .5) }, { opacity: 1, offset: .4, transform: TR(0, 0, 8, 1) }, { opacity: 0, transform: TR(0, 0, 16, 1.1) }], { duration: 600 }); burst(b, col, Math.round(5 + pw * 5), pw); scatter(el, b, col, pw); shake((2 + pw * 3) * sh); if (big) tint(col); };
   // ---- オリジナルわざの えんしゅつ(御三家・でんせつ・さいしゅうボス専用) ----
   Object.assign(SHAPE, { diamond: 'width:12px;height:19px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)', petal: 'width:12px;height:17px;border-radius:50% 0 50% 50%' });
   const sh = (kind, col, r, extra = '') => mk('bt-pt', r, `${SHAPE[kind]};background:${kind === 'feather' ? '#fffbe8' : col};box-shadow:0 0 8px ${col};mix-blend-mode:normal;${extra}`);
@@ -509,6 +512,7 @@ export async function runBattle(enemyId0, opts = {}) {
   const playFx = async (fromEl, toEl, sk, elem) => {
     const col = ELC[elem] || '#fff', pw = Math.min(1.8, 0.8 + (sk.power || 40) / 90), b = rectOf(toEl), a = rectOf(fromEl), hitSz = Math.max(b.w, b.h) * 1.1 * pw, mo = motionOf(sk), big = (sk.power || 0) >= 80;
     const impact = (sh = 1) => impactAt(elem, b, col, pw, hitSz, big, sh);
+    if (SP_FX[sk.id]) sfx(sk.id); else if (!SIG[sk.id]) sfx('ch_' + elem);
     if (sk.power > 0 && !SIG[sk.id]) sfx('mv_' + (mo === 'rain' || mo === 'barrage' || mo === 'beam' || mo === 'ram' || mo === 'bite' || mo === 'claw' || mo === 'cross' || mo === 'pillar' || mo === 'vortex' || mo === 'sweep' || mo === 'quake' ? mo : 'orb'));
     if (sk.id === 'x_tail') {   // しっぽをふる: からだを ふりふり ゆらす
       wa(fromEl, [{ rotate: '0deg', translate: '0 0' }, { rotate: '-9deg', translate: '-7px 0' }, { rotate: '9deg', translate: '7px 0' }, { rotate: '-9deg', translate: '-7px 0' }, { rotate: '9deg', translate: '7px 0' }, { rotate: '-6deg', translate: '-4px 0' }, { rotate: '0deg', translate: '0 0' }], { duration: 760, fill: 'none', easing: 'ease-in-out' });
@@ -703,12 +707,12 @@ export async function runBattle(enemyId0, opts = {}) {
   const afterFoeFaint = async (j) => {   // あいてが たおれた: けいけんち → つぎの あいてを だす(いれば)
     const f = slotsE[j]; useE(j);
     if (opts.trainer && !bossNow(f)) { msg(`${def.name} は たおれた!`); sfx('quest'); await sleep(700); await recall(eImgs[j], ballPrefix(f.ball), true); jingle('win'); }
-    else { playStrip('fx_faint', eImg, 1.7, 190); eImg.classList.add('faint'); msg(`${def.name} を たおした!`); jingle('win'); await sleep(1300); }
+    else { playStrip('fx_faint', eImg, 1.7, 190); sfx('faint'); eImg.classList.add('faint'); msg(`${def.name} を たおした!`); jingle('win'); await sleep(1300); }
     useA(firstA()); await payFoe();
     if (reserveE.length) {
       const nx = reserveE.shift(); slotsE[j] = nx; useE(j); draw();
       if (bossNow(nx)) {   // れんせんの さいご: ぬしが とうじょう(あんてんは しない)
-        eImgs[j].style.visibility = 'hidden'; msg(`つぎは ぬしが あいてだ! ${def.name} が たちはだかった!`); sfx('no'); await sleep(900); playBgm('boss');
+        eImgs[j].style.visibility = 'hidden'; msg(`つぎは ぬしが あいてだ! ${def.name} が たちはだかった!`); sfx('no'); await sleep(900); playBgm(bgmFor(true));
         fieldEl.classList.add('quake'); await sleep(500); eImgs[j].style.visibility = ''; eImgs[j].classList.add('enter-boss'); sfx('quest'); await sleep(900); eImgs[j].classList.remove('enter-boss'); fieldEl.classList.remove('quake');
         if (!state.tips.boss) { state.tips.boss = 1; msg('ヒント: ぬしが「ちからを ためて」きたら、つぎの こうげきは とても つよいよ!'); await sleep(2200); }
       } else { msg(`${opts.trainer} は ${def.name} を くりだした!`); await sleep(500); await sendOut(eImgs[j], ballPrefix(nx.ball), true); }
@@ -719,7 +723,7 @@ export async function runBattle(enemyId0, opts = {}) {
   // こちらの モンスターが たおれた: ボールに もどして、つぎを えらんで なげる。'ok' | 'empty'(ひかえが いない) | 'lose'
   const afterAllyFaint = async (k = curA) => {
     const sl = slotsA[k]; if (!sl) return 'ok'; const a = state.party[sl.ai]; if (hpOf(a) > 0) return 'ok';
-    msg(`${monName(a)} は たおれた…`); sfx('no'); playStrip('fx_faint', aImgs[k] || aImg, 1.7, 190); await sleep(900);
+    msg(`${monName(a)} は たおれた…`); sfx('faint'); playStrip('fx_faint', aImgs[k] || aImg, 1.7, 190); await sleep(900);
     await recall(aImgs[k], ballOf(a), false);
     const used = slotsA.map((x, j) => x && j !== k ? x.ai : -1), cand = state.party.map((m, i) => i).filter(i => hpOf(state.party[i]) > 0 && !used.includes(i));
     if (!cand.length) { slotsA[k] = null; draw(); return slotsA.some(Boolean) ? 'empty' : 'lose'; }
@@ -876,7 +880,7 @@ export async function runBattle(enemyId0, opts = {}) {
   });
 
   let result = null;
-  root.classList.add('nt'); playBgm(opts.boss && !opts.trainer ? 'boss' : 'battle'); draw(); void root.offsetWidth; requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('nt')));   // さいしょの HPバーは アニメなしで ぴったり表示
+  root.classList.add('nt'); playBgm(bgmFor()); draw(); void root.offsetWidth; requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('nt')));   // さいしょの HPバーは アニメなしで ぴったり表示
   // ---- バトルの はじまりの えんしゅつ(ふつう: アイリスワイプ / ぬし: とくべつな とうじょう) ----
   const introAnim = async () => {
     const isBoss = !!opts.boss && !opts.trainer, fld = $('.bt-field', root), EC = { fire: '#ff6a30', water: '#4aa8ff', grass: '#58c458', wind: '#7adcc8', earth: '#c89a54', thunder: '#ffd830', heaven: '#fff0a0', dark: '#a070e0', magic: '#e070e8', beast: '#e8a860', kami: '#ffe890' }, col = EC[def.element] || '#ffd860';
@@ -958,7 +962,7 @@ export async function runBattle(enemyId0, opts = {}) {
     const sl = slotsA[x.k]; if (!sl || state.party[sl.ai] !== x.who || hpOf(x.who) <= 0) return;
     useA(x.k); const a = state.party[ai]; let tj = x.t; if (tj == null || !slotsE[tj] || slotsE[tj].e.hp <= 0) tj = liveE()[0]; if (tj == null) return; useE(tj);
     if (x.kind === 'skill') {
-      if (x.sk === '__guard') { sl.guard = true; msg(`${monName(a)} は みを まもっている!`); sfx('pick'); playStrip('fx_guard', aImg, 1.7, 200); aImg.classList.add('glow'); await sleep(800); aImg.classList.remove('glow'); }
+      if (x.sk === '__guard') { sl.guard = true; msg(`${monName(a)} は みを まもっている!`); sfx('pick'); playStrip('fx_guard', aImg, 1.7, 200); sfx('guard'); aImg.classList.add('glow'); await sleep(800); aImg.classList.remove('glow'); }
       else await allyAttack(x.sk);
     } else if (x.kind === 'item') {
       const v = x.v;

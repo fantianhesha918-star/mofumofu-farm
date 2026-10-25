@@ -505,3 +505,5 @@ body { word-break: keep-all; overflow-wrap: break-word; line-break: strict; }
 #casinoplay .banner { position: absolute; left: 50%; bottom: 9%; transform: translateX(-50%); padding: 10px 26px; border-radius: 24px; background: linear-gradient(#f4d060, #d09a20); color: #3a2410; font-size: 22px; font-weight: bold; box-shadow: 0 6px 24px #000a; pointer-events: none; }
 #casinoplay .banner.pop { animation: csPop 3.2s ease-out forwards; }
 @keyframes csPop { 0% { transform: translateX(-50%) scale(.4); opacity: 0; } 12% { transform: translateX(-50%) scale(1.15); opacity: 1; } 22% { transform: translateX(-50%) scale(1); } 85% { opacity: 1; } 100% { opacity: 0; } }
+
+#namemodal .anbtns { display: flex; gap: 10px; justify-content: center; margin-top: 10px; } #namemodal .anbtns .pill { flex: 1; margin: 0; } #namemodal .pill.alt { background: #4a3a2a; color: #f4ead2; border: 1px solid #ffffff33; }
