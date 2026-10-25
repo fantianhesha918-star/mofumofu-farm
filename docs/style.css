@@ -256,7 +256,7 @@ body:not(.touch) #prompt { bottom: calc(26px + var(--sab)); }
 
 #bt.nt .hp i, #bt.nt .xp i { transition: none !important; }
 .wxov { position: absolute; inset: -4%; z-index: 4; pointer-events: none; background-size: cover; background-position: center; mix-blend-mode: screen; opacity: .8; animation: wxdrift 7s ease-in-out infinite alternate; }
-.wxov.wx-fog { opacity: .75; animation-duration: 12s; } .wxov.wx-sun { opacity: .7; animation-duration: 5s; } .wxov.wx-sand { opacity: .85; animation-duration: 4s; } .wxov.wx-hail { opacity: .85; animation-duration: 3s; } .wxov.wx-rain { opacity: .85; animation: wxrain 1.4s linear infinite; }
+.wxov.wx-fog { opacity: .75; animation-duration: 12s; } .wxov.wx-sun { opacity: .7; animation-duration: 5s; } .wxov.wx-sand { opacity: 1; filter: brightness(1.45) saturate(1.1); animation-duration: 4s; } .wxov.wx-hail { opacity: .85; animation-duration: 3s; } .wxov.wx-rain { opacity: .85; animation: wxrain 1.4s linear infinite; }
 @keyframes wxdrift { from { transform: translate(-1.5%, -1%) scale(1.02); } to { transform: translate(1.5%, 1%) scale(1.06); } }
 @keyframes wxrain { from { transform: translateY(-2%); } to { transform: translateY(2%); } }
 .bt-fx { position: absolute; transform: translate(-50%, -50%); pointer-events: none; z-index: 6; }

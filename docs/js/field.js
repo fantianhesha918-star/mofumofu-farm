@@ -693,13 +693,13 @@ if (FID === 'end') {
 }
 
 // ---- じかん・てんき(フィールドに はいるたびに 日づけで きまる) ----
-const WX_NAME = { clear: 'はれ', rain: 'あめ', storm: 'あらし', fog: 'きり', snow: 'ゆき', ash: 'ふんか', flare: 'フレア', meteor: 'りゅうせいぐん', petal: 'はなふぶき', spirit: 'ひとだま' };
-const FIELD_WX = { forest: [['clear', 55], ['rain', 25], ['fog', 20]], lake: [['clear', 40], ['rain', 25], ['snow', 20], ['fog', 15]], volcano: [['clear', 35], ['ash', 35], ['fog', 15], ['storm', 15]], ghost: [['fog', 35], ['spirit', 30], ['rain', 20], ['clear', 15]], def: [['clear', 55], ['rain', 20], ['fog', 20], ['storm', 5]],
-  sky: [['clear', 60], ['fog', 15], ['storm', 15], ['rain', 10]], sun: [['clear', 30], ['flare', 45], ['fog', 10], ['storm', 15]], cosmos: [['clear', 40], ['meteor', 40], ['fog', 20]],
-  grove: [['clear', 40], ['petal', 25], ['rain', 20], ['fog', 15]], castle: [['fog', 40], ['storm', 30], ['rain', 20], ['clear', 10]], temple: [['clear', 35], ['meteor', 40], ['fog', 25]],
+const WX_NAME = { clear: 'はれ', rain: 'あめ', storm: 'あらし', fog: 'きり', snow: 'ゆき', ash: 'ふんか', flare: 'フレア', sun: 'ひでり', sand: 'すなあらし', hail: 'あられ', meteor: 'りゅうせいぐん', petal: 'はなふぶき', spirit: 'ひとだま' };
+const FIELD_WX = { forest: [['clear', 45], ['rain', 25], ['fog', 18], ['sun', 12]], lake: [['clear', 35], ['rain', 25], ['snow', 12], ['hail', 13], ['fog', 15]], volcano: [['clear', 25], ['ash', 25], ['sun', 18], ['sand', 15], ['fog', 10], ['storm', 7]], ghost: [['fog', 35], ['spirit', 30], ['rain', 20], ['clear', 15]], def: [['clear', 55], ['rain', 20], ['fog', 20], ['storm', 5]],
+  sky: [['clear', 50], ['fog', 12], ['storm', 13], ['rain', 10], ['hail', 15]], sun: [['clear', 20], ['flare', 30], ['sun', 30], ['sand', 8], ['fog', 5], ['storm', 7]], cosmos: [['clear', 40], ['meteor', 40], ['fog', 20]],
+  grove: [['clear', 40], ['petal', 25], ['rain', 20], ['fog', 15]], castle: [['fog', 35], ['storm', 25], ['rain', 15], ['hail', 15], ['clear', 10]], temple: [['clear', 25], ['meteor', 30], ['sand', 25], ['fog', 20]],
   dragon: [['clear', 30], ['rain', 25], ['storm', 15], ['petal', 20], ['fog', 10]], end: [['meteor', 35], ['clear', 25], ['storm', 20], ['fog', 20]] };
-const WX_MULT = { rain: { water: 2.2, grass: 1.8, thunder: 1.6, fire: 0.5 }, storm: { thunder: 3, wind: 2.5, water: 1.8, fire: 0.4 }, fog: { dark: 2.2, magic: 1.6, heaven: 0.7 }, snow: { water: 2, heaven: 1.6, fire: 0.4 }, ash: { fire: 2, earth: 1.6, dark: 1.3, water: 0.6 }, flare: { fire: 2.4, thunder: 1.4, heaven: 1.3, water: 0.5 }, meteor: { heaven: 2.2, magic: 1.7, dark: 1.2 }, petal: { grass: 1.7, wind: 1.8, heaven: 1.3, dark: 0.7 }, spirit: { dark: 2.4, magic: 2, beast: 1.2, heaven: 0.5 }, clear: {} };
-const WX_HINT = { rain: 'みずや くさの モンスターが でやすいよ', storm: 'でんきや かぜの モンスターが でやすいよ', fog: 'やみや まほうの モンスターが でやすいよ', snow: 'みずや てんの モンスターが でやすいよ', ash: 'ほのおや だいちの モンスターが でやすいよ', flare: 'ほのおや かみなりの モンスターが でやすいよ', meteor: 'てんや まほうの モンスターが でやすいよ', petal: 'くさや かぜの モンスターが でやすいよ', spirit: 'やみや まほうの モンスターが でやすいよ', clear: '' };
+const WX_MULT = { rain: { water: 2.2, grass: 1.8, thunder: 1.6, fire: 0.5 }, storm: { thunder: 3, wind: 2.5, water: 1.8, fire: 0.4 }, fog: { dark: 2.2, magic: 1.6, heaven: 0.7 }, snow: { water: 2, heaven: 1.6, fire: 0.4 }, ash: { fire: 2, earth: 1.6, dark: 1.3, water: 0.6 }, sun: { fire: 2.2, grass: 1.6, heaven: 1.3, water: 0.6 }, sand: { earth: 2.4, beast: 1.4, thunder: 1.2, grass: 0.6 }, hail: { water: 2, heaven: 1.5, wind: 1.3, fire: 0.5 }, flare: { fire: 2.4, thunder: 1.4, heaven: 1.3, water: 0.5 }, meteor: { heaven: 2.2, magic: 1.7, dark: 1.2 }, petal: { grass: 1.7, wind: 1.8, heaven: 1.3, dark: 0.7 }, spirit: { dark: 2.4, magic: 2, beast: 1.2, heaven: 0.5 }, clear: {} };
+const WX_HINT = { rain: 'みずや くさの モンスターが でやすいよ', storm: 'でんきや かぜの モンスターが でやすいよ', fog: 'やみや まほうの モンスターが でやすいよ', snow: 'みずや てんの モンスターが でやすいよ', ash: 'ほのおや だいちの モンスターが でやすいよ', flare: 'ほのおや かみなりの モンスターが でやすいよ', sun: 'ほのおや くさの モンスターが でやすいよ(たたかうと ほのお・くさが つよい)', sand: 'だいちや けものの モンスターが でやすいよ(たたかうと まいターン ダメージ)', hail: 'みずや てんの モンスターが でやすいよ(たたかうと まいターン ダメージ)', meteor: 'てんや まほうの モンスターが でやすいよ', petal: 'くさや かぜの モンスターが でやすいよ', spirit: 'やみや まほうの モンスターが でやすいよ', clear: '' };
 const FI = Math.max(0, ['forest', 'lake', 'volcano', 'ghost', 'sky', 'sun', 'cosmos', 'grove', 'castle', 'temple', 'dragon', 'end'].indexOf(FID));
 let WX = 'clear';
 const pickWx = () => { const tb = FIELD_WX[FID] || FIELD_WX.def; let x = ((state.day || 1) * 2654435761 + FI * 40503) >>> 0; x = (x ^ (x >>> 15)) * 2246822519 >>> 0; const r = (x % 1000) / 1000 * tb.reduce((a, b) => a + b[1], 0); let acc = 0; for (const [k, w] of tb) { acc += w; if (r < acc) return k; } return 'clear'; };
@@ -715,8 +715,8 @@ const baseSky = new THREE.Color(F.sky), nightSky = new THREE.Color('#0c1230'), t
 let flash = 0;
 function updateSky(dt) {
   const n = nightK(hourNow()), wl = ({ clear: 1, rain: 0.82, storm: 0.6, fog: 0.9, snow: 0.95, ash: 0.82, flare: 1.12, meteor: 1, petal: 1, spirit: 0.8 })[WX], lm = (1 - 0.5 * n) * wl;
-  tmpC.copy(baseSky).lerp(nightSky, 0.75 * n); if (WX === 'fog' || WX === 'storm') tmpC.lerp(new THREE.Color('#9aa4ac'), WX === 'fog' ? 0.45 : 0.3); else if (WX === 'ash') tmpC.lerp(new THREE.Color('#7a6a62'), 0.45); else if (WX === 'flare') tmpC.lerp(new THREE.Color('#ff9a50'), 0.35); else if (WX === 'spirit') tmpC.lerp(new THREE.Color('#5a6a98'), 0.4); else if (WX === 'meteor') tmpC.lerp(nightSky, 0.5);
-  scene.background.copy(tmpC); scene.fog.color.copy(tmpC); scene.fog.near = fogN0 * (WX === 'fog' ? 0.3 : WX === 'spirit' ? 0.4 : 1); scene.fog.far = fogF0 * (WX === 'fog' ? 0.45 : WX === 'spirit' ? 0.55 : WX === 'ash' ? 0.6 : WX === 'rain' || WX === 'storm' ? 0.75 : WX === 'flare' ? 0.9 : 1);
+  tmpC.copy(baseSky).lerp(nightSky, 0.75 * n); if (WX === 'fog' || WX === 'storm') tmpC.lerp(new THREE.Color('#9aa4ac'), WX === 'fog' ? 0.45 : 0.3); else if (WX === 'ash') tmpC.lerp(new THREE.Color('#7a6a62'), 0.45); else if (WX === 'flare') tmpC.lerp(new THREE.Color('#ff9a50'), 0.35); else if (WX === 'sun') tmpC.lerp(new THREE.Color('#ffd890'), 0.28); else if (WX === 'sand') tmpC.lerp(new THREE.Color('#c8a870'), 0.5); else if (WX === 'hail') tmpC.lerp(new THREE.Color('#aab8c8'), 0.32); else if (WX === 'spirit') tmpC.lerp(new THREE.Color('#5a6a98'), 0.4); else if (WX === 'meteor') tmpC.lerp(nightSky, 0.5);
+  scene.background.copy(tmpC); scene.fog.color.copy(tmpC); scene.fog.near = fogN0 * (WX === 'fog' ? 0.3 : WX === 'spirit' ? 0.4 : 1); scene.fog.far = fogF0 * (WX === 'fog' ? 0.45 : WX === 'spirit' ? 0.55 : WX === 'ash' ? 0.6 : WX === 'sand' ? 0.45 : WX === 'hail' ? 0.75 : WX === 'rain' || WX === 'storm' ? 0.75 : WX === 'flare' ? 0.9 : 1);
   hemiL.intensity = hemiBase * lm + flash * 2.4; sun.intensity = sunBase * lm * (WX === 'storm' ? 0.5 : 1) + flash * 2;
 }
 // あめ(線で えがく)
@@ -730,6 +730,9 @@ function initWeather() {
   rain = { lines: new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: '#c0dcff', transparent: true, opacity: WX === 'storm' ? 0.85 : 0.7, depthWrite: false })), spd, n }; rain.lines.frustumCulled = false; scene.add(rain.lines);
   }
   if (WX === 'ash') addFxLayer({ color: '#a89c94', n: 420, size: 0.5, dir: -1, speed: [0.6, 1.4], sway: 0.5, blend: 'normal', h: 16 });
+  if (WX === 'sand') addFxLayer({ color: '#d8b878', n: 480, size: 0.55, dir: -1, speed: [0.8, 1.8], sway: 2.2, blend: 'normal', h: 14 });
+  if (WX === 'hail') addFxLayer({ color: '#eaf4ff', n: 320, size: 0.3, dir: -1, speed: [3.2, 6], sway: 0.3, blend: 'normal', h: 18 });
+  if (WX === 'sun') addFxLayer({ color: '#ffe8a0', n: 140, size: 0.3, dir: 1, speed: [0.3, 0.9], sway: 0.8, h: 12 });
   if (WX === 'flare') addFxLayer({ color: '#ffb060', n: 240, size: 0.36, dir: 1, speed: [1, 2.4], sway: 0.6, h: 14 });
   if (WX === 'petal') addFxLayer({ color: '#ffb0cc', n: 360, size: 0.8, dir: -1, speed: [0.5, 1.2], sway: 1.4, blend: 'normal', h: 16 });
   if (WX === 'spirit') addFxLayer({ color: '#a8e8ff', n: 170, size: 0.4, dir: 1, speed: [0.2, 0.6], sway: 1.0, h: 10 });

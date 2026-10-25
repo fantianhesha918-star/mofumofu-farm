@@ -617,7 +617,7 @@ function addHen(i0) {
     const cr = makeCreature(gltf, len); let x, z;
     if (room) { const bd = room.bounds; x = rr(bd.minx + 0.5, bd.maxx - 0.5); z = rr(bd.minz + 0.5, bd.maxz - 0.5); cr.outer.position.set(x, 0, z); }
     else { const an = rr(0, 6.28), r = rr(2, 4); x = c.x + Math.cos(an) * r; z = c.z + Math.sin(an) * r; cr.outer.position.set(x, heightAt(x, z), z); }
-    hens.push({ i, ck, chick, room, c: cr, x, z, tx: x, tz: z, face: rr(0, 6.28), wait: rr(0, 3), sp: 0, ph: rr(0, 6), petCd: 0, name: chick ? 'ひよこ' : 'ニワトリ' });
+    hens.push({ i, ck, chick, room, c: cr, x, z, tx: x, tz: z, face: rr(0, 6.28), wait: rr(0, 3), sp: 0, ph: rr(0, 6), petCd: 0, name: chick ? 'ひよこ' : nm('hen:' + i, 'ニワトリ') });
   };
   mk1(RANCH.chicken, 0.9, false, i0, i0 % 2 === 1 ? RM : null);
   if (RANCH.chick && !chicksMade.has(ck)) { chicksMade.add(ck); for (let i = 0; i < 2; i++) mk1(RANCH.chick, 0.42, true, -1, null); for (let i = 0; i < 2; i++) mk1(RANCH.chick, 0.42, true, -1, RM); }
@@ -641,14 +641,15 @@ function updateHens(dt, t) {
   }
 }
 function coopDoorPos(k = 0) { const c = COOP_SPOTS[k]; return c ? { x: c.x, z: c.z + 2.5 } : null; }
+const hn = (a) => nm('hen:' + a.i, 'ニワトリ');   // なまえを つけた ニワトリは その なまえで よぶ
 function henTarget(a) {
   if (a.chick) return { label: 'ひよこを なでる', sub: 'ぴよぴよ', short: 'なでる', can: a.petCd <= 0, act: () => { a.petCd = 8; sfx('pet'); burst('heart', a.c.outer.position.clone().setY(0.7), 3, { size: 0.3, life: 1.2 }); a.wait = 2; } };
   const s = state.chickens[a.i];
   if (!s.fed) {
-    if (count('chicken_feed') > 0) return { label: 'ニワトリに えさを あげる', sub: `とりのえさ のこり${count('chicken_feed')}　あげると あしたの あさ たまごを うむよ`, short: 'あげる', can: true, act: () => { addItem('chicken_feed', -1); s.fed = true; s.friend += 0.5; sfx('feed'); burst('heart', a.c.outer.position.clone().setY(1.2), 4, { size: 0.35, life: 1.3 }); a.wait = 2.5; } };
-    return { label: 'ニワトリは おなかが すいている', sub: 'とりのえさが ないと たまごは うまないよ。たねやで かえるよ', short: 'えさ', can: false };
+    if (count('chicken_feed') > 0) return { label: `${hn(a)}に えさを あげる`, sub: `とりのえさ のこり${count('chicken_feed')}　あげると あしたの あさ たまごを うむよ`, short: 'あげる', can: true, act: () => { addItem('chicken_feed', -1); s.fed = true; s.friend += 0.5; sfx('feed'); burst('heart', a.c.outer.position.clone().setY(1.2), 4, { size: 0.35, life: 1.3 }); a.wait = 2.5; } };
+    return { label: `${hn(a)}は おなかが すいている`, sub: 'とりのえさが ないと たまごは うまないよ。たねやで かえるよ', short: 'えさ', can: false };
   }
-  return { label: 'ニワトリを なでる', sub: `なかよし度 ${Math.floor(s.friend)}　なかよしだと たまごが ふえるよ`, short: 'なでる', can: a.petCd <= 0, act: () => { a.petCd = 10; s.friend += 0.3; sfx('pet'); burst('heart', a.c.outer.position.clone().setY(1.2), 4, { size: 0.35, life: 1.3 }); a.wait = 2.5; } };
+  return { label: `${hn(a)}を なでる`, sub: `なかよし度 ${Math.floor(s.friend)}　なかよしだと たまごが ふえるよ`, short: 'なでる', can: a.petCd <= 0, act: () => { a.petCd = 10; s.friend += 0.3; sfx('pet'); burst('heart', a.c.outer.position.clone().setY(1.2), 4, { size: 0.35, life: 1.3 }); a.wait = 2.5; } };
 }
 
 // ----- 画面タップ(近くの牛・動物・たまご・畑をタップして操作) -----
@@ -1233,7 +1234,7 @@ bus.on('spawnAnimal', async (k) => {
     state.cows.push({ hunger: 0.3, friend: 0, milked: false, b });
     const base = COW_DEF[i % COW_DEF.length].name, v = await askAnimalName('うし', base); state.names = state.names || {}; if (v !== base) state.names['cow:' + i] = v; addCow(i);
   }
-  else if (k === 'hen') { const c = Math.max(0, state.coops.findIndex((_, ci) => state.chickens.filter(o => o.c === ci).length < 6)); state.chickens.push({ friend: 0, fed: false, c }); addHen(state.chickens.length - 1); }
+  else if (k === 'hen') { const c = Math.max(0, state.coops.findIndex((_, ci) => state.chickens.filter(o => o.c === ci).length < 6)); state.chickens.push({ friend: 0, fed: false, c }); const i = state.chickens.length - 1, v = await askAnimalName('ニワトリ', 'ニワトリ'); state.names = state.names || {}; if (v !== 'ニワトリ') state.names['hen:' + i] = v; addHen(i); }
   else {
     const i = state.animals.length; state.animals.push({ hunger: 0.4, friend: 0 });
     const base = ANIMAL_DEF[i % ANIMAL_DEF.length].name, v = await askAnimalName('ちんちら', base); state.names = state.names || {}; if (v !== base) state.names['pet:' + i] = v; addAnimal(i);
