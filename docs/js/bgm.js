@@ -59,6 +59,7 @@ const DR = {
   epic: { k: 'x...x...x...x...', s: '....x.......x...', h: 'x.x.x.x.x.x.x.x.', t: '..............12', v: 1, fill: 1, crash: 4, boom: 1 },
   heart: { k: 'x..x............', v: 0.55 },
   fight: { k: 'x..x..x.x..x..x.', s: 'x.g.X.g.x.g.X.xx', h: 'x.x.x.x.x.x.x.x.', o: '..............x.', v: 1, fill: 1, crash: 8 },
+  grand: { k: 'x...x...x.x.x...', s: '....X.......X.x.', t: '..............12', v: 1, fill: 1, crash: 4, boom: 1 },
   fightB: { k: 'x..x..x.x.xx..x.', s: 'x.g.X.g.x.g.X.xx', h: 'xxxxxxxxxxxxxxxx', o: '..............x.', v: 1, fill: 1, crash: 8, boom: 1 },
   boss: { k: 'x..x..x.x.xx..x.', s: '....x.......x...', h: 'xxxxxxxxxxxxxxxx', o: '..............x.', v: 1, fill: 1, crash: 8, boom: 1 },
 };
@@ -167,10 +168,14 @@ const TRACKS = {
 };
 // ファミコン風の べつパターン: 戦闘曲3つを コピー(矩形波2+波形メモリベース+ノイズドラム)
 for (const k of ['battle', 'battle2', 'battle3']) TRACKS['chip_' + k] = JSON.parse(JSON.stringify(TRACKS[k]));
+// GBA風 どうどうパターン: トレーナー・でんせつ・ボス用の コピー
+const GBA_SRC = { gba_trainer: 'battle_trainer', gba_legend: 'battle_legend', gba_boss: 'boss', gba_boss2: 'boss2' };
+for (const [k, v] of Object.entries(GBA_SRC)) TRACKS[k] = JSON.parse(JSON.stringify(TRACKS[v]));
 // きょくの てんかい: sty=がっきの ならべかた / intro=イントロの しょうせつすう / lift=さいごの 8しょうせつで あげる はんおん / brk=いったん しずまる しょうせつ(つぎで ばくはつ) / riser=もりあげの ノイズ
 const PLAN = {
   village: { sty: 'folk' }, f_forest: { sty: 'folk' }, f_lake: { sty: 'folk' }, f_grove: { sty: 'folk' }, f_sun: { sty: 'bright', lift: 2 }, f_sky: { sty: 'sacred' }, f_cosmos: { sty: 'sacred' }, f_temple: { sty: 'sacred', lift: 2 },
   f_ghost: { sty: 'dark' }, f_castle: { sty: 'dark', lift: 2 }, f_volcano: { sty: 'dark', lift: 2 }, f_dragon: { sty: 'epic', lift: 2, riser: 1 }, f_end: { sty: 'epic', lift: 2, riser: 1, brk: 15 },
+  gba_trainer: { intro: 2, lift: 2 }, gba_legend: { intro: 2, lift: 2, brk: 15 }, gba_boss: { intro: 2, lift: 2, brk: 15 }, gba_boss2: { intro: 2, lift: 2, brk: 15 },
   chip_battle: { lift: 2 }, chip_battle2: { lift: 2 }, chip_battle3: { lift: 2 },
   battle: { sty: 'epic', intro: 2, lift: 2, riser: 1 }, battle2: { sty: 'epic', intro: 2, lift: 2, riser: 1 }, battle3: { sty: 'epic', intro: 2, lift: 2, riser: 1 }, battle_trainer: { sty: 'epic', intro: 2, lift: 2, riser: 1 },
   battle_legend: { sty: 'epic', sac: 1, intro: 2, lift: 2, riser: 1, brk: 15 }, boss: { sty: 'epic', intro: 2, lift: 2, riser: 1, brk: 15 }, boss2: { sty: 'epic', intro: 2, lift: 2, riser: 1, brk: 15 }, boss_final: { sty: 'epic', sac: 1, intro: 2, lift: 2, riser: 1, brk: 15 },
@@ -211,6 +216,16 @@ function battleArr(tr) {
   tr.L_bass = [{ i: 'ebass', v: 0.2, p: '1818181818181858' }];
   tr.L_drums = [/^boss/.test(tr.name) ? DR.fightB : DR.fight];
 }
+function gbaArr(tr) {   // ブラス=しゅせんりつ・ファンファーレ / シンセ=わおんの あつみ・かざり / ベース=どっしり / ドラム=どうどう
+  const main = tr.L_lead.filter(l => l.v >= 0.15 || l.i === 'brass' || l.i === 'trumpet' || l.i === 'lead');
+  tr.L_lead = main.map(l => ({ ...l, i: 'brass', v: 0.17, r: 0.3 }));
+  for (const l of main) tr.L_lead.push({ ...l, i: 'horn', v: 0.07, oct: -1, r: 0.3 }, { ...l, i: 'trumpet', v: 0.06, pass: 2, r: 0.25 });
+  tr.L_stab = [{ i: 'brass', v: 0.1, p: 'x.....x.x.......', up: 12, len: 1.3, pass: 2 }, { i: 'synpad', v: 0.07, p: '..x...x...x...x.', up: 12, len: 1.0 }];
+  tr.L_pad = [{ i: 'synpad', v: 0.045, r: 0.4 }, { i: 'cello', v: 0.08, up: -12, only: [0], r: 0.3 }];
+  tr.L_arp = [{ i: 'bell', v: 0.05, p: '0.1.2.3.2.1.0.1.', up: 36, r: 0.5, pass: 2 }, { i: 'pluck', v: 0.04, p: '..0.1.2.1.0.1.2.', up: 24 }];
+  tr.L_bass = [{ i: 'bass', v: 0.26, p: '1...1...1.1.1.5.' }, { i: 'synbass', v: 0.1, p: '1...1...1.1.1.5.', pass: 2 }];
+  tr.L_drums = [DR.grand];
+}
 function chipArr(tr) {   // 矩形波1=メロディ / 矩形波2=ハモリ・あいの手 / 波形メモリ=ベース / ノイズ=ドラム
   tr.chip = true; tr.g = 1.35; const sc = SCALES[tr.mode || 'major'], harm = (bars) => bars.map(b => b.map(([st, m, len]) => {
     const rel = m - tr.key, oc = Math.floor(rel / 12), i = sc.indexOf(((rel % 12) + 12) % 12); if (i < 0) return [st, m - 4, len];
@@ -233,7 +248,7 @@ for (const [name, tr] of Object.entries(TRACKS)) {
     let L = tr[k]; if (!L) { tr['L_' + k] = []; continue; } if (!Array.isArray(L)) L = [L]; tr['L_' + k] = L;
     for (const l of L) { if (l.m) l.bars_ = parseMel(l.m, tr, name); else if (l.notes) l.bars_ = splitLegacy(l.notes, tr.chords.length); }
   }
-  orchestrate(tr); tr.name = name; if (/^chip_/.test(name)) chipArr(tr); else if (/^(battle|boss)/.test(name)) battleArr(tr);
+  orchestrate(tr); tr.name = name; if (/^gba_/.test(name)) gbaArr(tr); else if (/^chip_/.test(name)) chipArr(tr); else if (/^(battle|boss)/.test(name)) battleArr(tr);
 }
 
 // ---------- オーディオ ----------
@@ -293,6 +308,7 @@ function voice(inst, f, t, dur, vol, o = {}) {
     case 'cello': { end = env(g, t, dur, vol, 0.2, 0.2, 0.9, 0.35); const fl = lp(Math.min(1500, f * 6)); fl.connect(g); [-6, 6].forEach(d => osc('sawtooth', f, t, end, d, true).connect(fl)); osc('sine', f, t, end).connect(g); outTo(g, r ?? 0.35, dl); break; }
     case 'pulse': case 'pulse25': { end = env(g, t, dur, vol, 0.003, 0.06, 0.7, 0.04); const o = ac.createOscillator(); o.setPeriodicWave(pulseWave(inst === 'pulse' ? 0.5 : 0.25)); o.frequency.value = f; o.start(t); o.stop(end); outTo(g, r ?? 0.04, 0); o.connect(g); break; }
     case 'wavebass': { end = env(g, t, dur, vol, 0.002, 0.03, 0.9, 0.02); osc('triangle', f, t, end).connect(g); outTo(g, 0, 0); break; }
+    case 'synpad': { end = env(g, t, dur, vol, 0.05, 0.15, 0.8, 0.2); const fl = lp(Math.min(2800, f * 4)); fl.connect(g); [-10, 0, 10].forEach(d => osc('sawtooth', f, t, end, d, true).connect(fl)); outTo(g, r ?? 0.3, dl); break; }
     case 'sleg': { end = env(g, t, dur, vol, 0.04, 0.1, 0.85, 0.12); const fl = lp(Math.min(3400, f * 5)); fl.connect(g); [-8, 8].forEach(d => osc('sawtooth', f, t, end, d, true).connect(fl)); outTo(g, r ?? 0.35, dl); break; }
     case 'sstac': { end = env(g, t, Math.min(dur, 0.11), vol, 0.006, 0.05, 0.5, 0.04); const fl = lp(Math.min(3000, f * 6)); fl.connect(g); [-7, 7].forEach(d => osc('sawtooth', f, t, end, d, true).connect(fl)); outTo(g, r ?? 0.18, dl); break; }
     case 'ebass': { end = env(g, t, dur, vol, 0.004, 0.07, 0.65, 0.05); const fl = lp(1100); fl.frequency.setValueAtTime(1100, t); fl.frequency.exponentialRampToValueAtTime(380, t + 0.12); fl.connect(g); osc('sawtooth', f, t, end).connect(fl); const sb = osc('sine', f, t, end), sg = ac.createGain(); sg.gain.value = 0.8; sb.connect(sg); sg.connect(g); outTo(g, 0, 0); break; }
@@ -367,14 +383,17 @@ function startNow(name) {
   if (!cfg.bgm || !name || !TRACKS[name]) { cur = null; return; }
   cur = name; step = -(TRACKS[name].intro || 0) * 16; nextT = 0; tbus = trackBus(); timer = setInterval(tick, 80); tick();
 }
+const GBA_ALT = { battle_trainer: 'gba_trainer', battle_legend: 'gba_legend', boss: 'gba_boss', boss2: 'gba_boss2' };
 function resolve(name) {
   if (name === 'field') return fieldTheme;
   if (name === 'battle') { const pool = ['battle', 'battle2', 'battle3', 'chip_battle', 'chip_battle2', 'chip_battle3'].filter(x => x !== lastBattle); lastBattle = pool[Math.floor(Math.random() * pool.length)]; return lastBattle; }
+  const alt = GBA_ALT[name];
+  if (alt && Math.random() < 0.5) return alt;
   return name;
 }
 export function playBgm(name) {
   want = name; if (!ensure()) return;   // まだ音が使えない(タッチしたら はじまる)
-  const to = resolve(name); if (to === cur && timer) return; startNow(to);
+  if (timer && cur && GBA_ALT[name] === cur) return; const to = resolve(name); if (to === cur && timer) return; startNow(to);
 }
 export function setFieldBgm(fid) { fieldTheme = 'f_' + fid; if (!TRACKS[fieldTheme]) fieldTheme = 'f_forest'; playBgm('field'); }
 export function stopBgm() { want = null; cur = null; clearInterval(timer); timer = null; fadeOut(tbus); tbus = null; }
