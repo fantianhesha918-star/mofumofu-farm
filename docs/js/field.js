@@ -375,18 +375,9 @@ async function challengeBoss() {
   if (busy) return; busy = true; sfx('quest'); fade(true); await new Promise(r => setTimeout(r, 700));
   const re = bossBeaten(), o = BOSS.over, cap = ELITE ? { left: 3 } : null;   // してんのうは かいふくの たべものが 3かいまで
   if (cap) { ui.toast('してんのうの たたかい', 'かいふくの たべものは 3かいまで!', 'てしたも ぬしも れんせん。とちゅうで かいふくは できないよ', 3600); await new Promise(r => setTimeout(r, 1200)); }
-  if (!re) {   // はじめての ちょうせんは てしたを たおしてから ぬしと たたかう(まけたら さいしょから)
-    const team = await gymTeam();
-    for (let i = 0; i < team.length; i++) {
-      const u = team[i];
-      ui.toast(BOSS.name, `てした ${i + 1}/${team.length}`, `${u.name} が たちはだかった!`, 2200);
-      const r = await runBattle(u.id, { boss: u.over, trainer: `${BOSS.name}の てした`, bg: F.bg, wx: WX, hour: hourNow(), cap }); save();
-      if (r === 'lose') { fade(false); grace = 6; encDist = 0; ui.setCoins(); goVillage(true); return; }
-    }
-    ui.toast(BOSS.name, 'てしたを ぜんいん たおした!', 'つぎは ぬしが あいてだよ', 2600);
-  }
   const over = re ? { ...o, level: o.level + 3, hp: Math.round(o.hp * 1.2), atk: Math.round(o.atk * 1.1), def: Math.round(o.def * 1.1), exp: Math.round(o.exp * 0.8), money: Math.round(o.money * 0.5) } : o;
-  const res = await runBattle(BOSS.id, { boss: over, bg: F.bg, wx: WX, hour: hourNow(), cap, onBossWin: async (msg, sleep) => {
+  const team = re ? null : (await gymTeam()).map(u => ({ id: u.id, over: u.over })).concat([{ id: BOSS.id, over, isBoss: true }]);   // はじめては てしたを たおしてから ぬし(1つの たたかいで つづける)
+  const res = await runBattle(re ? BOSS.id : team[0].id, { boss: over, ...(team ? { team, trainer: `${BOSS.name}の てした`, trainerBall: FI < 3 ? 'nakama_ball' : FI < 7 ? 'super_ball' : 'hyper_ball' } : {}), bg: F.bg, wx: WX, hour: hourNow(), cap, onBossWin: async (msg, sleep) => {
     if (re) { state.bossRe = state.bossRe || {}; state.bossRe[BOSS.key] = state.day || 1; const bn = FI < 3 ? 'nakama_ball' : FI < 7 ? 'super_ball' : 'hyper_ball'; addItem(bn, 2); const bonus = Math.round(BOSS.coins * 0.25); state.coins += bonus; msg(`${BOSS.name} に また かった! ${bonus}コインと ${ITEMS[bn].name}×2 を もらった!`); sfx('quest'); await sleep(2200); }
     else { state.boss[BOSS.key] = 1; addItem('nakama_ball', 5); if (FID === 'forest' && !state.gotMame) { state.gotMame = 1; const gm = giveMon('mame_chin', 5); if (gm) msg(gm === 'party' ? 'もりの ぬしから まめちんちらを あずかった! なかまに なったよ!' : 'もりの ぬしから まめちんちらを あずかった! ぼくじょうで まっているよ!'); } if (FID === 'end') addItem('evo_kami', 1); state.coins += BOSS.coins; msg(BOSS.win + (FID === 'end' ? ' かみの しんかいしを てにいれた!' : '')); sfx('quest'); await sleep(2200); } } });
   save(); fade(false); grace = 6; encDist = 0; ui.setCoins();

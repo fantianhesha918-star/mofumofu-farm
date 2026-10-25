@@ -225,16 +225,17 @@ export async function runBattle(enemyId0, opts = {}) {
   await questData();
   if (!state.party.length) giveStarter();
   // ---- あいて(トレーナーは 1〜3ひき。ダブルのときは さいしょの 2ひきが でる)。いま はたらいている あいて/こちらを「コンテキスト」に いれて つかう ----
-  const mkFoe = (id, ov) => {
+  const mkFoe = (id, ov, isBoss) => {
     const base = GD.MONSTERS[id], d = { ...base, ...(ov || {}) }, o = { id, lv: d.level, maxHp: d.hp, hp: d.hp, atk: d.atk, def: d.def, spd: d.spd, ...magicOf(id, d.element, d.atk, d.def) };
     if (!state.mdex[id]) state.mdex[id] = 1; o.ab = abilityOf(id);
-    return { id, def: d, e: o, E: { stg: { atk: 0, def: 0, spd: 0 }, ail: null }, fort: false, ball: opts.trainerBall || 'nakama_ball' };
+    return { id, def: d, e: o, E: { stg: { atk: 0, def: 0, spd: 0 }, ail: null }, fort: false, isBoss, ball: opts.trainerBall || 'nakama_ball' };
   };
-  const foeList = (opts.team && opts.team.length ? opts.team : [{ id: enemyId0, over: { ...(opts.boss || {}), ...(opts.over || {}) } }]).map(m => mkFoe(m.id, m.over));
+  const foeList = (opts.team && opts.team.length ? opts.team : [{ id: enemyId0, over: { ...(opts.boss || {}), ...(opts.over || {}) } }]).map(m => mkFoe(m.id, m.over, m.isBoss));
   const dbl = !!(opts.double && foeList.length >= 2);   // あいてが 2ひき どうじに でる たたかい
   const slotsE = [foeList[0], dbl ? foeList[1] : null], reserveE = foeList.slice(dbl ? 2 : 1);
   let cur = slotsE[0], curE = 0, def = cur.def, e = cur.e, E = cur.E, eLv = def.level;
   enemyId = cur.id;
+  const bossNow = (f = cur) => f.isBoss !== undefined ? !!f.isBoss : (!!opts.boss && !opts.trainer);   // いま たたかっている あいてが ぬしか(てしたと れんせんの ときは さいごだけ ぬし)
   const useE = (k) => { cur = slotsE[k]; curE = k; eImg = eImgs[k]; enemyId = cur.id; def = cur.def; e = cur.e; E = cur.E; eLv = def.level; };
   let buff = null, aFort = false;
   const fxMap = new Map();
@@ -593,7 +594,7 @@ export async function runBattle(enemyId0, opts = {}) {
     return { ...c, power: sk.power, _fx: null };
   };
   const bossCheck = async () => {
-    if (!opts.boss || opts.trainer || e.hp <= 0) return;
+    if (!bossNow() || e.hp <= 0) return;
     if (bossPhase < 1 && e.hp <= e.maxHp * 0.5) { bossPhase = 1; e.atk = Math.round(e.atk * 1.2); e.matk = Math.round(e.matk * 1.2); e.spd = Math.round(e.spd * 1.1); fieldEl.classList.add('quake'); sfx('no'); msg(`${def.name} は ほんきを だした!`); await sleep(1300); fieldEl.classList.remove('quake'); msg(`${def.name} は ときどき ちからを ためて つよい こうげきを してくるよ!(ぼうぎょで ふせごう)`); await sleep(1500); }
     if (bossPhase < 2 && e.hp <= e.maxHp * 0.25) { bossPhase = 2; e.atk = Math.round(e.atk * 1.15); e.matk = Math.round(e.matk * 1.15); fieldEl.classList.add('quake'); sfx('no'); msg(`${def.name} は おいつめられて いかりに もえている!`); await sleep(1300); fieldEl.classList.remove('quake'); }
   };
@@ -651,15 +652,22 @@ export async function runBattle(enemyId0, opts = {}) {
   // たおした/つかまえた あいての けいけんち・しょうきん・ドロップ(いまの def / ai を つかう)
   const payFoe = async () => {
     await gainExp(); const money = Math.round(def.money * (hasBadge('ghost') ? 1.25 : 1) * (abilityOf(state.party[ai].id) === 'greedy' ? 1.15 : 1) * (holdOf(state.party[ai]).money || 1) * (1 + monStats(state.party[ai]).luck * 0.004)); state.coins += money; xpLog.money = (xpLog.money || 0) + money; addStat('win', 1); msg(`${money} コインを てにいれた!`); sfx('coin'); await sleep(1100);
-    { const dr = rollDrops(def, !!opts.boss && !opts.trainer), names = Object.entries(dr); if (names.length) { for (const [id, n] of names) addItem(id, n); xpLog.drops = (xpLog.drops || []).concat(names); msg(names.map(([id, n]) => `${ITEMS[id].name}×${n}`).join('、') + ' を てにいれた!'); sfx('pick'); await sleep(1400); } }
+    { const dr = rollDrops(def, bossNow()), names = Object.entries(dr); if (names.length) { for (const [id, n] of names) addItem(id, n); xpLog.drops = (xpLog.drops || []).concat(names); msg(names.map(([id, n]) => `${ITEMS[id].name}×${n}`).join('、') + ' を てにいれた!'); sfx('pick'); await sleep(1400); } }
   };
   const firstA = () => Math.max(0, slotsA.findIndex(Boolean));
   const afterFoeFaint = async (j) => {   // あいてが たおれた: けいけんち → つぎの あいてを だす(いれば)
     const f = slotsE[j]; useE(j);
-    if (opts.trainer) { msg(`${def.name} は たおれた!`); sfx('quest'); await sleep(700); await recall(eImgs[j], ballPrefix(f.ball), true); jingle('win'); }
+    if (opts.trainer && !bossNow(f)) { msg(`${def.name} は たおれた!`); sfx('quest'); await sleep(700); await recall(eImgs[j], ballPrefix(f.ball), true); jingle('win'); }
     else { eImg.classList.add('faint'); msg(`${def.name} を たおした!`); jingle('win'); await sleep(1300); }
     useA(firstA()); await payFoe();
-    if (reserveE.length) { const nx = reserveE.shift(); slotsE[j] = nx; useE(j); draw(); msg(`${opts.trainer} は ${def.name} を くりだした!`); await sleep(500); await sendOut(eImgs[j], ballPrefix(nx.ball), true); }
+    if (reserveE.length) {
+      const nx = reserveE.shift(); slotsE[j] = nx; useE(j); draw();
+      if (bossNow(nx)) {   // れんせんの さいご: ぬしが とうじょう(あんてんは しない)
+        eImgs[j].style.visibility = 'hidden'; msg(`つぎは ぬしが あいてだ! ${def.name} が たちはだかった!`); sfx('no'); await sleep(900); playBgm('boss');
+        fieldEl.classList.add('quake'); await sleep(500); eImgs[j].style.visibility = ''; eImgs[j].classList.add('enter-boss'); sfx('quest'); await sleep(900); eImgs[j].classList.remove('enter-boss'); fieldEl.classList.remove('quake');
+        if (!state.tips.boss) { state.tips.boss = 1; msg('ヒント: ぬしが「ちからを ためて」きたら、つぎの こうげきは とても つよいよ!'); await sleep(2200); }
+      } else { msg(`${opts.trainer} は ${def.name} を くりだした!`); await sleep(500); await sendOut(eImgs[j], ballPrefix(nx.ball), true); }
+    }
     else { slotsE[j] = null; draw(); }
     if (!slotsE.some(Boolean)) result = 'win';
   };
@@ -777,7 +785,7 @@ export async function runBattle(enemyId0, opts = {}) {
       next();
     }, 700);
   });
-  const xpOf = (a) => Math.round(def.exp * expLevelMul(a.lv, eLv) * (opts.trainer ? 1.5 : 1) * (1 + villageBoost() * 0.5) * (hasBadge('forest') ? 1.15 : 1) * (hasBadge('sky') ? 1.15 : 1) * (hasBadge('dragon') ? 1.15 : 1) * (abilityOf(a.id) === 'wise' ? 1.15 : 1) * (holdOf(a).exp || 1) * ((buff && buff.exp) || 1));
+  const xpOf = (a) => Math.round(def.exp * expLevelMul(a.lv, eLv) * (opts.trainer && !bossNow() ? 1.5 : 1) * (1 + villageBoost() * 0.5) * (hasBadge('forest') ? 1.15 : 1) * (hasBadge('sky') ? 1.15 : 1) * (hasBadge('dragon') ? 1.15 : 1) * (abilityOf(a.id) === 'wise' ? 1.15 : 1) * (holdOf(a).exp || 1) * ((buff && buff.exp) || 1));
   const gainExp = async () => {
     const a = state.party[ai], ad = GD.MONSTERS[a.id], xp = xpOf(a);
     xpLog.push([monName(a), xp, false]); msg(`${xp} の けいけんちを てにいれた!`); a.exp = (a.exp || 0) + xp; await sleep(900);
