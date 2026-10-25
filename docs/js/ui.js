@@ -1,6 +1,6 @@
 import { seasonOf } from './season.js';
 import { BUCKET, APPEAR, FIELD_NAMES, HOLD, EVO_STONES, MON_GROUPS, ALL_MONS, CRAFT_RECIPES, MDEX_REWARDS, ELEMENT_REWARD, ABILITIES, BADGES, MON_HEAL, ITEMS, SHOP_SEEDS, CROPS, QUESTS, RECIPES, HEAL, DECOR, SHOP_GOODS, FURNI, DECO, DEX, FIELD_MONS } from './data.js';
-import { SAVE_KEY, ECO, ECO_KEY, lastSaveOk, state, bus, save, addItem, count, addStat, activeQuests, villageLevel, villagePoints, villageBoost, sellOf, hasBadge } from './state.js';
+import { blockSave, SAVE_KEY, ECO, ECO_KEY, lastSaveOk, state, bus, save, addItem, count, addStat, activeQuests, villageLevel, villagePoints, villageBoost, sellOf, hasBadge } from './state.js';
 import { sfx } from './audio.js';
 
 const $ = (s) => document.querySelector(s);
@@ -463,7 +463,7 @@ function renderPanel() {
         try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'もふもふ牧場 セーブデータ' }); toast('バックアップ', 'ファイルを ほぞんしてね', '', 2400); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
         const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast('バックアップ', `${name} を ほぞんしたよ`, '', 2400);
       };
-      const loadTxt = (txt) => { let o; try { o = JSON.parse(txt); } catch { return toast('よみこめない', 'ファイルが ただしくないよ', '', 2400); } if (!o || typeof o !== 'object' || (o.coins == null && !o.party)) return toast('よみこめない', 'もふもふ牧場の データじゃないよ', '', 2400); if (!confirm('いまの データは きえて、ファイルの ないように かわるよ。よみこむ?')) return; try { localStorage.setItem(SAVE_KEY + '-bak', localStorage.getItem(SAVE_KEY) || ''); localStorage.setItem(SAVE_KEY, txt); } catch {} location.reload(); };
+      const loadTxt = (txt) => { let o; try { o = JSON.parse(txt); } catch { return toast('よみこめない', 'ファイルが ただしくないよ', '', 2400); } if (!o || typeof o !== 'object' || (o.coins == null && !o.party)) return toast('よみこめない', 'もふもふ牧場の データじゃないよ', '', 2400); if (!confirm('いまの データは きえて、ファイルの ないように かわるよ。よみこむ?')) return; try { localStorage.setItem(SAVE_KEY + '-bak', localStorage.getItem(SAVE_KEY) || ''); localStorage.setItem(SAVE_KEY, txt); localStorage.setItem(SAVE_KEY + '-prev', txt); } catch {} blockSave(); location.reload(); };
       body.querySelector('#sbIm').onclick = () => body.querySelector('#sbFile').click();
       body.querySelector('#sbFile').onchange = (ev) => { const f = ev.target.files && ev.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => loadTxt(String(r.result)); r.readAsText(f); };
       body.querySelector('#sbBak').onclick = () => { let b = null; try { b = localStorage.getItem(SAVE_KEY + '-bak'); } catch {} if (!b) return toast('もどせない', 'バックアップが まだ ないよ', '', 2200); loadTxt(b); };

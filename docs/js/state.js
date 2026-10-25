@@ -88,7 +88,10 @@ export function load() {
 export const SAVE_KEY = KEY;
 let saveFailed = false, lastOk = true;
 export const lastSaveOk = () => lastOk;
+let saveBlocked = false;
+export const blockSave = () => { saveBlocked = true; };   // データを よみこんだ あと、よみこみなおす まえに ふるい データで うわがきしない ため
 export function save() {
+  if (saveBlocked) return true;
   const prevAt = state.savedAt;
   try {
     state.savedAt = Date.now();
