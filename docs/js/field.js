@@ -46,7 +46,7 @@ const FIELDS = {
     sky: '#2c2a46', fogN: 14, fogF: 85, g0: '#5a5878', g1: ['#4c4a68', '#66647f', '#706e8c', '#3e3c58'], bg: 'battle_ghost.webp',
     light: { hemi: [0xc8c8f0, 0x4a4468, 1.0], sun: [0xb8c0ff, 1.5] }, zd: ['#4a3a7acc', '#3e3270aa', '#3e327000'], tint: [[0.55, 0.75], [0.6, 0.8], [1.2, 1.5]],
     zones: [[10, -6, 8], [22, -32, 9], [-8, -42, 8], [30, 10, 7], [-34, 0, 7], [2, 26, 7]],
-    trees: [['deco_ghost_lantern', 22, 34, [2.0, 3.0], 12, 70], ['pine_far', 40, 70, [4.4, 6.6], 20, 78, '#2a2638']],
+    trees: [['deco_ghost_lantern', 22, 34, [2.0, 3.0], 12, 70], ['deco_tomb', 26, 40, [1.1, 1.7], 14, 76, null, { fit: true }], ['deco_cross', 18, 28, [1.4, 2.2], 14, 76, null, { fit: true }], ['deco_wisp', 24, 36, [0.8, 1.4], 12, 74, null, { fit: true, basic: true, nofog: true, fly: [0.6, 3.2] }]],
     wild: [['koyurei_2', 4], ['hone_kenshi_2', 4], ['komori_2', 3], ['koyurei_3', 1], ['hone_kenshi_3', 1], ['kage_bouzu', 1], ['yoru_kage', 1], ['maboroshi_yomi', 1]], scale: { lv: 6, hp: 1.6, atk: 1.5, def: 1.5, spd: 1.3, exp: 1.6, money: 1.6 },
     boss: { key: 'ghost', x: 0, z: -58, id: 'yurei_ou', name: 'ゆうれいの ぬし', deco: { model: 'deco_ghost_lantern', n: 9, r: 7.8, w: 3.4 }, over: { name: 'ゆうれいの ぬし', image: 'assets/bosses/ghost.webp', level: 33, hp: 381, atk: 63, def: 39, spd: 19, exp: 480, money: 560 }, model: 'boss_ghost', h: 6.0, lines: ['ふふふ……よく ここまで きたね、いきている ものよ。', 'ここは ねむれぬ たましいが あつまる はかば。', 'わたしを ちっそくさせられるか、ためして あげよう……'], coins: 1200, win: 'ゆうれいの ぬしが みとめてくれた! なかまボール×5 と 1200コインを もらった!', after: 'はかばに しずけさが もどったよ' },
   },
@@ -56,7 +56,9 @@ const FIELDS = {
     sky: '#f4dcc8', fogN: 30, fogF: 160, g0: '#a8c890', g1: ['#98c088', '#bcd89c', '#c8dca4', '#a8ccb0'], bg: 'battle_sky.webp',
     light: { hemi: [0xfff0e0, 0xb8a8c8, 1.5], sun: [0xffe8c0, 2.4] }, zd: ['#e8d890cc', '#dcd098aa', '#dcd09800'], tint: [[1.0, 1.2], [1.0, 1.15], [0.8, 1.0]],
     zones: [[12, -8, 8], [22, -32, 9], [-6, -42, 8], [28, 10, 7], [-32, 14, 8], [4, 24, 7]],
-    trees: [['deco_starshard', 24, 36, [2.0, 3.2], 12, 70], ['birch', 30, 50, [3.0, 4.4], 16, 72]],
+    trees: [['deco_starshard', 24, 36, [2.0, 3.2], 12, 70],
+      ['cloud_fluffy', 22, 34, [10, 22], 10, 78, '#ffffff', { fit: true, basic: true, nofog: true, fly: [2, 12] }], ['cloud_cumulo', 5, 8, [16, 30], 40, 82, '#ffffff', { fit: true, basic: true, nofog: true, fly: [3, 14] }], ['cloud_long', 6, 10, [18, 34], 30, 82, '#ffffff', { fit: true, basic: true, nofog: true, fly: [5, 16] }], ['cloud_chin', 4, 6, [10, 18], 24, 78, '#ffffff', { fit: true, basic: true, nofog: true, fly: [3, 10] }],
+      ['cloud_fluffy', 40, 56, [8, 16], 20, 78, '#ffffff', { fit: true, basic: true, nofog: true, fly: [0, 0.6] }]],
     wild: [['mame_chin_heaven', 2], ['shinju_pegasus', 2], ['shinju_unicorn', 1], ['mitsubachi', 2], ['mame_chin_magic', 2], ['mame_chin_thunder', 1], ['raichou_ko', 1], ['watage', 1], ['tsubame_ko', 1], ['kaze_chou', 1], ['kumo_hitsuji', 1], ['kitsune_ko_2', 1], ['denki_neko', 1], ['fuusen_ko', 2], ['hikari_kame', 1], ['denchi_risu', 1], ['hoshi_usagi', 1], ['niji_hato', 1], ['furin_ko', 1], ['furin_ko_2', 1], ['tako_ko', 1], ['chibi_ryu', 1], ['sora_ryu', 1], ['nari_kami', 1]], scale: { lv: 6, hp: 1.7, atk: 1.6, def: 1.6, spd: 1.4, exp: 1.7, money: 1.7 },
     boss: { key: 'sky', x: 0, z: -58, id: 'shinju_pegasus', name: 'てんくうの ぬし', deco: { model: 'deco_starshard', n: 9, r: 7.8, w: 3.4 }, over: { name: 'てんくうの ぬし', image: 'assets/bosses/sky.webp', level: 40, hp: 482, atk: 76, def: 48, spd: 23, exp: 700, money: 800 }, model: 'boss_celestial', h: 6.2, lines: ['……ほしの ひかりに みちびかれて きたのですね。', 'ここは そらに いちばん ちかい はら。', 'ちからと きずなを、わたしに みせてください。'], coins: 2000, win: 'てんくうの ぬしが みとめてくれた! なかまボール×5 と 2000コインを もらった!', after: 'てんくうに ひかりが もどったよ' },
   },
@@ -66,7 +68,7 @@ const FIELDS = {
     lava: [[-22, -18, 9], [26, -14, 7], [-30, 22, 8]], bg: 'battle_sun.webp',
     light: { hemi: [0xffe0a0, 0x8a5a30, 1.5], sun: [0xffc070, 2.4] }, zd: ['#e8b040cc', '#d8a040aa', '#d8a04000'], tint: [[1.3, 1.6], [1.0, 1.25], [0.5, 0.7]],
     zones: [[10, -6, 8], [22, -32, 9], [-8, -42, 8], [30, 10, 7], [-34, 0, 7], [2, 26, 7]],
-    trees: [['deco_lava_rock', 24, 36, [1.6, 3.0], 12, 74], ['birch', 14, 20, [3.0, 4.4], 20, 76, '#3a2418']],
+    trees: [['deco_lava_rock', 24, 36, [1.6, 3.0], 12, 74]],
     wild: [['hinotama_3', 3], ['saboten_3', 2], ['kodai_kyubi', 1], ['kodai_oni', 2], ['kodai_kitsunemen', 2], ['shinju_reishishi', 1], ['aodori_3', 2], ['kumo_hitsuji', 1], ['kumo_hitsuji_2', 1], ['tenshi_chin', 1], ['kitsune_ko', 1], ['kitsune_ko_2', 1], ['hikari_kame', 1], ['hoshi_usagi', 1], ['hoshi_usagi_2', 1], ['niji_hato', 1], ['chibi_ryu', 1], ['hikari_kishi', 1], ['sei_kishi', 1], ['yume_no_ko', 1]], scale: { lv: 4, hp: 1.4, atk: 1.4, def: 1.4, spd: 1.2, exp: 2, money: 2 },
     boss: { key: 'sun', x: 0, z: -58, id: 'legend_houou', name: 'たいようの ぬし', deco: { model: 'deco_lava_rock', n: 9, r: 7.8, w: 3.6 }, over: { name: 'たいようの ぬし', image: 'assets/bosses/sun.webp', level: 47, hp: 605, atk: 91, def: 56, spd: 27, exp: 800, money: 900 }, model: 'boss_phoenix_b', h: 6.6, lines: ['……あたたかい ひかりに ひかれて きたのですね。', 'わたしは たいようの ひを まもる もの。', 'ほのおの ちからを うけとめられるか、みせてください!'], coins: 3000, win: 'たいようの ぬしが みとめてくれた! なかまボール×5 と 3000コインを もらった!', after: 'たいようの はらに あたたかさが もどったよ' },
   },
@@ -76,7 +78,8 @@ const FIELDS = {
     sky: '#1c2a5e', fogN: 16, fogF: 110, g0: '#3a4478', g1: ['#2e3868', '#46528a', '#505e98', '#262e58'], bg: 'battle_cosmos.webp',
     light: { hemi: [0xe0e8ff, 0x5a6088, 1.35], sun: [0x9ab8ff, 1.7] }, zd: ['#4a62b0cc', '#3a52a0aa', '#3a52a000'], tint: [[0.55, 0.8], [0.8, 1.0], [1.5, 1.9]],
     zones: [[10, -6, 8], [22, -32, 9], [-8, -42, 8], [30, 10, 7], [-34, 0, 7], [2, 26, 7]],
-    trees: [['deco_water_orb', 20, 30, [1.6, 2.6], 12, 74], ['pine_far', 20, 40, [4.4, 6.6], 24, 80, '#26346a']],
+    trees: [['deco_water_orb', 20, 30, [1.6, 2.6], 12, 74], ['deco_star5', 34, 56, [1.6, 3.4], 14, 78, '#ffffff', { fit: true, basic: true, nofog: true, fly: [1, 9] }], ['deco_star5', 14, 22, [1.4, 2.6], 14, 78, '#ffb0e8', { fit: true, basic: true, nofog: true, fly: [1, 9] }], ['deco_star5', 14, 22, [1.4, 2.6], 14, 78, '#a0f0ff', { fit: true, basic: true, nofog: true, fly: [1, 9] }],
+      ['deco_planet_ring', 8, 12, [9, 16], 36, 82, '#ffffff', { fit: true, basic: true, nofog: true, fly: [6, 22] }], ['deco_planet_ring', 5, 8, [7, 12], 40, 82, '#a8c8ff', { fit: true, basic: true, nofog: true, fly: [6, 22] }], ['deco_planet_moon', 8, 12, [4, 9], 30, 80, '#ffffff', { fit: true, basic: true, nofog: true, fly: [4, 14] }], ['deco_crescent', 6, 10, [3, 6], 24, 78, '#ffffff', { fit: true, basic: true, nofog: true, fly: [3, 12] }]],
     wild: [['kodai_yukionna', 2], ['kodai_biwanushi', 2], ['kodai_kappabouzu', 2], ['shinju_kamezan', 2], ['legend_hyoketsuhime', 1], ['mame_chin_water', 2], ['lamp_no_sei', 1], ['kurage_ko_2', 1], ['hoshi_usagi_2', 1], ['kantera_bito', 1], ['raimei_hydra', 1], ['daichi_madoromi', 1], ['umihebi_ko', 1], ['namino_kairyu', 1], ['shinkai_ryujin', 1], ['tenkuu_shugoshin', 1]], scale: { lv: 4, hp: 1.4, atk: 1.4, def: 1.4, spd: 1.2, exp: 2, money: 2 },
     boss: { key: 'cosmos', x: 0, z: -58, id: 'legend_hoshikujira', name: 'うちゅうの ぬし', deco: { model: 'deco_water_orb', n: 9, r: 7.8, w: 3.6 }, over: { name: 'うちゅうの ぬし', image: 'assets/bosses/cosmos.webp', level: 54, hp: 728, atk: 106, def: 65, spd: 31, exp: 1000, money: 1100 }, model: 'boss_whale', h: 6.0, lines: ['…………(ふかく ひびく うたごえ)', 'ここは ほしぼしが ながれる うみ。', 'わたしの うたを きいて、まだ たっていられるかな?'], coins: 4000, win: 'うちゅうの ぬしが みとめてくれた! なかまボール×5 と 4000コインを もらった!', after: 'うちゅうの うみに うたごえが ひびくよ' },
   },
@@ -86,7 +89,7 @@ const FIELDS = {
     sky: '#cfe8c8', fogN: 26, fogF: 140, g0: '#7aa860', g1: ['#6a9a52', '#90bc66', '#a0c872', '#5c8a46'], bg: 'battle_grove.webp',
     light: { hemi: [0xf0ffe0, 0x7a9a60, 1.5], sun: [0xf4ffd0, 2.3] }, zd: ['#5a9a3acc', '#4a8a36aa', '#4a8a3600'], tint: [[0.8, 1.0], [1.0, 1.15], [0.8, 1.0]],
     zones: [[10, -6, 8], [22, -32, 9], [-8, -42, 8], [30, 10, 7], [-34, 0, 7], [2, 26, 7]],
-    trees: [['deco_pillar_vine', 22, 32, [1.8, 3.2], 12, 74], ['birch', 40, 60, [3.2, 4.8], 16, 74]],
+    trees: [['deco_pillar_vine', 22, 32, [1.8, 3.2], 12, 74], ['deco_ruin_arch', 8, 12, [3.6, 5.0], 16, 74, null, { fit: true }], ['deco_pillar_broken', 14, 22, [2.0, 3.0], 14, 74, null, { fit: true }], ['deco_pearl_shell', 14, 22, [1.2, 2.0], 12, 70, null, { fit: true }]],
     wild: [['dokukinoko_3', 2], ['saboten_3', 2], ['shokujinsou_2', 2], ['legend_kyoshin', 1], ['mame_chin_grass', 2], ['shinju_hakurou', 1], ['kodai_tengu', 2], ['biriunagi_2', 1], ['watage_2', 1], ['kaze_chou', 1], ['raimushi_2', 1], ['ringo_ko', 1], ['ringo_ko_2', 2], ['dango_mushi', 1], ['dango_mushi_2', 1], ['denki_neko_2', 1], ['mame_chin', 1], ['chin_kusa', 1], ['chin_kusa_2', 1], ['denchi_risu_2', 1], ['donguri_robo_2', 1], ['suna_kai', 1], ['iwagoro', 1], ['mitsugo_hebi', 1], ['nebosuke_kyo', 1], ['wakagi_shika', 1], ['mori_shika', 1], ['shinju_taiboku', 1], ['nari_kami', 1], ['toki_no_yousei', 1]], scale: { lv: 4, hp: 1.4, atk: 1.4, def: 1.4, spd: 1.2, exp: 2, money: 2 },
     boss: { key: 'grove', x: 0, z: -58, id: 'kami_ryokuya', name: 'しんじゅの ぬし', deco: { model: 'deco_pillar_vine', n: 9, r: 7.8, w: 3.6 }, over: { name: 'しんじゅの ぬし', image: 'assets/bosses/grove.webp', level: 60, hp: 874, atk: 121, def: 73, spd: 34, exp: 1300, money: 1500 }, model: 'boss_goddess', h: 6.4, lines: ['……ようこそ、ちいさき ものよ。', 'この いせきは もりの いのちを みまもる ばしょ。', 'きずなの つよさを、みせてもらいましょう。'], coins: 5000, win: 'しんじゅの ぬしが みとめてくれた! なかまボール×5 と 5000コインを もらった!', after: 'いせきに みどりの ひかりが もどったよ' },
   },
@@ -96,7 +99,7 @@ const FIELDS = {
     sky: '#241a36', fogN: 12, fogF: 80, g0: '#4a4058', g1: ['#3c3248', '#564a68', '#605474', '#30283c'], bg: 'battle_castle.webp',
     light: { hemi: [0xe0d4f0, 0x504060, 1.1], sun: [0xc0a0ff, 1.5] }, zd: ['#5a3a80cc', '#4a2a70aa', '#4a2a7000'], tint: [[0.9, 1.1], [0.5, 0.7], [1.2, 1.5]],
     zones: [[10, -6, 8], [22, -32, 9], [-8, -42, 8], [30, 10, 7], [-34, 0, 7], [2, 26, 7]],
-    trees: [['deco_dark_sword', 20, 30, [1.8, 3.0], 12, 72], ['pine_far', 30, 50, [4.4, 6.6], 22, 78, '#1e1428']],
+    trees: [['deco_dark_sword', 20, 30, [1.8, 3.0], 12, 72], ['deco_spire', 12, 18, [5, 8], 22, 78, null, { fit: true }], ['deco_banner', 16, 26, [3.5, 4.8], 14, 76, null, { fit: true }]],
     wild: [['ankoku_madoushi_2', 3], ['hone_kenshi_3', 3], ['komori_3', 2], ['koyurei_3', 2], ['shinju_cerberus', 1], ['kodai_gashadokuro', 1], ['legend_meifukishi', 1], ['majutsusho', 1], ['majutsusho_2', 1], ['majo_chin', 1], ['kagami_ko', 1], ['mame_chin', 1], ['houki_ko_2', 1], ['suzu_sei', 1], ['omocha_mahou', 1], ['gankou_goro', 1], ['daichi_taishou', 1], ['kage_bouzu', 1], ['nebosuke_kyo', 1], ['goro_kyojuu', 1]], scale: { lv: 4, hp: 1.4, atk: 1.4, def: 1.4, spd: 1.2, exp: 2, money: 2 },
     boss: { key: 'castle', x: 0, z: -58, id: 'kami_datenken', name: 'やみの ぬし', deco: { model: 'deco_dark_sword', n: 9, r: 7.8, w: 3.6 }, over: { name: 'やみの ぬし', image: 'assets/bosses/castle.webp', level: 66, hp: 1030, atk: 136, def: 82, spd: 37, exp: 1600, money: 1900 }, model: 'boss_darkknight', h: 6.4, lines: ['……ここまで たどりついたか。', 'わが けんは やみに ちかった ほこり。', 'おまえの いしを、この けんで たしかめよう!'], coins: 6500, win: 'やみの ぬしが みとめてくれた! なかまボール×5 と 6500コインを もらった!', after: 'しろに しずかな ねむりが もどったよ' },
   },
@@ -116,7 +119,7 @@ const FIELDS = {
     sky: '#bfeadf', fogN: 30, fogF: 170, g0: '#78b0a0', g1: ['#68a090', '#88c4b0', '#98d0bc', '#5c9484'], bg: 'battle_dragon.webp',
     light: { hemi: [0xe0fff4, 0x6a9a90, 1.5], sun: [0xf0fff0, 2.3] }, zd: ['#4a9a8acc', '#3a8a7aaa', '#3a8a7a00'], tint: [[0.6, 0.8], [1.0, 1.2], [0.9, 1.1]],
     zones: [[10, -6, 8], [22, -32, 9], [-8, -42, 8], [30, 10, 7], [-34, 0, 7], [2, 26, 7]],
-    trees: [['deco_water_orb', 14, 20, [1.4, 2.2], 14, 74], ['birch', 30, 50, [3.2, 4.8], 18, 76]],
+    trees: [['deco_water_orb', 14, 20, [1.4, 2.2], 14, 74], ['deco_torii', 6, 10, [4.5, 6.5], 20, 76, null, { fit: true }], ['deco_toro', 20, 32, [1.8, 2.8], 14, 74, null, { fit: true }], ['cloud_fluffy', 14, 22, [10, 20], 16, 78, '#ffffff', { fit: true, basic: true, nofog: true, fly: [4, 16] }], ['cloud_long', 5, 8, [18, 32], 30, 82, '#ffffff', { fit: true, basic: true, nofog: true, fly: [7, 20] }]],
     wild: [['dragon', 2], ['shinju_griffon', 2], ['kodai_tengu', 2], ['shinju_murasakiryu', 1], ['legend_houou', 1], ['mame_chin_wind', 2], ['mame_chin_thunder', 2], ['raimushi_3', 1], ['biriunagi_3', 1], ['kaze_chou', 1], ['denki_neko_2', 1], ['mame_chin', 1], ['denchi_risu_2', 1], ['furin_ko_2', 1], ['sora_ryu', 1], ['seikuu_ryuou', 1], ['mitsugo_hydra', 1], ['raimei_hydra', 1], ['shinkai_ryujin', 1]], scale: { lv: 4, hp: 1.4, atk: 1.4, def: 1.4, spd: 1.2, exp: 2, money: 2 },
     boss: { key: 'dragon', x: 0, z: -58, id: 'dragon', name: 'せいりゅうの ぬし', over: { name: 'せいりゅうの ぬし', image: 'assets/bosses/dragon.webp', level: 78, hp: 1366, atk: 168, def: 102, spd: 45, exp: 2500, money: 3000 }, model: 'boss_dragon', h: 7.0, lines: ['……わらべよ、ここは そらの いただき。', 'わが こえは かみなり、わが いぶきは あらし。', 'そのゆうきが ほんものか、みせてみよ!'], coins: 10000, win: 'せいりゅうの ぬしが みとめてくれた! なかまボール×5 と 10000コインを もらった!', after: 'そらに せいりゅうの すがたが ゆうゆうと もどったよ' },
   },
@@ -127,7 +130,7 @@ const FIELDS = {
     sky: '#0a0618', fogN: 14, fogF: 100, g0: '#4a3a78', g1: ['#3c2e68', '#5a4690', '#6a54a0', '#30245a'], bg: 'battle_end.webp',
     light: { hemi: [0xf4eef8, 0x60507a, 1.35], sun: [0xffd8ff, 1.8] }, zd: ['#7a5ac0cc', '#6a4ab0aa', '#6a4ab000'], tint: [[0.9, 1.2], [0.6, 0.8], [1.4, 1.8]],
     zones: [[10, -6, 8], [22, -32, 9], [-8, -42, 8], [30, 10, 7], [-34, 0, 7], [2, 26, 7]],
-    trees: [['deco_starshard', 38, 56, [1.8, 3.4], 12, 74], ['deco_armillary', 14, 20, [1.8, 3.2], 20, 76], ['deco_water_orb', 14, 20, [1.4, 2.4], 14, 70, '#e0b0ff']],
+    trees: [['deco_starshard', 38, 56, [1.8, 3.4], 12, 74], ['deco_armillary', 14, 20, [1.8, 3.2], 20, 76], ['deco_water_orb', 14, 20, [1.4, 2.4], 14, 70, '#e0b0ff'], ['deco_star5', 30, 50, [1.5, 3.0], 14, 78, '#ffffff', { fit: true, basic: true, nofog: true, fly: [1, 9] }], ['deco_planet_ring', 6, 10, [8, 15], 34, 80, '#e0b0ff', { fit: true, basic: true, nofog: true, fly: [6, 22] }]],
     wild: [['mame_chin_magic', 2], ['mame_chin_dark', 2], ['mame_chin_heaven', 2], ['mame_chin_kami', 1], ['legend_rasetsuou', 1], ['legend_shinpan', 1]], scale: { lv: 4, hp: 1.4, atk: 1.4, def: 1.4, spd: 1.2, exp: 2, money: 2 },
     boss: { key: 'end', x: 0, z: -58, id: 'mame_chin_kami', name: 'うちゅうの かみ', deco: { model: 'deco_starshard', n: 9, r: 7.8, w: 3.6 }, patch: 'patch_cosmic', patchW: 18, over: { name: 'うちゅうの かみ', image: 'assets/bosses/end.webp', level: 90, hp: 1800, atk: 200, def: 120, spd: 55, exp: 5000, money: 6000 }, model: 'final_ultimate', h: 7.4, lines: ['……ついに ここまで きたのですね、ちいさな ぼうけんしゃ。', 'わたしは すべての ほしを うんだ もの。', 'あなたと なかまの きずなを、さいごに ためします!'], coins: 20000, win: 'うちゅうの かみが みとめてくれた! なかまボール×5 と 20000コインを もらった!', after: 'うちゅうに あたらしい ほしが うまれたよ' },
   },
@@ -136,19 +139,23 @@ const FIELDS = {
      fx: { color: '#ffffff', n: 200, size: 0.3, dir: -1, speed: [0.8, 1.6], sway: 0.5, blend: 'normal' },
     sky: '#a6d6ee', g0: '#6aa04a', g1: ['#5a9444', '#86b858', '#74a84e', '#a0c868'], bg: 'battle_water.webp', lake: { x: -26, z: -16, r: 17 },
     zones: [[12, -8, 8], [22, -32, 9], [-6, -42, 8], [28, 10, 7], [-32, 14, 8], [4, 24, 7]],
-    trees: [['birch', 40, 70, [3.0, 4.6], 14, 70], ['pine_far', 50, 80, [4.4, 6.6], 20, 78]],
+    trees: [['deco_reed', 70, 110, [1.2, 2.2], 14, 74, null, { fit: true }], ['deco_rock_smooth', 24, 40, [1.0, 2.4], 14, 76, null, { fit: true }], ['deco_ice_crystal', 14, 22, [1.4, 2.6], 18, 76, null, { fit: true }]],
     wild: [['slime_2', 3], ['aodori_2', 3], ['kujira_ko', 3], ['slime', 2], ['aodori', 2], ['fukurou_ko', 2], ['mitsubachi', 1], ['slime_3', 1], ['biriunagi', 2], ['biriunagi_2', 1], ['hikari_kame', 1], ['furebu_mizu', 1], ['furebu_mizu_2', 1], ['kurage_ko', 2], ['kurage_ko_2', 1], ['mitsugo_hebi', 1], ['mitsugo_hydra', 1], ['umihebi_ko', 2], ['namino_kairyu', 1], ['kora_rakko', 2], ['yume_no_ko', 1]], scale: { lv: 6, hp: 1.5, atk: 1.4, def: 1.4, spd: 1.2, exp: 1.5, money: 1.5 },
     boss: { key: 'lake', x: 16, z: -58, deco: { model: 'deco_ice_crystal', n: 9, r: 7.5, w: 3.4 }, id: 'yeti', name: 'みずうみの ぬし', over: { name: 'みずうみの ぬし', image: 'assets/bosses/lake.webp', level: 19, hp: 200, atk: 34, def: 20, spd: 14, exp: 240, money: 280 }, model: 'boss_lake', h: 5.8, lines: ['……さむい かぜが ふいてきたな。', 'このみずうみは わたしの すみか。ふみあらす ものは かえさん。', 'こおりのように つめたい わたしを、おまえの なかまは とかせるか?'], coins: 500, win: 'みずうみの ぬしが みとめてくれた! なかまボール×5 と 500コインを もらった!', after: 'みずうみに へいわが もどったよ' },
   },
 };
+FIELDS.sun.flyers = { flare: 28, spurt: 3 };   // たいよう: フレアの 火の玉が とびかう + 溶岩のふんしゅつ
+FIELDS.temple.flyers = { meteor: 7, flare: 18, colors: ['#d8e8ff', '#7aa8ff', '#080c30'], speed: 0.5, A: [3, 8], B: [2, 6], h0: [1.5, 5], size: [0.25, 0.55] };   // ほしの しんでん: ながれぼし + ほしの ちり
+FIELDS.ghost.flyers = { flare: 24, colors: ['#c8f4ff', '#58b8e8', '#04101c'], speed: 0.4, A: [2, 6], B: [0.8, 2.5], h0: [0.6, 2.2], size: [0.35, 0.8] };   // ゆうれいの はかば: ふわふわ ひとだま
+FIELDS.volcano.flyers = { flare: 0, spurt: 6 };   // ようがんやま: 溶岩の池から 溶岩の かたまりが ふきあがる
 const FID = ['lake', 'volcano', 'ghost', 'sky', 'sun', 'cosmos', 'grove', 'castle', 'temple', 'dragon', 'end'].includes(params.get('f')) ? params.get('f') : 'forest', F = FIELDS[FID], LC = F.lake || null, WATER_Y = -0.9;
 // ---- してんのうの フィールド: せまくて くらい・くさむらなし。バッジ8つで ひらく ----
 const GYM8 = ['forest', 'lake', 'volcano', 'ghost', 'sky', 'sun', 'cosmos', 'grove'], gymClear = () => GYM8.every(k => state.boss[k]);
 const ELITE = ['castle', 'temple', 'dragon', 'end'].includes(FID), SPZ = ELITE ? 20 : 46;
 if (ELITE) {
   F.zones = []; F.lava = []; F.pool = null; F.fogN = 8; F.fogF = 62; F.boss.x = 0; F.boss.z = -16;
-  F.trees = F.trees.map(([nm, nT, nP, sc, , , tn]) => [nm, nT * 2, nP * 2, sc, 31, 48, tn]);
-  F.props = (F.props || []).map(([nm, nT, nP, sc, r0, r1, tn]) => [nm, Math.ceil(nT / 2), Math.ceil(nP / 2), sc, r0, Math.min(r1, 25), tn]);
+  F.trees = F.trees.map(([nm, nT, nP, sc, , , tn, op]) => [nm, nT * 2, nP * 2, sc, 31, 48, tn, op]);
+  F.props = (F.props || []).map(([nm, nT, nP, sc, r0, r1, tn, op]) => [nm, Math.ceil(nT / 2), Math.ceil(nP / 2), sc, r0, Math.min(r1, 25), tn, op]);
 }
 document.title = F.name;
 const canvas = $('#c');
@@ -236,16 +243,69 @@ const inZone = (x, z) => ZONES.some(([cx, cz, r]) => Math.hypot(x - cx, z - cz) 
 const circles = [];
 const loader = new GLTFLoader();
 const firstMesh = (gl) => { let m = null; gl.scene.traverse(o => { if (!m && o.isMesh) m = o; }); return m; };
-async function plant(name, n, scaleR, rMin, rMax, tint) {
-  const gl = await loader.loadAsync(`./assets/${name}_lite.glb`), m = firstMesh(gl); if (tint) { m.material = m.material.clone(); m.material.color.set(tint); }
-  const bb = new THREE.Box3().setFromBufferAttribute(m.geometry.attributes.position), im = new THREE.InstancedMesh(m.geometry, m.material, n), mt = new THREE.Matrix4(); let k = 0, tries = 0;
+const plantChunks = [];   // 木・かざりの 区画(きりで ぜんぶ かくれる とおさに なったら えがかない)
+let chunkT = 0;
+// opt: { fit: scaleR を「はば(メートル)」として あつかう, fly: [ひくい, たかい] じめんから うかせる, basic: ひかりを うけない いろ/がぞうのまま(星・くも) }
+async function plant(name, n, scaleR, rMin, rMax, tint, opt = {}) {
+  const gl = await loader.loadAsync(`./assets/${name}_lite.glb`), m = firstMesh(gl);
+  if (opt.basic) m.material = new THREE.MeshBasicMaterial({ map: m.material.map || null, vertexColors: !!m.geometry.attributes.color, color: tint || '#ffffff', side: THREE.DoubleSide, fog: !opt.nofog });
+  if (opt.basic && name.startsWith('cloud_')) m.material.color.multiplyScalar(1.75);   // くもを しろっぽく
+  else if (tint) { m.material = m.material.clone(); m.material.color.set(tint); }
+  const bb = new THREE.Box3().setFromBufferAttribute(m.geometry.attributes.position), mt = new THREE.Matrix4(), list = [], dim = Math.max(...bb.getSize(new V3()).toArray()) || 1, fly = opt.fly; let k = 0, tries = 0;
   while (k < n && tries++ < n * 40) {
     const a = R(0, 6.28), r = R(rMin, rMax), x = Math.cos(a) * r, z = Math.sin(a) * r;
-    if (Math.hypot(x - BOSS.x, z - BOSS.z) < 11 || inZone(x, z) || ZONES.some(([cx, cz, rz]) => Math.hypot(x - cx, z - cz) < rz + 2.5) || Math.hypot(x, z - (GZ - 4)) < 9 || (LC && hAt(x, z) < WATER_Y + 0.9) || LAVA.some(([cx, cz, r]) => Math.hypot(x - cx, z - cz) < r + 3) || circles.some(c => Math.hypot(c.x - x, c.z - z) < 3.4)) continue;
-    const s = R(scaleR[0], scaleR[1]); mt.compose(new V3(x, hAt(x, z) - bb.min.y * s - 0.1, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, R(0, 6.28), 0)), new V3(s, s * R(0.92, 1.12), s)); im.setMatrixAt(k++, mt);
-    if (r < 64) circles.push({ x, z, r: 0.6 * s * 0.22 + 0.45 });
+    if (fly ? (Math.hypot(x - BOSS.x, z - BOSS.z) < 11 || Math.hypot(x, z - (GZ - 4)) < 9) : (Math.hypot(x - BOSS.x, z - BOSS.z) < 11 || inZone(x, z) || ZONES.some(([cx, cz, rz]) => Math.hypot(x - cx, z - cz) < rz + 2.5) || Math.hypot(x, z - (GZ - 4)) < 9 || (LC && hAt(x, z) < WATER_Y + 0.9) || LAVA.some(([cx, cz, r]) => Math.hypot(x - cx, z - cz) < r + 3) || circles.some(c => Math.hypot(c.x - x, c.z - z) < 3.4))) continue;
+    const s = R(scaleR[0], scaleR[1]) / (opt.fit ? dim : 1); mt.compose(new V3(x, hAt(x, z) - bb.min.y * s - 0.1 + (fly ? R(fly[0], fly[1]) : 0), z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, R(0, 6.28), 0)), new V3(s, s * R(0.92, 1.12), s)); list.push([x, z, mt.clone()]); k++;
+    if (r < 64 && !fly) circles.push({ x, z, r: 0.6 * s * 0.22 + 0.45 });
   }
-  im.count = k; im.computeBoundingSphere(); scene.add(im);
+  // 区画ごとに わけて 1つずつ InstancedMesh にする(画面の そとの 区画は えがかない=みた目は かわらず かるくなる)
+  const CELL = 26, cells = new Map();
+  for (const it of list) { const key = Math.floor(it[0] / CELL) + ',' + Math.floor(it[1] / CELL); let a = cells.get(key); if (!a) cells.set(key, a = []); a.push(it[2]); }
+  for (const arr of cells.values()) { const im = new THREE.InstancedMesh(m.geometry, m.material, arr.length); arr.forEach((m4, i) => im.setMatrixAt(i, m4)); im.computeBoundingSphere(); scene.add(im); if (!opt.nofog) plantChunks.push(im); }
+}
+
+// ---- 火の玉(フレアが とびかう / 溶岩が ふきあがる)。かんたんな ちからで うごかす ----
+let flyUpd = null;
+function buildFlyers(cfg) {
+  const head = new THREE.SphereGeometry(0.5, 8, 6).toNonIndexed(), tail = new THREE.ConeGeometry(0.46, 2.6, 8, 1, true); tail.rotateX(-Math.PI / 2); tail.translate(0, 0, -1.3);
+  const tl = tail.toNonIndexed(), cl = cfg.colors || ['#ffc874', '#ff8a20', '#300800'], cA = new THREE.Color(cl[0]), cB = new THREE.Color(cl[1]), cC = new THREE.Color(cl[2]), tmp = new THREE.Color();
+  const pos = new Float32Array((head.attributes.position.count + tl.attributes.position.count) * 3), col = new Float32Array(pos.length);
+  pos.set(head.attributes.position.array, 0); pos.set(tl.attributes.position.array, head.attributes.position.count * 3);
+  for (let i = 0; i < head.attributes.position.count; i++) cA.toArray(col, i * 3);
+  for (let i = 0; i < tl.attributes.position.count; i++) { const t = THREE.MathUtils.clamp(-tl.attributes.position.getZ(i) / 2.6, 0, 1); tmp.copy(cB).lerp(cC, t).toArray(col, (head.attributes.position.count + i) * 3); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const nFlare = cfg.flare || 0, nSpurt = (cfg.spurt || 0) * LAVA.length, nMet = cfg.meteor || 0, N = nFlare + nSpurt + nMet; if (!N) return;
+  const im = new THREE.InstancedMesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, fog: false }), N);
+  im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); im.frustumCulled = false; scene.add(im);
+  const fl = Array.from({ length: nFlare }, () => { const a = R(0, 6.28), d = Math.sqrt(rnd()) * 52; return { cx: Math.cos(a) * d, cz: Math.sin(a) * d, A: R(...(cfg.A || [5, 13])), B: R(...(cfg.B || [3, 9])), h0: R(...(cfg.h0 || [1.2, 3.5])), w1: R(0.25, 0.55) * (cfg.speed || 1) * (rnd() < 0.5 ? -1 : 1), w2: R(0.2, 0.5) * (cfg.speed || 1), w3: R(0.4, 0.9) * (cfg.speed || 1), p1: R(0, 6.28), p2: R(0, 6.28), p3: R(0, 6.28), s: R(...(cfg.size || [0.45, 1.05])) }; });
+  const mets = Array.from({ length: nMet }, () => ({ ph: R(0, 9), per: R(4, 9), id: rnd() * 100 }));
+  const sp = []; LAVA.forEach(([cx, cz, r], k) => { for (let j = 0; j < cfg.spurt; j++) sp.push({ cx, cz, r, y: LAVAY[k] + 0.4, ph: R(0, 8), per: R(3.4, 6), id: rnd() * 100 }); });
+  const q = new THREE.Quaternion(), zv = new V3(0, 0, 1), dir = new V3(), p = new V3(), sc = new V3(), M4 = new THREE.Matrix4(), hash = (x) => { const v = Math.sin(x * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
+  flyUpd = (T) => {
+    let i = 0;
+    for (const f of fl) {
+      const a1 = f.w1 * T + f.p1, a2 = f.w2 * T + f.p2, a3 = f.w3 * T + f.p3, x = f.cx + f.A * Math.sin(a1), z = f.cz + f.A * Math.cos(a2), y = hAt(x, z) + f.h0 + f.B * (0.5 + 0.5 * Math.sin(a3));
+      dir.set(f.A * f.w1 * Math.cos(a1), 0.5 * f.B * f.w3 * Math.cos(a3), -f.A * f.w2 * Math.sin(a2)).normalize();
+      q.setFromUnitVectors(zv, dir); const s = f.s * (0.9 + 0.1 * Math.sin(T * 9 + f.p1)); M4.compose(p.set(x, y, z), q, sc.set(s, s, s * 1.4)); im.setMatrixAt(i++, M4);
+    }
+    for (const b of sp) {
+      const u0 = T + b.ph, cyc = Math.floor(u0 / b.per), u = u0 - cyc * b.per, h1 = hash(cyc * 13.1 + b.id), h2 = hash(cyc * 7.7 + b.id * 3.3), h3 = hash(cyc * 3.9 + b.id * 1.7);
+      const v0 = 8 + h1 * 7, g = 11, tf = 2 * v0 / g;
+      if (u > tf) { sc.set(0, 0, 0); M4.compose(p.set(b.cx, -50, b.cz), q.identity(), sc); im.setMatrixAt(i++, M4); continue; }
+      const ang = h2 * 6.283, sp0 = 2 + h3 * 5, ox = b.cx + Math.cos(h3 * 6.283) * b.r * 0.5, oz = b.cz + Math.sin(h3 * 6.283) * b.r * 0.5;
+      const x = ox + Math.cos(ang) * sp0 * u, z = oz + Math.sin(ang) * sp0 * u, y = b.y + v0 * u - 0.5 * g * u * u;
+      dir.set(Math.cos(ang) * sp0, v0 - g * u, Math.sin(ang) * sp0).normalize(); q.setFromUnitVectors(zv, dir);
+      const s = (0.7 + h1 * 0.8) * Math.min(1, (tf - u) * 2 + 0.3); M4.compose(p.set(x, y, z), q, sc.set(s, s, s * 1.2)); im.setMatrixAt(i++, M4);
+    }
+    for (const b of mets) {   // ながれぼし
+      const u0 = T + b.ph, cyc = Math.floor(u0 / b.per), u = u0 - cyc * b.per, h1 = hash(cyc * 5.3 + b.id), h2 = hash(cyc * 9.1 + b.id * 2.1), h3 = hash(cyc * 2.7 + b.id * 4.4), dur = 1.5;
+      if (u > dur) { sc.set(0, 0, 0); M4.compose(p.set(0, -50, 0), q.identity(), sc); im.setMatrixAt(i++, M4); continue; }
+      const ang = h3 * 6.283; dir.set(Math.cos(ang) * 0.6, -0.5, Math.sin(ang) * 0.6).normalize(); q.setFromUnitVectors(zv, dir);
+      const sp0 = 75, x = (h1 - 0.5) * 150 + dir.x * sp0 * u, y = 50 + h2 * 22 + dir.y * sp0 * u, z = (h2 - 0.5) * 150 + dir.z * sp0 * u, f = Math.sin(Math.PI * u / dur);
+      M4.compose(p.set(x, y, z), q, sc.set(1.4 * f, 1.4 * f, 6 * f)); im.setMatrixAt(i++, M4);
+    }
+    im.instanceMatrix.needsUpdate = true;
+  };
 }
 
 // ---- 主人公 ----
@@ -633,10 +693,13 @@ if (FID === 'end') {
 }
 
 // ---- じかん・てんき(フィールドに はいるたびに 日づけで きまる) ----
-const WX_NAME = { clear: 'はれ', rain: 'あめ', storm: 'あらし', fog: 'きり', snow: 'ゆき' };
-const FIELD_WX = { forest: [['clear', 55], ['rain', 25], ['fog', 20]], lake: [['clear', 40], ['rain', 25], ['snow', 20], ['fog', 15]], volcano: [['clear', 60], ['fog', 25], ['storm', 15]], ghost: [['fog', 55], ['clear', 30], ['rain', 15]], def: [['clear', 55], ['rain', 20], ['fog', 20], ['storm', 5]] };
-const WX_MULT = { rain: { water: 2.2, grass: 1.8, thunder: 1.6, fire: 0.5 }, storm: { thunder: 3, wind: 2.5, water: 1.8, fire: 0.4 }, fog: { dark: 2.2, magic: 1.6, heaven: 0.7 }, snow: { water: 2, heaven: 1.6, fire: 0.4 }, clear: {} };
-const WX_HINT = { rain: 'みずや くさの モンスターが でやすいよ', storm: 'でんきや かぜの モンスターが でやすいよ', fog: 'やみや まほうの モンスターが でやすいよ', snow: 'みずや てんの モンスターが でやすいよ', clear: '' };
+const WX_NAME = { clear: 'はれ', rain: 'あめ', storm: 'あらし', fog: 'きり', snow: 'ゆき', ash: 'ふんか', flare: 'フレア', meteor: 'りゅうせいぐん', petal: 'はなふぶき', spirit: 'ひとだま' };
+const FIELD_WX = { forest: [['clear', 55], ['rain', 25], ['fog', 20]], lake: [['clear', 40], ['rain', 25], ['snow', 20], ['fog', 15]], volcano: [['clear', 35], ['ash', 35], ['fog', 15], ['storm', 15]], ghost: [['fog', 35], ['spirit', 30], ['rain', 20], ['clear', 15]], def: [['clear', 55], ['rain', 20], ['fog', 20], ['storm', 5]],
+  sky: [['clear', 60], ['fog', 15], ['storm', 15], ['rain', 10]], sun: [['clear', 30], ['flare', 45], ['fog', 10], ['storm', 15]], cosmos: [['clear', 40], ['meteor', 40], ['fog', 20]],
+  grove: [['clear', 40], ['petal', 25], ['rain', 20], ['fog', 15]], castle: [['fog', 40], ['storm', 30], ['rain', 20], ['clear', 10]], temple: [['clear', 35], ['meteor', 40], ['fog', 25]],
+  dragon: [['clear', 30], ['rain', 25], ['storm', 15], ['petal', 20], ['fog', 10]], end: [['meteor', 35], ['clear', 25], ['storm', 20], ['fog', 20]] };
+const WX_MULT = { rain: { water: 2.2, grass: 1.8, thunder: 1.6, fire: 0.5 }, storm: { thunder: 3, wind: 2.5, water: 1.8, fire: 0.4 }, fog: { dark: 2.2, magic: 1.6, heaven: 0.7 }, snow: { water: 2, heaven: 1.6, fire: 0.4 }, ash: { fire: 2, earth: 1.6, dark: 1.3, water: 0.6 }, flare: { fire: 2.4, thunder: 1.4, heaven: 1.3, water: 0.5 }, meteor: { heaven: 2.2, magic: 1.7, dark: 1.2 }, petal: { grass: 1.7, wind: 1.8, heaven: 1.3, dark: 0.7 }, spirit: { dark: 2.4, magic: 2, beast: 1.2, heaven: 0.5 }, clear: {} };
+const WX_HINT = { rain: 'みずや くさの モンスターが でやすいよ', storm: 'でんきや かぜの モンスターが でやすいよ', fog: 'やみや まほうの モンスターが でやすいよ', snow: 'みずや てんの モンスターが でやすいよ', ash: 'ほのおや だいちの モンスターが でやすいよ', flare: 'ほのおや かみなりの モンスターが でやすいよ', meteor: 'てんや まほうの モンスターが でやすいよ', petal: 'くさや かぜの モンスターが でやすいよ', spirit: 'やみや まほうの モンスターが でやすいよ', clear: '' };
 const FI = Math.max(0, ['forest', 'lake', 'volcano', 'ghost', 'sky', 'sun', 'cosmos', 'grove', 'castle', 'temple', 'dragon', 'end'].indexOf(FID));
 let WX = 'clear';
 const pickWx = () => { const tb = FIELD_WX[FID] || FIELD_WX.def; let x = ((state.day || 1) * 2654435761 + FI * 40503) >>> 0; x = (x ^ (x >>> 15)) * 2246822519 >>> 0; const r = (x % 1000) / 1000 * tb.reduce((a, b) => a + b[1], 0); let acc = 0; for (const [k, w] of tb) { acc += w; if (r < acc) return k; } return 'clear'; };
@@ -651,9 +714,9 @@ function elemWeight(el, h) {
 const baseSky = new THREE.Color(F.sky), nightSky = new THREE.Color('#0c1230'), tmpC = new THREE.Color(), hemiBase = LT.hemi[2], sunBase = LT.sun[1], fogN0 = scene.fog.near, fogF0 = scene.fog.far, hemiSky0 = new THREE.Color(LT.hemi[0]);
 let flash = 0;
 function updateSky(dt) {
-  const n = nightK(hourNow()), wl = ({ clear: 1, rain: 0.82, storm: 0.6, fog: 0.9, snow: 0.95 })[WX], lm = (1 - 0.5 * n) * wl;
-  tmpC.copy(baseSky).lerp(nightSky, 0.75 * n); if (WX === 'fog' || WX === 'storm') tmpC.lerp(new THREE.Color('#9aa4ac'), WX === 'fog' ? 0.45 : 0.3);
-  scene.background.copy(tmpC); scene.fog.color.copy(tmpC); scene.fog.near = fogN0 * (WX === 'fog' ? 0.3 : 1); scene.fog.far = fogF0 * (WX === 'fog' ? 0.45 : WX === 'rain' || WX === 'storm' ? 0.75 : 1);
+  const n = nightK(hourNow()), wl = ({ clear: 1, rain: 0.82, storm: 0.6, fog: 0.9, snow: 0.95, ash: 0.82, flare: 1.12, meteor: 1, petal: 1, spirit: 0.8 })[WX], lm = (1 - 0.5 * n) * wl;
+  tmpC.copy(baseSky).lerp(nightSky, 0.75 * n); if (WX === 'fog' || WX === 'storm') tmpC.lerp(new THREE.Color('#9aa4ac'), WX === 'fog' ? 0.45 : 0.3); else if (WX === 'ash') tmpC.lerp(new THREE.Color('#7a6a62'), 0.45); else if (WX === 'flare') tmpC.lerp(new THREE.Color('#ff9a50'), 0.35); else if (WX === 'spirit') tmpC.lerp(new THREE.Color('#5a6a98'), 0.4); else if (WX === 'meteor') tmpC.lerp(nightSky, 0.5);
+  scene.background.copy(tmpC); scene.fog.color.copy(tmpC); scene.fog.near = fogN0 * (WX === 'fog' ? 0.3 : WX === 'spirit' ? 0.4 : 1); scene.fog.far = fogF0 * (WX === 'fog' ? 0.45 : WX === 'spirit' ? 0.55 : WX === 'ash' ? 0.6 : WX === 'rain' || WX === 'storm' ? 0.75 : WX === 'flare' ? 0.9 : 1);
   hemiL.intensity = hemiBase * lm + flash * 2.4; sun.intensity = sunBase * lm * (WX === 'storm' ? 0.5 : 1) + flash * 2;
 }
 // あめ(線で えがく)
@@ -666,6 +729,11 @@ function initWeather() {
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   rain = { lines: new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: '#c0dcff', transparent: true, opacity: WX === 'storm' ? 0.85 : 0.7, depthWrite: false })), spd, n }; rain.lines.frustumCulled = false; scene.add(rain.lines);
   }
+  if (WX === 'ash') addFxLayer({ color: '#a89c94', n: 420, size: 0.5, dir: -1, speed: [0.6, 1.4], sway: 0.5, blend: 'normal', h: 16 });
+  if (WX === 'flare') addFxLayer({ color: '#ffb060', n: 240, size: 0.36, dir: 1, speed: [1, 2.4], sway: 0.6, h: 14 });
+  if (WX === 'petal') addFxLayer({ color: '#ffb0cc', n: 360, size: 0.8, dir: -1, speed: [0.5, 1.2], sway: 1.4, blend: 'normal', h: 16 });
+  if (WX === 'spirit') addFxLayer({ color: '#a8e8ff', n: 170, size: 0.4, dir: 1, speed: [0.2, 0.6], sway: 1.0, h: 10 });
+  if (WX === 'meteor') { const fl = F.flyers || {}; F.flyers = { ...fl, meteor: (fl.meteor || 0) + 16, colors: fl.colors || ['#d8e8ff', '#7aa8ff', '#080c30'] }; }
   if (WX === 'snow') addFxLayer({ color: '#ffffff', n: 280, size: 0.38, dir: -1, speed: [0.8, 1.7], sway: 0.7, blend: 'normal', h: 18 });
 }
 function updateWeather(dt) {
@@ -762,7 +830,8 @@ async function challengeLegend(s) {
 const clock = new THREE.Clock(); let T = 0, lastFrame = 0;
 function frame() {
   requestAnimationFrame(frame); if (ECO) { const now = performance.now(); if (now - lastFrame < 30) return; lastFrame = now; }   // 省エネ: 30fps
-  const dt = Math.min(clock.getDelta(), 0.05); T += dt; pollInput();
+  const dt = Math.min(clock.getDelta(), 0.05); T += dt; pollInput(); if (flyUpd) flyUpd(T);
+  if ((chunkT -= dt) <= 0) { chunkT = 0.4; const far = scene.fog ? scene.fog.far + 3 : 1e9; for (const m of plantChunks) { const b = m.boundingSphere; m.visible = Math.hypot(b.center.x - P.pos.x, b.center.z - P.pos.z) - b.radius < far; } }
   if (chin) {
     if (input.menu) { input.menu = false; if (!busy) ui.togglePanel('menu'); }
     updatePlayer(dt); updateCamera(dt); updateTarget();
@@ -783,7 +852,8 @@ function frame() {
 async function boot() {
   load(); initWeather(); buildGate2(); chinGL = await loader.loadAsync('./assets/chin_storybook_lite.glb'); chinGL.scene.traverse(o => { if (o.isMesh && !o.geometry.attributes.normal) o.geometry.computeVertexNormals(); });
   chin = makeChin(0.95); scene.add(chin.outer); makePet(); makeBoss(); if (!ELITE) { await makeTrainers(); await makeChests(); } await makeShrines();
-  for (const [nm, nT, nP, sc, r0, r1, tn] of [...F.trees, ...(F.props || [])]) await plant(nm, isTouch ? nT : nP, sc, r0, r1, tn);
+  for (const [nm, nT, nP, sc, r0, r1, tn, op] of [...F.trees, ...(F.props || [])]) await plant(nm, isTouch ? nT : nP, sc, r0, r1, tn, op);
+  if (F.flyers) buildFlyers(F.flyers);
   await questData(); const first = giveStarter(); save();
   ui.setCoins(); ui.setClock && ui.setClock(); ui.setLevel && ui.setLevel();
   P.pos.set(0, hAt(0, SPZ), SPZ); cam.yaw = 0; cam.pitch = 0.36; updateCamera(0, true);

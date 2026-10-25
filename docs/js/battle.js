@@ -216,8 +216,8 @@ const STRUGGLE = { id: 'struggle', name: 'わるあがき', power: 30, uses: 99,
 export const ppMax = (s) => s.uses || 20;
 export const ppOf = (m, s) => (m.pp && m.pp[s.id] != null) ? m.pp[s.id] : ppMax(s);
 // てんき・じかんの えいきょう
-const ENV_WX = { rain: { water: 1.2, thunder: 1.1, fire: 0.85 }, storm: { thunder: 1.3, wind: 1.2, fire: 0.8 }, fog: { dark: 1.2, magic: 1.15, heaven: 0.9 }, snow: { water: 1.1, heaven: 1.15, fire: 0.8, grass: 0.9 }, clear: {} };
-const ENV_NAME = { rain: 'あめ', storm: 'あらし', fog: 'きり', snow: 'ゆき' };
+const ENV_WX = { rain: { water: 1.2, thunder: 1.1, fire: 0.85 }, storm: { thunder: 1.3, wind: 1.2, fire: 0.8 }, fog: { dark: 1.2, magic: 1.15, heaven: 0.9 }, snow: { water: 1.1, heaven: 1.15, fire: 0.8, grass: 0.9 }, ash: { fire: 1.15, earth: 1.15, water: 0.9 }, flare: { fire: 1.25, thunder: 1.1, water: 0.85 }, meteor: { heaven: 1.2, magic: 1.15 }, petal: { grass: 1.15, wind: 1.15, dark: 0.9 }, spirit: { dark: 1.2, magic: 1.15, heaven: 0.9 }, clear: {} };
+const ENV_NAME = { rain: 'あめ', storm: 'あらし', fog: 'きり', snow: 'ゆき', ash: 'ふんか', flare: 'フレア', meteor: 'りゅうせいぐん', petal: 'はなふぶき', spirit: 'ひとだま' };
 export const isNight = (h) => h != null && (h >= 20 || h < 5);
 export const envMul = (wx, hour, el) => ((ENV_WX[wx] || {})[el] || 1) * (isNight(hour) ? ({ dark: 1.15, heaven: 0.9 }[el] || 1) : ({ heaven: 1.08 }[el] || 1));
 export const envText = (wx, hour) => { const t = []; if (ENV_NAME[wx]) t.push(`${ENV_NAME[wx]}の ちから`); if (isNight(hour)) t.push('よるの ちから'); return t.length ? t.join('と ') + ' が はたらいている…' : ''; };
