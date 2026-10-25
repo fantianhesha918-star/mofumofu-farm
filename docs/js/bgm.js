@@ -8,7 +8,7 @@ const saveCfg = () => { try { localStorage.setItem(KEY, JSON.stringify(cfg)); } 
 
 const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
 // コードは [根音, 3度, 5度](MIDI)。1小節=16ステップ(16分音符)
-const C = { C: [48, 52, 55], Am: [45, 48, 52], F: [41, 45, 48], G: [43, 47, 50], Em: [40, 43, 47], D: [50, 54, 57], Dm: [50, 53, 57], Bb: [46, 50, 53], A: [45, 49, 52], Cc: [48, 52, 55], Gm: [43, 46, 50], E: [40, 44, 47] };
+const C = { C: [48, 52, 55], Am: [45, 48, 52], F: [41, 45, 48], G: [43, 47, 50], Em: [40, 43, 47], D: [50, 54, 57], Dm: [50, 53, 57], Bb: [46, 50, 53], A: [45, 49, 52], Cc: [48, 52, 55], Gm: [43, 46, 50], E: [40, 44, 47], Edim: [40, 43, 46] };
 const mel = (...a) => a;   // [ステップ, 音, ながさ]
 
 const TRACKS = {
@@ -34,28 +34,36 @@ const TRACKS = {
       mel(0, 77, 4), mel(4, 76, 2), mel(6, 72, 2), mel(8, 69, 8),
       mel(0, 74, 4), mel(4, 79, 4), mel(8, 78, 4), mel(12, 74, 4),
       mel(0, 69, 8), mel(8, 72, 4), mel(12, 76, 4)] } },
-  // バトル
-  battle: { bpm: 150, bars: ['Em', 'C', 'G', 'D', 'Em', 'C', 'D', 'Em'], arp: { wave: 'square', vol: 0.04, pat: [0, 1, 2, 1, 2, 1, 0, 1], up: 12, every: 2 }, bass: { wave: 'sawtooth', vol: 0.1, steps: [0, 2, 4, 6, 8, 10, 12, 14], lp: 700 },
-    mel: { wave: 'square', vol: 0.06, notes: [
-      mel(0, 76, 2), mel(2, 76, 2), mel(4, 79, 2), mel(6, 83, 2), mel(8, 81, 4), mel(12, 79, 4),
-      mel(0, 79, 2), mel(2, 79, 2), mel(4, 76, 2), mel(6, 72, 2), mel(8, 76, 8),
-      mel(0, 74, 2), mel(2, 74, 2), mel(4, 79, 2), mel(6, 83, 2), mel(8, 86, 4), mel(12, 83, 4),
-      mel(0, 81, 4), mel(4, 78, 4), mel(8, 74, 8),
-      mel(0, 76, 2), mel(2, 79, 2), mel(4, 83, 2), mel(6, 86, 2), mel(8, 83, 4), mel(12, 79, 4),
-      mel(0, 84, 2), mel(2, 79, 2), mel(4, 76, 2), mel(6, 72, 2), mel(8, 79, 8),
-      mel(0, 78, 2), mel(2, 81, 2), mel(4, 86, 2), mel(6, 81, 2), mel(8, 78, 4), mel(12, 74, 4),
-      mel(0, 76, 4), mel(4, 83, 4), mel(8, 76, 8)] } },
-  // ボス
-  boss: { bpm: 164, bars: ['Dm', 'Bb', 'C', 'A', 'Dm', 'Gm', 'A', 'Dm'], arp: { wave: 'sawtooth', vol: 0.03, pat: [0, 1, 2, 1, 0, 2, 1, 2], up: 12, every: 1, lp: 2400 }, bass: { wave: 'sawtooth', vol: 0.12, steps: [0, 2, 3, 4, 6, 8, 10, 11, 12, 14], lp: 600 },
-    mel: { wave: 'square', vol: 0.065, notes: [
-      mel(0, 74, 3), mel(3, 77, 1), mel(4, 81, 4), mel(8, 80, 2), mel(10, 81, 2), mel(12, 84, 4),
-      mel(0, 82, 3), mel(3, 81, 1), mel(4, 77, 4), mel(8, 74, 8),
-      mel(0, 79, 3), mel(3, 84, 1), mel(4, 88, 4), mel(8, 86, 2), mel(10, 84, 2), mel(12, 79, 4),
-      mel(0, 81, 4), mel(4, 85, 4), mel(8, 88, 8),
-      mel(0, 86, 3), mel(3, 84, 1), mel(4, 81, 4), mel(8, 77, 4), mel(12, 81, 4),
-      mel(0, 82, 3), mel(3, 79, 1), mel(4, 74, 4), mel(8, 70, 8),
-      mel(0, 85, 2), mel(2, 88, 2), mel(4, 91, 4), mel(8, 88, 4), mel(12, 85, 4),
-      mel(0, 86, 8), mel(8, 81, 4), mel(12, 74, 4)] } },
+  // バトル(ドラム・パッド・ぶあついリードで、きんぱくした たたかいの ふんいき)
+  battle: { bpm: 164, bars: ['Am', 'Am', 'F', 'G', 'Am', 'F', 'Dm', 'E'],
+    arp: { wave: 'triangle', vol: 0.03, pat: [0, 1, 2, 1, 2, 1, 0, 1], up: 12, every: 2, lp: 2200 },
+    bass: { wave: 'sawtooth', vol: 0.11, steps: [0, 2, 3, 4, 6, 8, 10, 11, 12, 14], lp: 520 },
+    pad: { wave: 'sawtooth', vol: 0.022, lp: 1100 },
+    drums: { k: [0, 6, 8, 11], s: [4, 12], h: [0, 2, 4, 6, 8, 10, 12, 14], hv: 0.5 },
+    mel: { wave: 'sawtooth', vol: 0.05, lp: 3200, det: 9, notes: [
+      mel(0, 81, 2), mel(2, 76, 2), mel(4, 72, 2), mel(6, 76, 2), mel(8, 81, 4), mel(12, 79, 2), mel(14, 76, 2),
+      mel(0, 77, 2), mel(2, 76, 2), mel(4, 72, 2), mel(6, 69, 2), mel(8, 72, 8),
+      mel(0, 77, 2), mel(2, 81, 2), mel(4, 84, 2), mel(6, 81, 2), mel(8, 77, 4), mel(12, 81, 4),
+      mel(0, 83, 2), mel(2, 79, 2), mel(4, 74, 2), mel(6, 79, 2), mel(8, 83, 6), mel(14, 81, 2),
+      mel(0, 81, 2), mel(2, 84, 2), mel(4, 88, 4), mel(8, 86, 2), mel(10, 84, 2), mel(12, 81, 4),
+      mel(0, 84, 2), mel(2, 81, 2), mel(4, 77, 2), mel(6, 81, 2), mel(8, 84, 8),
+      mel(0, 86, 2), mel(2, 81, 2), mel(4, 77, 2), mel(6, 74, 2), mel(8, 77, 4), mel(12, 81, 4),
+      mel(0, 80, 2), mel(2, 83, 2), mel(4, 88, 4), mel(8, 87, 2), mel(10, 83, 2), mel(12, 80, 2), mel(14, 83, 2)] } },
+  // ボス(おもく せまってくる ひくい ギャロップ・ふきんしんな ひびき・はやい ドラム)
+  boss: { bpm: 176, bars: ['Dm', 'Dm', 'Bb', 'A', 'Dm', 'Gm', 'Edim', 'A'],
+    arp: { wave: 'sawtooth', vol: 0.026, pat: [0, 1, 2, 1, 0, 2, 1, 2], up: 12, every: 1, lp: 2000 },
+    bass: { wave: 'sawtooth', vol: 0.14, steps: [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 14, 15], lp: 480 },
+    pad: { wave: 'sawtooth', vol: 0.03, lp: 900 },
+    drums: { k: [0, 3, 6, 8, 10, 11, 14], s: [4, 12], h: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], hv: 0.45, boom: [0] },
+    mel: { wave: 'sawtooth', vol: 0.058, lp: 3600, det: 12, notes: [
+      mel(0, 86, 3), mel(3, 85, 1), mel(4, 86, 2), mel(6, 89, 2), mel(8, 88, 4), mel(12, 86, 2), mel(14, 85, 2),
+      mel(0, 81, 2), mel(2, 82, 2), mel(4, 81, 2), mel(6, 77, 2), mel(8, 74, 8),
+      mel(0, 89, 3), mel(3, 86, 1), mel(4, 82, 4), mel(8, 86, 2), mel(10, 89, 2), mel(12, 91, 4),
+      mel(0, 88, 3), mel(3, 85, 1), mel(4, 81, 4), mel(8, 85, 2), mel(10, 88, 2), mel(12, 85, 4),
+      mel(0, 86, 2), mel(2, 89, 2), mel(4, 93, 4), mel(8, 91, 2), mel(10, 89, 2), mel(12, 86, 4),
+      mel(0, 91, 3), mel(3, 89, 1), mel(4, 86, 4), mel(8, 82, 2), mel(10, 86, 2), mel(12, 89, 4),
+      mel(0, 88, 2), mel(2, 85, 2), mel(4, 82, 2), mel(6, 79, 2), mel(8, 76, 4), mel(12, 79, 4),
+      mel(0, 85, 2), mel(2, 88, 2), mel(4, 91, 2), mel(6, 88, 2), mel(8, 85, 4), mel(12, 81, 4)] } },
 };
 
 let ac = null, bus = null, timer = null, cur = null, want = null, nextT = 0, step = 0;
@@ -64,17 +72,36 @@ function ensure() {
   if (ac !== a.ac) { ac = a.ac; bus = ac.createGain(); bus.connect(ac.destination); }
   bus.gain.value = cfg.bgm * 0.8; return true;
 }
-function note(wave, freq, t, dur, vol, lp) {
-  const o = ac.createOscillator(), g = ac.createGain(); o.type = wave; o.frequency.value = freq;
+function note(wave, freq, t, dur, vol, lp, det) {
+  const o = ac.createOscillator(), g = ac.createGain(); o.type = wave; o.frequency.value = freq; if (det) o.detune.value = det;
   let out = g; if (lp) { const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; g.connect(f); out = f; }
   g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(0.06, dur));
   o.connect(g); out.connect(bus); o.start(t); o.stop(t + dur + 0.06);
+}
+function padNote(wave, freq, t, dur, vol, lp) {   // のばす おと(ふくらんで、さいごに きえる)
+  const o = ac.createOscillator(), g = ac.createGain(), f = ac.createBiquadFilter(); o.type = wave; o.frequency.value = freq; f.type = 'lowpass'; f.frequency.value = lp || 1200;
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.18); g.gain.setValueAtTime(vol, t + dur - 0.12); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(f); f.connect(g); g.connect(bus); o.start(t); o.stop(t + dur + 0.05);
+}
+let noiseBuf = null;
+function noiseSrc() { if (!noiseBuf || noiseBuf.sampleRate !== ac.sampleRate) { noiseBuf = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.4), ac.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; } const n = ac.createBufferSource(); n.buffer = noiseBuf; return n; }
+function perc(kind, t, vol) {   // ドラム(キック/スネア/ハイハット/ひくい ドーン)
+  if (kind === 'k' || kind === 'boom') {
+    const o = ac.createOscillator(), g = ac.createGain(), lo = kind === 'boom' ? 38 : 48; o.type = 'sine'; o.frequency.setValueAtTime(kind === 'boom' ? 110 : 160, t); o.frequency.exponentialRampToValueAtTime(lo, t + (kind === 'boom' ? 0.25 : 0.1));
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + (kind === 'boom' ? 0.5 : 0.18)); o.connect(g); g.connect(bus); o.start(t); o.stop(t + 0.55);
+  } else {
+    const n = noiseSrc(), f = ac.createBiquadFilter(), g = ac.createGain(); f.type = 'highpass'; f.frequency.value = kind === 's' ? 1400 : 7000;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + (kind === 's' ? 0.16 : 0.045)); n.connect(f); f.connect(g); g.connect(bus); n.start(t); n.stop(t + 0.2);
+    if (kind === 's') { const o = ac.createOscillator(), g2 = ac.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(220, t); o.frequency.exponentialRampToValueAtTime(110, t + 0.08); g2.gain.setValueAtTime(vol * 0.5, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.1); o.connect(g2); g2.connect(bus); o.start(t); o.stop(t + 0.12); }
+  }
 }
 function scheduleStep(tr, s, t, sd) {
   const bar = Math.floor(s / 16) % tr.bars.length, st = s % 16, ch = C[tr.bars[bar]];
   if (tr.bass.steps.includes(st)) note(tr.bass.wave, mtof(ch[0] - 12 + (st % 4 === 2 && tr.bass.steps.length > 4 ? 12 : 0)), t, sd * (tr.bass.steps.length > 4 ? 1.6 : 6), tr.bass.vol, tr.bass.lp);
   if (st % tr.arp.every === 0) { const i = tr.arp.pat[(st / tr.arp.every) % tr.arp.pat.length]; note(tr.arp.wave, mtof(ch[i % 3] + tr.arp.up), t, sd * 1.8, tr.arp.vol, tr.arp.lp); }
-  for (const [ms, m, len] of tr.mel.notes_[bar]) if (ms === st) note(tr.mel.wave, mtof(m), t, sd * len * 0.95, tr.mel.vol);
+  for (const [ms, m, len] of tr.mel.notes_[bar]) if (ms === st) { note(tr.mel.wave, mtof(m), t, sd * len * 0.95, tr.mel.vol, tr.mel.lp, tr.mel.det ? -tr.mel.det : 0); if (tr.mel.det) note(tr.mel.wave, mtof(m), t, sd * len * 0.95, tr.mel.vol, tr.mel.lp, tr.mel.det); }
+  if (tr.pad && st === 0) for (const m of ch) padNote(tr.pad.wave, mtof(m), t, sd * 16, tr.pad.vol, tr.pad.lp);
+  if (tr.drums) { const d = tr.drums; if (d.k.includes(st)) perc('k', t, 0.5); if (d.s.includes(st)) perc('s', t, 0.3); if (d.h.includes(st)) perc('h', t, 0.1 * (d.hv || 1) * (st % 4 === 0 ? 1.4 : 1)); if (d.boom && d.boom.includes(st) && bar % 2 === 0) perc('boom', t, 0.45); }
 }
 // メロディを小節ごとに分けておく(1小節=16ステップ)
 for (const tr of Object.values(TRACKS)) {
