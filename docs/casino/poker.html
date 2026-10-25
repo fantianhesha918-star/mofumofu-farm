@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ポーカー</title>
+<style>
+  :root{ --felt:#1f5a6a; --felt2:#143c48; --cw:min(17vw,84px); }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;min-height:100dvh;background:radial-gradient(circle at 50% 30%,var(--felt),var(--felt2) 75%);color:#fff;font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;display:flex;flex-direction:column;align-items:center;padding:56px 12px 20px}
+  h1{margin:0 0 4px;font-size:20px;color:#f4d060;letter-spacing:.08em}
+  .sub{margin:0 0 14px;font-size:12.5px;opacity:.85;text-align:center;line-height:1.6;max-width:460px}
+  .area{width:100%;max-width:480px;margin-bottom:12px}
+  .lab{display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px}
+  .lab b{color:#f4d060}
+  .hand{display:flex;gap:6px;justify-content:center}
+  .slot{position:relative;width:var(--cw)}
+  .card{width:100%;aspect-ratio:2/3;border-radius:calc(var(--cw)*.11);background:#fff center/cover no-repeat;box-shadow:0 2px 6px #0007;transition:transform .15s}
+  .slot.hold .card{transform:translateY(-14px);box-shadow:0 0 0 3px #f4d060,0 6px 10px #0008}
+  .slot .tag{position:absolute;left:0;right:0;bottom:-20px;text-align:center;font-size:12px;color:#f4d060;font-weight:bold;opacity:0}
+  .slot.hold .tag{opacity:1}
+  .msg{min-height:58px;text-align:center;font-size:18px;font-weight:bold;margin:14px 0 10px;line-height:1.5}
+  .msg small{display:block;font-size:12.5px;font-weight:normal;opacity:.9}
+  .btns{display:flex;gap:10px;justify-content:center}
+  button.act{min-width:130px;padding:13px 18px;font-size:16px;font-weight:bold;border:0;border-radius:24px;background:linear-gradient(#f4d060,#d09a20);color:#3a2410;box-shadow:0 3px 0 #8a6414}
+  .tbl{width:100%;max-width:480px;margin-top:16px;font-size:11.5px;opacity:.8;line-height:1.7;text-align:center}
+</style>
+</head>
+<body>
+<h1>ポーカー</h1>
+<p class="sub">5まいで やくを つくろう。ほしい カードを タップして「のこす」にして、あとは こうかん。1かいだけ とりかえられるよ。つよい やくの ほうが かち</p>
+<div class="area"><div class="lab"><span>CPU</span><b id="cn"></b></div><div class="hand" id="ch"></div></div>
+<div class="msg" id="msg"></div>
+<div class="area"><div class="lab"><span>あなた</span><b id="pn"></b></div><div class="hand" id="ph"></div></div>
+<div class="btns" id="btns"></div>
+<div class="tbl">つよい じゅん: ロイヤルストレートフラッシュ > ストレートフラッシュ > フォーカード > フルハウス > フラッシュ > ストレート > スリーカード > ツーペア > ワンペア > ブタ</div>
+<script>
+(function(){
+  const SUITS=["S","H","D","C"], NAMES=["ブタ(やく なし)","ワンペア","ツーペア","スリーカード","ストレート","フラッシュ","フルハウス","フォーカード","ストレートフラッシュ","ロイヤルストレートフラッシュ"];
+  let deck=[],P=[],C=[],hold=[],phase="idle";
+  const $=id=>document.getElementById(id);
+  function shuffle(){ deck=[]; for(const s of SUITS)for(let r=1;r<=13;r++)deck.push({s,r}); for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];} }
+  const hr=c=>c.r===1?14:c.r;
+  function evalHand(h){
+    const rs=h.map(hr).sort((a,b)=>b-a), cnt={}; rs.forEach(r=>cnt[r]=(cnt[r]||0)+1);
+    const groups=Object.keys(cnt).map(r=>[cnt[r],+r]).sort((a,b)=>b[0]-a[0]||b[1]-a[1]), shape=groups.map(g=>g[0]).join(""), ks=groups.map(g=>g[1]);
+    const flush=h.every(c=>c.s===h[0].s); let st=false,top=rs[0];
+    if(new Set(rs).size===5){ if(rs[0]-rs[4]===4)st=true; else if(rs.join()==="14,5,4,3,2"){st=true;top=5;} }
+    if(st&&flush) return top===14&&rs[1]===13?[9,14]:[8,top];
+    if(shape==="41") return [7,...ks]; if(shape==="32") return [6,...ks]; if(flush) return [5,...rs]; if(st) return [4,top];
+    if(shape==="311") return [3,...ks]; if(shape==="221") return [2,...ks]; if(shape==="2111") return [1,...ks]; return [0,...rs];
+  }
+  function cmp(a,b){ for(let i=0;i<Math.max(a.length,b.length);i++){ const d=(a[i]||0)-(b[i]||0); if(d) return d; } return 0; }
+  function cpuKeep(h){
+    // 一番つよくなりそうな のこしかた: ぜんぶの のこしかたを ためして、のこした カードの やくの つよさ+ねらいで えらぶ
+    let best=null,bs=-1;
+    for(let m=0;m<32;m++){
+      const keep=h.filter((_,i)=>m>>i&1); let sc=0; const rs=keep.map(hr), cnt={}; rs.forEach(r=>cnt[r]=(cnt[r]||0)+1);
+      const mult=Object.values(cnt).sort((a,b)=>b-a);
+      if(mult[0]===4)sc=90; else if(mult[0]===3)sc=60; else if(mult[0]===2&&mult[1]===2)sc=50; else if(mult[0]===2)sc=30+Math.max(...Object.keys(cnt).filter(k=>cnt[k]===2).map(Number))/2;
+      if(keep.length>=4&&keep.every(c=>c.s===keep[0].s))sc=Math.max(sc,keep.length===5?80:45);
+      if(keep.length===5){ const e=evalHand(keep); if(e[0]>=4)sc=Math.max(sc,70+e[0]); }
+      if(sc===0)sc=Math.max(0,...rs.map(r=>r>=11?r-8:0))*1.5;
+      sc-=keep.length*0.01; if(sc>bs){bs=sc;best=m;}
+    }
+    return best;
+  }
+  function cardEl(c,down){ const d=document.createElement("div"); d.className="card"; d.style.backgroundImage="url(assets/cards/"+(down?"back":c.s+c.r)+".webp)"; return d; }
+  function render(showC){
+    const ph=$("ph"); ph.innerHTML=""; P.forEach((c,i)=>{ const s=document.createElement("div"); s.className="slot"+(hold[i]?" hold":""); s.appendChild(cardEl(c,false)); const t=document.createElement("div"); t.className="tag"; t.textContent="のこす"; s.appendChild(t); if(phase==="pick") s.onclick=()=>{ hold[i]=!hold[i]; render(false); }; ph.appendChild(s); });
+    const ch=$("ch"); ch.innerHTML=""; C.forEach(c=>{ const s=document.createElement("div"); s.className="slot"; s.appendChild(cardEl(c,!showC)); ch.appendChild(s); });
+    $("pn").textContent=phase==="done"||phase==="pick"?NAMES[evalHand(P)[0]]:""; $("cn").textContent=showC?NAMES[evalHand(C)[0]]:"";
+  }
+  function setBtns(list){ const b=$("btns"); b.innerHTML=""; list.forEach(([t,fn])=>{ const x=document.createElement("button"); x.className="act"; x.textContent=t; x.onclick=fn; b.appendChild(x); }); }
+  function msg(t,s){ $("msg").innerHTML=t+(s?"<small>"+s+"</small>":""); }
+  function report(result){ try{ parent.postMessage({casino:1,game:"poker",result:result,place:0},"*"); }catch(e){} }
+  function start(){ shuffle(); P=[0,1,2,3,4].map(()=>deck.pop()); C=[0,1,2,3,4].map(()=>deck.pop()); hold=[false,false,false,false,false]; phase="pick"; msg("のこす カードを えらんでね","タップで のこす / もういちどタップで はずす"); render(false); setBtns([["こうかんする",draw]]); }
+  function draw(){
+    if(phase!=="pick")return; phase="done"; setBtns([]);
+    P=P.map((c,i)=>hold[i]?c:deck.pop());
+    const m=cpuKeep(C); C=C.map((c,i)=>(m>>i&1)?c:deck.pop());
+    render(false); msg("カードを こうかん!","CPUも とりかえたよ…"); setTimeout(()=>{ phase="done"; render(true); finish(); },1100);
+  }
+  function finish(){
+    const a=evalHand(P), b=evalHand(C), d=cmp(a,b); let r,t;
+    if(d>0){ r="win"; t="かち!"; } else if(d<0){ r="lose"; t="まけ…"; } else { r="draw"; t="ひきわけ"; }
+    msg(t,"あなた: "+NAMES[a[0]]+" ／ CPU: "+NAMES[b[0]]); report(r); setBtns([["もういちど",start]]);
+  }
+  setBtns([["はじめる",start]]); msg("じゅんびは いい?","");
+})();
+</script>
+<button id="casinoClose" type="button" style="position:fixed;right:10px;top:max(8px,env(safe-area-inset-top));z-index:9999;padding:6px 14px;border-radius:16px;border:1px solid #fff6;background:#000a;color:#fff;font-size:14px">カジノにもどる</button>
+<script>document.getElementById('casinoClose').onclick=function(){try{parent.postMessage({casino:1,close:1},'*');}catch(e){}};</script>
+</body>
+</html>

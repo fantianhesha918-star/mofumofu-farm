@@ -15,6 +15,7 @@ import { ui, itemIcon } from './ui.js';
 import { input, pollInput, setupInput } from './input.js';
 import { sfx, unlockAudio } from './audio.js';
 import { STARTERS } from './monsters_extra.js';
+import { openCasinoMenu } from './casino.js';
 
 const $ = (s) => document.querySelector(s);
 const V3 = THREE.Vector3;
@@ -919,12 +920,14 @@ function eachTarget(test) {
   if (!P.room) for (const v of villagers) test(v.x, v.z, 2.4, () => ({ label: `${vN(v)}と はなす`, sub: `あそびに きた ${v.d.who}`, short: 'はなす', can: true, act: () => talkVillager(v) }), -0.4);
   if (!P.room) for (const m of yardGroup.children) { const f = state.deco[m.userData.di]; if (f && f.k === 'bench') test(f.x, f.z, 2.0, () => ({ label: 'ベンチで ひとやすみ', sub: P.stam >= 99 ? 'いまは げんきいっぱい' : 'スタミナが ぜんかいふく するよ', short: 'やすむ', can: P.stam < 99, act: () => { P.stam = 100; sfx('feed'); ui.toast('ひとやすみ', 'スタミナが ぜんかいふくしたよ', '', 1800); } }), 0.2); }
   for (const n of npcs) test(n.x, n.z, 2.4, () => ({ label: `${nN(n)}と はなす`, sub: 'むらのひと', short: 'はなす', can: true, act: () => { ui.toast(nN(n), n.d.lines[n.line % n.d.lines.length], '', 4200); n.line++; n.wait = 4; sfx('pet'); } }), -0.3);
+  if (P.room && P.room === ROOMS.casino && dealer) test(dealer.x, dealer.z + 1.2, 2.8, () => ({ label: 'ディーラーと はなす', sub: 'ゲームで あそんで コインを もらおう', short: 'あそぶ', can: true, act: () => openCasinoMenu(doSave) }), 0.2, 1.2, 150);
   if (P.room) { const r = P.room; test(r.exit.x, r.exit.z, 1.6, () => ({ label: 'そとに でる', sub: '', short: 'でる', can: true, act: () => goRoom(null, r.outPos(), 0, 6.4) }), 0.5, 1.2, 120);
     if (r.kitchen) test(r.kitchen.x + 3.2, r.kitchen.z + 1.6, 2.4, () => ({ label: 'もようがえ', sub: 'かべがみ・ゆかを かえる', short: 'もようがえ', can: true, act: () => ui.openPanel('decor') }), -0.1, 1.2, 120);
     if (r.kitchen) test(r.kitchen.x, r.kitchen.z, 2.2, () => ({ label: 'りょうりを する', sub: 'ざいりょうで おいしいごはん', short: 'りょうり', can: true, act: () => ui.openPanel('cook') }), -0.2, 1.2, 140);
     for (const f of state.furni) if (f.k === 'workbench') test(f.x, f.z, 2.6, () => ({ label: 'さぎょうだい', sub: 'バトルの ざいりょうで ボールを つくる', short: 'つくる', can: true, act: () => ui.openPanel('craft') }), -0.2, 1.2, 130);
     if (r.bed) test(r.bed.x, r.bed.z + 0.5, 2.4, () => ({ label: 'ベッドで やすむ', sub: 'あさまで ぐっすり(セーブされるよ)', short: 'ねる', can: true, act: sleep }), -0.4, 0.8, 140); }
-  else COOP_SPOTS.forEach((_, k) => { const d = coopDoorPos(k); if (d && ROOMS.coops[k]) test(d.x, d.z, 2.2, () => ({ label: 'とりごやに はいる', sub: 'なかで たまごが ひろえるよ', short: 'はいる', can: true, act: () => goRoom(ROOMS.coops[k], ROOMS.coops[k].spawn, Math.PI, 5.6) }), 0.6, 1.2, 130); });
+  else if (casinoBuilt && ROOMS.casino) { const d = casinoDoorPos(); test(d.x, d.z, 2.6, () => ({ label: 'カジノに はいる', sub: 'ディーラーと トランプや オセロで あそべるよ', short: 'はいる', can: true, act: () => goRoom(ROOMS.casino, ROOMS.casino.spawn, Math.PI, 6.2) }), 0.6, 1.2, 130); }
+  if (!P.room) COOP_SPOTS.forEach((_, k) => { const d = coopDoorPos(k); if (d && ROOMS.coops[k]) test(d.x, d.z, 2.2, () => ({ label: 'とりごやに はいる', sub: 'なかで たまごが ひろえるよ', short: 'はいる', can: true, act: () => goRoom(ROOMS.coops[k], ROOMS.coops[k].spawn, Math.PI, 5.6) }), 0.6, 1.2, 130); });
   { const sh = world.spots.ship; test(sh.x, sh.z + 1.2, 3.0, () => ({ label: 'しゅっかばこ', sub: 'いれたものは あさに うれるよ', short: 'いれる', can: true, act: () => ui.openPanel('ship') }), 0.5, 0.6, 120); }
   for (const st of world.spots.stalls) test(st.at.x, st.at.z, 3.0, () => ({ label: `${st.name}を みる`, sub: st.id === 'tane' ? 'たね を かえるよ' : 'うる・かう', short: 'おみせ', can: true, act: () => ui.openPanel('shop', st.id) }), 0.5, 1.5, 150);
   if (!P.room && world.spots.houseDoor) test(world.spots.houseDoor.x, world.spots.houseDoor.z, 2.6, () => ({ label: 'いえに はいる', sub: 'なかに ベッドが あるよ', short: 'はいる', can: true, act: () => goRoom(ROOMS.house, ROOMS.house.spawn, Math.PI, 5.8) }), 0.5, 1.2, 130);
@@ -1157,17 +1160,84 @@ async function buildCoop(k) {
   const M = await loadMesh('coop'); putModel(M, cx, cz, 3.6, 0); addBoxC(cx, cz, 4.2, 3.6); BUILT.coop[k] = rec; rec = null;
   if (!ROOMS.coops[k]) ROOMS.coops[k] = buildCoopRoom(k); state.eggs.filter(e => (e.c || 0) === k && !nodes.some(n => n.egg === e)).forEach(addNestEgg); makeHens();
 }
+// ---------- カジノ(よろずやで けんりしょを かうと むらの なかほどに たつ) ----------
+const CASINO = { x: 15, z: 7, sc: 1.15, rot: -Math.PI / 2 };   // 入口は にし(みち)がわ
+let casinoBuilt = false, dealer = null;
+const casinoDoorPos = () => ({ x: CASINO.x - 4.9 * CASINO.sc, z: CASINO.z });
+function buildCasinoRoom() {
+  const cx = 1000, cz = -400, hw = 5.2, hd = 4.4, H = 3.5, g = new THREE.Group(); villageRoot.add(g);
+  const tl = new THREE.TextureLoader(), tex = (f, rx, ry) => { const t = tl.load(f); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); t.anisotropy = 4; return t; };
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(hw * 2, hd * 2), new THREE.MeshLambertMaterial({ map: tex('./assets/interior/floor_5.jpg', 3, 2.5), color: '#c04050' })); floor.rotation.x = -Math.PI / 2; floor.position.set(cx, 0, cz); g.add(floor);
+  const wall = (w, x, z, ry) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, H), new THREE.MeshLambertMaterial({ map: tex('./assets/interior/wall_4.jpg', w / 3, 1), color: '#a02a3a' })); m.position.set(x, H / 2, z); m.rotation.y = ry; g.add(m); return m; };
+  wall(hw * 2, cx, cz - hd, 0); wall(hw * 2, cx, cz + hd, Math.PI); wall(hd * 2, cx - hw, cz, Math.PI / 2); wall(hd * 2, cx + hw, cz, -Math.PI / 2);
+  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(hw * 2, hd * 2), new THREE.MeshLambertMaterial({ color: '#2d1820' })); ceil.rotation.x = Math.PI / 2; ceil.position.set(cx, H, cz); g.add(ceil);
+  const gold = L('#e0b040'), felt = L('#1f6a3a'), woodD = L('#4a2a1c');
+  for (const [w, x, z, ry] of [[hw * 2, cx, cz - hd + 0.04, 0], [hw * 2, cx, cz + hd - 0.04, Math.PI], [hd * 2, cx - hw + 0.04, cz, Math.PI / 2], [hd * 2, cx + hw - 0.04, cz, -Math.PI / 2]]) { const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.14, 0.08), gold); m.position.set(x, 1.1, z); m.rotation.y = ry; g.add(m); const m2 = m.clone(); m2.position.y = H - 0.12; g.add(m2); }
+  const door = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 2.3), woodD); door.position.set(cx, 1.15, cz + hd - 0.03); door.rotation.y = Math.PI; g.add(door);
+  { const c = document.createElement('canvas'); c.width = 512; c.height = 128; const x = c.getContext('2d'); x.fillStyle = '#16101c'; x.fillRect(0, 0, 512, 128); x.strokeStyle = '#e0b040'; x.lineWidth = 6; x.strokeRect(6, 6, 500, 116); x.fillStyle = '#f4d060'; x.font = 'bold 74px serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('CASINO', 256, 64);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; const m = new THREE.Mesh(new THREE.PlaneGeometry(4, 1), new THREE.MeshBasicMaterial({ map: t })); m.position.set(cx, 2.6, cz - hd + 0.05); g.add(m); }
+  const tz = cz - 1.3, top = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.12, 1.5), felt); top.position.set(cx, 0.78, tz); g.add(top);
+  const rim = new THREE.Mesh(new THREE.BoxGeometry(4.8, 0.16, 1.7), gold); rim.position.set(cx, 0.7, tz); g.add(rim);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.7, 1.4), woodD); body.position.set(cx, 0.35, tz + 0.05); g.add(body);
+  const cardM = L('#f4f0e8'); for (let i = 0; i < 4; i++) { const c = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.015, 0.52), cardM); c.position.set(cx - 0.6 + i * 0.42, 0.85, tz + 0.15); c.rotation.y = (i - 1.5) * 0.12; g.add(c); }
+  [['#d83a3a', -1.6], ['#3a6ad8', -1.35], ['#2a2a2a', 1.4], ['#e0b040', 1.65]].forEach(([col, dx], k) => { for (let j = 0; j < 4 + k; j++) { const ch = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.04, 14), L(col)); ch.position.set(cx + dx, 0.87 + j * 0.045, tz + 0.1); g.add(ch); } });
+  for (const sx of [-3.3, 3.3]) { const t = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, 0.1, 22), felt); t.position.set(cx + sx, 0.9, cz + 1.4); g.add(t); const r = new THREE.Mesh(new THREE.CylinderGeometry(1.02, 1.02, 0.08, 22), gold); r.position.set(cx + sx, 0.84, cz + 1.4); g.add(r); const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.2, 0.84, 10), woodD); leg.position.set(cx + sx, 0.42, cz + 1.4); g.add(leg);
+    for (const a of [0.6, 2.7, 4.8]) { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.5, 12), L('#b0283c')); st.position.set(cx + sx + Math.cos(a) * 1.45, 0.25, cz + 1.4 + Math.sin(a) * 1.45); g.add(st); } }
+  const ch = new THREE.Mesh(new THREE.TorusGeometry(0.8, 0.07, 8, 24), gold); ch.rotation.x = Math.PI / 2; ch.position.set(cx, H - 0.6, cz + 0.9); g.add(ch);
+  for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4, b = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), new THREE.MeshBasicMaterial({ color: '#fff2b0' })); b.position.set(cx + Math.cos(a) * 0.8, H - 0.55, cz + 0.9 + Math.sin(a) * 0.8); g.add(b); }
+  const boxes = [{ minx: cx - 2.5, maxx: cx + 2.5, minz: tz - 0.95, maxz: tz + 0.95 }, ...[-3.3, 3.3].map(sx => ({ minx: cx + sx - 1.1, maxx: cx + sx + 1.1, minz: cz + 0.3, maxz: cz + 2.5 }))];
+  return { group: g, bounds: { minx: cx - hw + 0.5, maxx: cx + hw - 0.5, minz: cz - hd + 0.5, maxz: cz + hd - 0.55 }, boxes, nests: [], nestY: 0, y: 0, exit: { x: cx, z: cz + hd - 0.5 }, spawn: { x: cx, z: cz + hd - 1.5 }, light: { x: cx, y: 2.7, z: cz + 0.2, i: 34 }, outPos: casinoDoorPos, dealerAt: { x: cx, z: tz - 0.95 }, cx, cz };
+}
+async function buildCasino(announce) {
+  if (casinoBuilt || count('casino_deed') < 1) return; casinoBuilt = true;
+  const { x, z, sc, rot } = CASINO;
+  try {
+    const gl = await loader.loadAsync('./assets/casino_lite.glb'), obj = gl.scene; obj.traverse(o => { if (o.isMesh) { o.castShadow = !isTouch; o.receiveShadow = true; } });
+    const sg = new THREE.Group(); sg.add(obj); sg.scale.setScalar(sc); sg.rotation.y = rot; sg.position.set(x, heightAt(x, z), z); villageRoot.add(sg);
+    { const c = document.createElement('canvas'); c.width = 1024; c.height = 280; const g2 = c.getContext('2d'); g2.fillStyle = '#16101c'; g2.fillRect(0, 0, 1024, 280); g2.fillStyle = '#ffd860'; g2.shadowColor = '#ff9a30'; g2.shadowBlur = 24; g2.font = 'bold 150px serif'; g2.textAlign = 'center'; g2.textBaseline = 'middle'; g2.fillText('CASINO', 512, 120); g2.shadowBlur = 0; g2.fillStyle = '#ff7aa0'; g2.font = 'bold 56px sans-serif'; g2.fillText('カ ジ ノ', 512, 232);
+      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; const m = new THREE.Mesh(new THREE.PlaneGeometry(5.4, 1.45), new THREE.MeshBasicMaterial({ map: t })); m.position.set(0, 5.9, 2.9); obj.add(m); }
+    world.hideGrass(x - 5.4 * sc, z - 4.6 * sc, x + 5.4 * sc, z + 4.6 * sc);
+    world.colliders.boxes.push({ minx: x - 3.5 * sc, maxx: x + 3.5 * sc, minz: z - 4.3 * sc, maxz: z + 4.3 * sc });
+  } catch (e) { console.warn('casino model', e); }
+  if (!ROOMS.casino) {
+    ROOMS.casino = buildCasinoRoom();
+    try {
+      const gl = await loader.loadAsync('./assets/dealer_lite.glb'), obj = gl.scene; obj.traverse(o => { if (o.isMesh) o.castShadow = false; });
+      const box = new THREE.Box3().setFromObject(obj), h = box.getSize(new V3()).y, k = 2.0 / h, cn = box.getCenter(new V3()); obj.scale.setScalar(k); obj.position.set(-cn.x * k, -box.min.y * k, -cn.z * k);
+      const outer = new THREE.Group(); outer.add(obj); const d = ROOMS.casino.dealerAt; outer.position.set(d.x, 0.32, d.z); villageRoot.add(outer); const pod = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.32, 1.3), L('#3a2418')); pod.position.set(d.x, 0.16, d.z); villageRoot.add(pod); dealer = { outer, obj, x: d.x, z: d.z, t: 0 };
+    } catch (e) { console.warn('dealer', e); }
+  }
+  if (announce) { ui.toast('カジノ', 'むらに カジノが たったよ! ディーラーに はなしかけて あそんでね', '', 4200); sfx('quest'); }
+}
 async function rebuildPlaced() {
   if (state.plots.some(p => p.x == null)) state.plots = [];   // むかしの セーブ(固定の畑)は つくりなおし
   state.plots.forEach(p => { world.hideGrass(p.x - 1.8, p.z - 1.8, p.x + 1.8, p.z + 1.8); addPlotVisual(p); });
   state.cleared.forEach(c => { world.hideGrass(c.x - 1.8, c.z - 1.8, c.x + 1.8, c.z + 1.8); addCleared(c); });
   for (let i = 0; i < state.wells.length; i++) await buildWell(state.wells[i], i);
   await fenceInit(); makeAnimals(); for (let k = 0; k < state.barns.length; k++) await buildBarn(k); for (let k = 0; k < state.coops.length; k++) await buildCoop(k);
+  await buildCasino(false);
 }
-bus.on('spawnAnimal', (k) => {
-  if (k === 'cow') { const b = Math.max(0, state.barns.findIndex((_, bi) => state.cows.filter(o => o.b === bi).length < 3)); state.cows.push({ hunger: 0.3, friend: 0, milked: false, b }); addCow(state.cows.length - 1); }
+// かった どうぶつに なまえを つける(うし・ペットの ちんちら。あとから メニューでも かえられる)
+function askAnimalName(label, base) {
+  return new Promise(res => {
+    const m = document.createElement('div'); m.id = 'namemodal'; m.style.zIndex = 200;
+    m.innerHTML = `<div class="box"><h3>${label}の なまえは?</h3><p>なかまに なった ${label}に なまえを つけよう(8もじまで)</p><input id="anIn" type="text" maxlength="8" value="${base}" autocomplete="off"><button id="anOk" class="pill">これで きまり</button></div>`;
+    document.body.appendChild(m); const inp = m.querySelector('#anIn'); setTimeout(() => { try { inp.focus(); inp.select(); } catch {} }, 100);
+    const ok = () => { const v = inp.value.trim().slice(0, 8) || base; m.remove(); res(v); };
+    m.querySelector('#anOk').onclick = ok; inp.addEventListener('keydown', e => { if (e.key === 'Enter') ok(); });
+  });
+}
+bus.on('spawnAnimal', async (k) => {
+  if (k === 'cow') {
+    const i = state.cows.length, b = Math.max(0, state.barns.findIndex((_, bi) => state.cows.filter(o => o.b === bi).length < 3));
+    state.cows.push({ hunger: 0.3, friend: 0, milked: false, b });
+    const base = COW_DEF[i % COW_DEF.length].name, v = await askAnimalName('うし', base); state.names = state.names || {}; if (v !== base) state.names['cow:' + i] = v; addCow(i);
+  }
   else if (k === 'hen') { const c = Math.max(0, state.coops.findIndex((_, ci) => state.chickens.filter(o => o.c === ci).length < 6)); state.chickens.push({ friend: 0, fed: false, c }); addHen(state.chickens.length - 1); }
-  else { state.animals.push({ hunger: 0.4, friend: 0 }); addAnimal(state.animals.length - 1); }
+  else {
+    const i = state.animals.length; state.animals.push({ hunger: 0.4, friend: 0 });
+    const base = ANIMAL_DEF[i % ANIMAL_DEF.length].name, v = await askAnimalName('ちんちら', base); state.names = state.names || {}; if (v !== base) state.names['pet:' + i] = v; addAnimal(i);
+  }
   sfx('quest'); doSave();
 });
 const waterCap = () => BUCKET.caps[Math.min(BUCKET.caps.length - 1, state.bucketLv || 0)];
@@ -1442,7 +1512,7 @@ function waterTarget() {
 const rewardText = (r) => [r.coins ? `${r.coins}コイン` : '', ...Object.entries(r.items || {}).map(([k, v]) => `${ITEMS[k].name}×${v}`)].filter(Boolean).join(' / ');
 bus.on('questDone', (q) => { sfx('quest'); ui.toast('QUEST CLEAR', q.title, 'ほうしゅう: ' + rewardText(q.reward), 4400); ui.setGoal(); ui.setCoins(); });
 bus.on('questNew', (q) => { setTimeout(() => { ui.toast('NEW QUEST', q.title, '', 4200); ui.setGoal(); }, 2600); });
-bus.on('coins', () => ui.setCoins());
+bus.on('coins', () => { ui.setCoins(); if (!casinoBuilt && count('casino_deed') > 0) buildCasino(true); });
 bus.on('saveNow', () => { if (doSave()) ui.toast('セーブ', 'セーブしました!', '', 2200); else ui.toast('セーブ', 'セーブできませんでした', 'ブラウザの ほぞんスペースを かくにんしてね', 4000); });
 bus.on('toTitle', () => { doSave(); location.reload(); });
 bus.on('eat', (heal, id) => { P.stam = Math.min(100, P.stam + heal); if (P.stam >= 28) P.lock = false; P.regen = 0; sfx('feed'); ui.toast('ごちそうさま', `${ITEMS[id].name}を たべたよ`, `たいりょく +${heal}`, 2400); burst('heart', P.pos.clone().setY(P.pos.y + 1.1), 5, { size: 0.35, life: 1.2 }); });

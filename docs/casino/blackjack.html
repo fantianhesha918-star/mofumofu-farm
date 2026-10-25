@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ブラックジャック</title>
+<style>
+  :root{ --felt:#1f6a3a; --felt2:#17512c; --gold:#e0b040; --cw:min(22vw,86px); }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;min-height:100dvh;background:radial-gradient(circle at 50% 30%,var(--felt),var(--felt2) 75%);color:#fff;font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;display:flex;flex-direction:column;align-items:center;padding:56px 12px 20px}
+  h1{margin:0 0 4px;font-size:20px;color:#f4d060;letter-spacing:.08em}
+  .sub{margin:0 0 14px;font-size:12.5px;opacity:.85;text-align:center;line-height:1.6}
+  .area{width:100%;max-width:480px;margin-bottom:14px}
+  .lab{display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px}
+  .lab b{color:#f4d060}
+  .hand{display:flex;flex-wrap:wrap;min-height:calc(var(--cw)*1.5);padding-left:calc(var(--cw)*.4)}
+  .card{width:var(--cw);aspect-ratio:2/3;margin-left:calc(var(--cw)*-.4);border-radius:calc(var(--cw)*.11);background:#fff center/cover no-repeat;box-shadow:0 2px 6px #0007;animation:deal .25s ease-out}
+  @keyframes deal{from{transform:translateY(-24px) scale(.9);opacity:0}to{transform:none;opacity:1}}
+  .msg{min-height:54px;text-align:center;font-size:18px;font-weight:bold;color:#fff;margin:4px 0 10px;line-height:1.5}
+  .msg small{display:block;font-size:12.5px;font-weight:normal;opacity:.9}
+  .btns{display:flex;gap:10px;justify-content:center}
+  button.act{min-width:110px;padding:13px 18px;font-size:16px;font-weight:bold;border:0;border-radius:24px;background:linear-gradient(#f4d060,#d09a20);color:#3a2410;box-shadow:0 3px 0 #8a6414}
+  button.act:disabled{opacity:.4}
+  button.act.sub2{background:linear-gradient(#e8e4d8,#bdb8a8);box-shadow:0 3px 0 #7a7668}
+</style>
+</head>
+<body>
+<h1>ブラックジャック</h1>
+<p class="sub">カードの ごうけいを 21に ちかづけよう。21を こえたら まけ。ディーラーは 17いじょうに なるまで ひくよ(Aは 1か 11、絵札は 10)</p>
+<div class="area"><div class="lab"><span>ディーラー</span><b id="dv"></b></div><div class="hand" id="dh"></div></div>
+<div class="msg" id="msg"></div>
+<div class="area"><div class="lab"><span>あなた</span><b id="pv"></b></div><div class="hand" id="ph"></div></div>
+<div class="btns" id="btns"></div>
+<script>
+(function(){
+  const SUITS=["S","H","D","C"];
+  let deck=[],P=[],D=[],phase="idle",done=false;
+  const $=id=>document.getElementById(id);
+  function shuffle(){ deck=[]; for(const s of SUITS)for(let r=1;r<=13;r++)deck.push({s,r}); for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];} }
+  const val=c=>c.r===1?11:Math.min(c.r,10);
+  function total(h){ let t=0,a=0; for(const c of h){t+=val(c); if(c.r===1)a++;} while(t>21&&a>0){t-=10;a--;} return t; }
+  const isBJ=h=>h.length===2&&total(h)===21;
+  function cardEl(c,down){ const d=document.createElement("div"); d.className="card"; d.style.backgroundImage="url(assets/cards/"+(down?"back":c.s+c.r)+".webp)"; return d; }
+  function render(hideDealer){
+    const render1=(el,h,hide)=>{ el.innerHTML=""; h.forEach((c,i)=>el.appendChild(cardEl(c,hide&&i===1))); };
+    render1($("ph"),P,false); render1($("dh"),D,hideDealer);
+    $("pv").textContent=P.length?total(P):""; $("dv").textContent=D.length?(hideDealer?val(D[0])===11?"?":val(D[0])+" + ?":total(D)):"";
+  }
+  function setBtns(list){ const b=$("btns"); b.innerHTML=""; list.forEach(([t,fn,cls])=>{ const x=document.createElement("button"); x.className="act "+(cls||""); x.textContent=t; x.onclick=fn; b.appendChild(x); }); }
+  function msg(t,s){ $("msg").innerHTML=t+(s?"<small>"+s+"</small>":""); }
+  function report(result){ try{ parent.postMessage({casino:1,game:"blackjack",result:result,place:0},"*"); }catch(e){} }
+  function start(){
+    shuffle(); P=[deck.pop(),deck.pop()]; D=[deck.pop(),deck.pop()]; phase="play"; done=false; msg("ヒット か スタンド?","");
+    render(true);
+    if(isBJ(P)||isBJ(D)){ finish(); return; }
+    setBtns([["ヒット",hit],["スタンド",stand,"sub2"]]);
+  }
+  function hit(){ if(phase!=="play")return; P.push(deck.pop()); render(true); if(total(P)>=21){ if(total(P)>21){finish();} else stand(); } }
+  function stand(){ if(phase!=="play")return; phase="dealer"; setBtns([]); render(false); step(); }
+  function step(){ if(total(D)<17){ setTimeout(()=>{ D.push(deck.pop()); render(false); step(); },650); } else finish(); }
+  function finish(){
+    phase="done"; render(false); const p=total(P),d=total(D); let r,t,s="";
+    if(isBJ(P)&&isBJ(D)){ r="draw"; t="りょうほう ブラックジャック! ひきわけ"; }
+    else if(isBJ(P)){ r="win"; t="ブラックジャック! かち!"; s="さいしょの 2まいで 21!"; }
+    else if(isBJ(D)){ r="lose"; t="ディーラーが ブラックジャック… まけ"; }
+    else if(p>21){ r="lose"; t="バースト! まけ"; s="21を こえちゃった"; }
+    else if(d>21){ r="win"; t="ディーラーが バースト! かち!"; }
+    else if(p>d){ r="win"; t="かち!"; s=p+" たい "+d; }
+    else if(p<d){ r="lose"; t="まけ…"; s=p+" たい "+d; }
+    else { r="draw"; t="ひきわけ"; s=p+" どうてん"; }
+    msg(t,s); report(r); setBtns([["もういちど",start]]);
+  }
+  setBtns([["はじめる",start]]); msg("じゅんびは いい?","");
+})();
+</script>
+<button id="casinoClose" type="button" style="position:fixed;right:10px;top:max(8px,env(safe-area-inset-top));z-index:9999;padding:6px 14px;border-radius:16px;border:1px solid #fff6;background:#000a;color:#fff;font-size:14px">カジノにもどる</button>
+<script>document.getElementById('casinoClose').onclick=function(){try{parent.postMessage({casino:1,close:1},'*');}catch(e){}};</script>
+</body>
+</html>
