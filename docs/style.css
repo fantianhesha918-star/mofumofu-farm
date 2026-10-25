@@ -476,3 +476,13 @@ body:not(.touch) #hotbar .tog span { display: none; }
 #bt.dbl .bt-a2 { left: auto; right: 2%; bottom: 2%; }
 .bt-aimg2 { transform: scaleX(-1); }
 .bt-aimg2.faint { transform: scaleX(-1) translateY(24px) scale(.8); }
+
+/* ぶんしょうの かいぎょう: ことばの とちゅうでは きらない(スペースの ところで おりかえす) */
+body { word-break: keep-all; overflow-wrap: break-word; line-break: strict; }
+.row { flex-wrap: wrap; row-gap: 6px; }
+.row .grow { flex: 1 1 150px; }
+.row .pill { flex: none; }
+.bt-cmd button small { word-break: keep-all; }
+.row:has(.pill + .pill + .pill) .grow { flex-basis: 100%; }
+.tabs { flex-wrap: wrap; overflow: visible; }
+.tabs button { flex: 1 1 auto; min-width: 22%; padding-left: 6px; padding-right: 6px; }
