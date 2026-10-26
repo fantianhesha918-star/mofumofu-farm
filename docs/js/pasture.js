@@ -25,7 +25,7 @@ export async function pastureDay() {
     const key = DROP_BY_ELEMENT[d.element || 'none']; if (key && Math.random() < 0.28) items[key] = (items[key] || 0) + 1;
     if (Math.random() < 0.22) items.monster_fur = (items.monster_fur || 0) + 1;
     m.exp = (m.exp || 0) + Math.round(needExp(m.lv, m.id) * 0.25); m.bond = (m.bond || 0) + 1; const lv0 = m.lv;
-    while (m.lv < 99 && m.exp >= needExp(m.lv, m.id)) { m.exp -= needExp(m.lv, m.id); m.lv++; }
+    while (m.lv < 999 && m.exp >= needExp(m.lv, m.id)) { m.exp -= needExp(m.lv, m.id); m.lv++; }
     if (m.lv > lv0) up.push(d.name);
     const ev = GD.MONSTERS[m.id].evolvesTo; if (ev && m.lv >= ev.level && GD.MONSTERS[ev.id]) { evo.push([d.name, GD.MONSTERS[ev.id].name]); m.id = ev.id; state.mdex[ev.id] = 2; m.moves = null; }
   }

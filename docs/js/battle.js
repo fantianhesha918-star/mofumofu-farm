@@ -112,6 +112,7 @@ export const sizeMul = (id, boss) => {
   else { const next = !!(d.evolvesTo || d.evolveStone), pre = preIds().has(id); k = next && !pre ? 0.84 : next && pre ? 0.92 : pre ? 1.0 : 0.92; }
   return boss ? Math.max(k, 1.0) * 1.1 : k;
 };
+export const MAX_LV = 999;   // レベルの じょうげん
 export const needExp = (lv, id) => Math.max(6, Math.round(GD.expToNext(lv) * 0.6 * (id ? growthMul(id) : 1)));   // スピーディに レベルアップ
 // あいての レベルと じぶんの レベルの さで もらえる けいけんちが かわる(ポケモンふう)。じょばんは おおめ
 export const expLevelMul = (myLv, foeLv) => {
@@ -866,7 +867,7 @@ export async function runBattle(enemyId0, opts = {}) {
     const a = state.party[ai], ad = GD.MONSTERS[a.id], xp = xpOf(a);
     xpLog.push([monName(a), xp, false]); msg(`${xp} の けいけんちを てにいれた!`); a.exp = (a.exp || 0) + xp; await sleep(900);
     a.bond = (a.bond || 0) + 1;   // いっしょに たたかうと なかよしに
-    while (a.exp >= needExp(a.lv, a.id)) {
+    while (a.lv < MAX_LV && a.exp >= needExp(a.lv, a.id)) {
       const before = knownOf(a), oldLv = a.lv, oldSt = monStats(a); a.exp -= needExp(a.lv, a.id); a.lv++; a.hp = hpOf({ ...a, hp: null }); draw(); sfx('levelup'); msg(`${monName(a)} は レベル ${a.lv} に あがった!`); await levelPopup(monName(a), oldLv, a.lv, oldSt, monStats(a));
       await learnNew(a, before);
       const ev = GD.MONSTERS[a.id].evolvesTo; if (ev && a.lv >= ev.level && GD.MONSTERS[ev.id]) await evolve(a, ev.id);
@@ -877,7 +878,7 @@ export async function runBattle(enemyId0, opts = {}) {
       if (m === a) continue; const full = fought.has(m), gain = Math.max(1, Math.round(xpOf(m) * (full ? 1 : 0.5))), nm = monName(m);
       xpLog.push([nm, gain, !full]); m.exp = (m.exp || 0) + gain; if (full) m.bond = (m.bond || 0) + 1;
       msg(`${nm} も ${gain} の けいけんちを てにいれた!${full ? '' : '(ひかえ)'}`); await sleep(800);
-      while (m.exp >= needExp(m.lv, m.id)) {
+      while (m.lv < MAX_LV && m.exp >= needExp(m.lv, m.id)) {
         const before = knownOf(m), oldLv = m.lv, oldSt = monStats(m), alive = hpOf(m) > 0; m.exp -= needExp(m.lv, m.id); m.lv++; if (alive) m.hp = null; sfx('levelup');
         msg(`${nm} は レベル ${m.lv} に あがった!`); await levelPopup(nm, oldLv, m.lv, oldSt, monStats(m));
         movesOf(m); for (const sk of knownOf(m).filter(x => !before.includes(x))) if (m.moves.length < 4) { m.moves.push(sk); msg(`${nm} は ${GD.SKILLS[sk].name} を おぼえた!`); await sleep(1000); }
