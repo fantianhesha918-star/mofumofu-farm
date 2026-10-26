@@ -300,6 +300,7 @@ const outTo = (node, r = 0.25, dly = 0) => {
 const osc = (type, f, t, end, det = 0, vib = false) => { const o = ac.createOscillator(); o.type = type; o.frequency.value = f; if (det) o.detune.value = det; if (vib) G.vib.connect(o.detune); o.start(t); o.stop(end); return o; };
 function env(g, t, dur, vol, a, d, s, r) { const e = t + Math.max(dur, a + d + 0.02); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + a); g.gain.linearRampToValueAtTime(vol * s, t + a + d); g.gain.setValueAtTime(vol * s, e); g.gain.exponentialRampToValueAtTime(0.0001, e + r); return e + r + 0.05; }
 const lp = (f, q = 0.7) => { const x = ac.createBiquadFilter(); x.type = 'lowpass'; x.frequency.value = f; x.Q.value = q; return x; };
+let subCurve = null;
 let pwCtx = null, pwMap = {};
 function pulseWave(d) { if (pwCtx !== ac) { pwCtx = ac; pwMap = {}; } if (pwMap[d]) return pwMap[d]; const N = 32, re = new Float32Array(N), im = new Float32Array(N); for (let n = 1; n < N; n++) { re[n] = 2 / (n * Math.PI) * Math.sin(n * Math.PI * d); im[n] = 2 / (n * Math.PI) * (1 - Math.cos(n * Math.PI * d)); } return pwMap[d] = ac.createPeriodicWave(re, im); }
 function voice(inst, f, t, dur, vol, o = {}) {
@@ -328,6 +329,7 @@ function voice(inst, f, t, dur, vol, o = {}) {
     case 'pulse': case 'pulse25': { end = env(g, t, dur, vol, 0.003, 0.06, 0.7, 0.04); const o = ac.createOscillator(); o.setPeriodicWave(pulseWave(inst === 'pulse' ? 0.5 : 0.25)); o.frequency.value = f; o.start(t); o.stop(end); outTo(g, r ?? 0.04, 0); o.connect(g); break; }
     case 'wavebass': { end = env(g, t, dur, vol, 0.002, 0.03, 0.9, 0.02); osc('triangle', f, t, end).connect(g); outTo(g, 0, 0); break; }
     case 'synpad': { end = env(g, t, dur, vol, 0.05, 0.15, 0.8, 0.2); const fl = lp(Math.min(2800, f * 4)); fl.connect(g); [-10, 0, 10].forEach(d => osc('sawtooth', f, t, end, d, true).connect(fl)); outTo(g, r ?? 0.3, dl); break; }
+    case 'subbass': { end = env(g, t, dur, vol, 0.012, 0.1, 0.85, 0.08); const sh = ac.createWaveShaper(); if (!subCurve) { subCurve = new Float32Array(256); for (let i = 0; i < 256; i++) subCurve[i] = Math.tanh((i / 128 - 1) * 2.6); } sh.curve = subCurve; osc('sine', f, t, end).connect(sh); sh.connect(g); outTo(g, 0, 0); break; }   // 小さな スピーカーでも きこえるよう 倍音(ひずみ)つき
     case 'sleg': { end = env(g, t, dur, vol, 0.04, 0.1, 0.85, 0.12); const fl = lp(Math.min(3400, f * 5)); fl.connect(g); [-8, 8].forEach(d => osc('sawtooth', f, t, end, d, true).connect(fl)); outTo(g, r ?? 0.35, dl); break; }
     case 'sstac': { end = env(g, t, Math.min(dur, 0.11), vol, 0.006, 0.05, 0.5, 0.04); const fl = lp(Math.min(3000, f * 6)); fl.connect(g); [-7, 7].forEach(d => osc('sawtooth', f, t, end, d, true).connect(fl)); outTo(g, r ?? 0.18, dl); break; }
     case 'ebass': { end = env(g, t, dur, vol, 0.004, 0.07, 0.65, 0.05); const fl = lp(1100); fl.frequency.setValueAtTime(1100, t); fl.frequency.exponentialRampToValueAtTime(380, t + 0.12); fl.connect(g); osc('sawtooth', f, t, end).connect(fl); const sb = osc('sine', f, t, end), sg = ac.createGain(); sg.gain.value = 0.8; sb.connect(sg); sg.connect(g); outTo(g, 0, 0); break; }
@@ -384,8 +386,8 @@ function scheduleStep(tr, s, t, sd) {
   if (tr.brk >= 0 && bar === tr.brk + 1 && st === 0) { perc('crash', t, 0.3 * gg); perc('boom', t, 0.55 * gg); }
   if (!brk) {
     for (const l of tr.L_lead) { if (!on(l, P)) continue; const nb = l.bars_.length, notes = l.bars_[sb % nb] || []; for (const [ms, m, len] of notes) if (ms === st) voice(l.i, mtof(m + 12 * (l.oct || 0) + trp), t, sd * len * (l.leg || 0.93), l.v * gg, l); }
-    for (const l of tr.L_bass) { if (!on(l, P)) continue; const c = ch(l.p, st); if (c === '.') continue; let len = 1; while (len < 16 && ch(l.p, st + len) === '.') len++; voice(l.i, mtof(ct[0] - 12 + trp + (c === '5' ? 7 : c === '8' ? 12 : c === '3' ? ct[1] - ct[0] : 0)), t, sd * len * 0.9, l.v * gg, l); }
-    for (const l of tr.L_arp) { if (!on(l, P)) continue; const c = ch(l.p, st); if (c === '.') continue; const ix = +c, nm = ct[ix % ct.length] + 12 * Math.floor(ix / ct.length) + (l.up ?? 24) + trp; voice(l.i, mtof(nm), t, sd * (l.len || 1.6), l.v * gg, l); }
+    for (const l of tr.L_bass) { if (!on(l, P)) continue; const c = ch(l.p, st); if (c === '.') continue; let len = 1; while (len < 16 && ch(l.p, st + len) === '.') len++; const bm = ct[0] - 12 + trp + (c === '5' ? 7 : c === '8' ? 12 : c === '3' ? ct[1] - ct[0] : 0); voice(l.i, mtof(bm), t, sd * len * 0.9, l.v * gg * 1.05, l); if (!tr.chip && bm - 12 >= 24) voice('subbass', mtof(bm - 12), t, sd * len * 0.9, l.v * gg * 0.6, {}); }
+    for (const l of tr.L_arp) { if (!on(l, P)) continue; const c = ch(l.p, st); if (c === '.') continue; const ix = +c, nm = ct[ix % ct.length] + 12 * Math.floor(ix / ct.length) + (l.up ?? 24) + trp; voice(l.i, mtof(nm), t, sd * (l.len || 1.6), l.v * gg * ((l.up ?? 24) >= 36 ? 0.65 : 1), l); }
     for (const l of tr.L_stab) { if (!on(l, P)) continue; if (ch(l.p, st) !== 'x') continue; for (const m of ct) voice(l.i, mtof(m + (l.up ?? 12) + trp), t, sd * (l.len || 1.5), l.v * gg * 0.7, l); }
     for (const d of tr.L_drums) {
       if (!on(d, P)) continue; const v = d.v || 1, a = (c, base) => c === 'X' ? base * 1.3 : c === 'g' ? base * 0.5 : base, fillNow = d.fill && sb % 4 === 3 && st >= 12;
@@ -400,8 +402,12 @@ function scheduleStep(tr, s, t, sd) {
 }
 function tick() {
   if (!ac || !cur) return; const tr = TRACKS[cur], sd = 60 / tr.bpm / 4;
+  if (ac.state !== 'running') { try { ac.resume(); } catch {} return; }   // iPhoneで 中断(interrupted/suspended)されたら ふっきする
   if (nextT < ac.currentTime) nextT = ac.currentTime + 0.05;
-  while (nextT < ac.currentTime + 0.35) { scheduleStep(tr, step, nextT, sd); step++; if (step >= tr.n * 16) step = 0; nextT += sd; }
+  while (nextT < ac.currentTime + 1.0) {   // 先よみ1秒: 画面が重くて タイマーが おくれても 音が とぎれにくい
+    try { scheduleStep(tr, step, nextT, sd); } catch (e) { (window.__bgmErr || (window.__bgmErr = [])).push(String(e && e.message || e)); }   // 1音の しっぱいで 曲ぜんたいが 止まらないように
+    step++; if (step >= tr.n * 16) step = 0; nextT += sd;
+  }
 }
 function fadeOut(tb) { if (!tb) return; const now = ac.currentTime; try { tb.mix.gain.cancelScheduledValues(now); tb.mix.gain.setValueAtTime(tb.mix.gain.value, now); tb.mix.gain.linearRampToValueAtTime(0, now + 0.4); tb.send.gain.setValueAtTime(tb.send.gain.value, now); tb.send.gain.linearRampToValueAtTime(0, now + 0.4); tb.dsend.gain.linearRampToValueAtTime(0, now + 0.4); } catch {} setTimeout(() => { try { tb.mix.disconnect(); tb.send.disconnect(); tb.dsend.disconnect(); } catch {} }, 4200); }
 function startNow(name) {
@@ -430,17 +436,19 @@ export function setVolumes(bgm, sfx) {
   if (cfg.bgm && want && !timer) { if (ensure()) startNow(resolve(want)); } else if (!cfg.bgm) { clearInterval(timer); timer = null; cur = null; }
 }
 // 短いファンファーレ
+let jingleBusy = false;
 export function jingle(kind = 'win') {
   if (!ensure()) return; const was = cur, t = ac.currentTime + 0.05, seq = kind === 'catch' ? [[67, 0, .12], [72, .13, .12], [76, .26, .12], [79, .39, .3], [76, .78, .12], [79, .92, .12], [84, 1.06, .2], [83, 1.34, .12], [84, 1.48, .8], [79, 1.48, .8], [76, 1.48, .8]] : kind === 'win' ? [[72, 0, .14], [72, .16, .14], [72, .32, .14], [76, .5, .3], [72, .86, .14], [76, 1.02, .14], [79, 1.2, .5]] : [[79, 0, .12], [76, .12, .12], [72, .24, .12], [67, .36, .4]];
   if (was) { clearInterval(timer); timer = null; fadeOut(tbus); tbus = null; }
   const jb = trackBusTmp(); for (const [m, d, l] of seq) { voiceTmp('lead', mtof(m), t + d, l, 0.16, jb); voiceTmp('bell', mtof(m + 12), t + d, l, 0.08, jb); voiceTmp('bass', mtof(m - 12), t + d, l, 0.14, jb); }
-  if (was) setTimeout(() => { if (want) startNow(resolve(want === 'battle' ? was : want)); }, 2100);
+  if (was) { jingleBusy = true; setTimeout(() => { jingleBusy = false; if (want) startNow(resolve(want === 'battle' ? was : want)); }, 2100); }
 }
 function trackBusTmp() { const b = trackBus(); tbus = b; return b; }
 function voiceTmp(i, f, t, d, v, b) { tbus = b; voice(i, f, t, d, v, {}); }
 // さいしょの タッチで 音を ゆるす(ページを開きなおしても ならせる)
 const unlock = () => { unlockAudio(); const a = audioCtx(); if (a.master) a.master.gain.value = 0.35 * cfg.sfx * 1.6; if (want && !timer) { if (ensure()) startNow(resolve(want)); } };
 ['pointerdown', 'touchend', 'keydown'].forEach(ev => addEventListener(ev, unlock, { once: false, passive: true }));
+setInterval(() => { try { if (cfg.bgm && want && !timer && ac && ac.state !== 'closed' && !jingleBusy) { if (ensure()) startNow(resolve(want)); } } catch {} }, 3000);   // 見はり番: 曲が とまっていたら かけなおす
 document.addEventListener('visibilitychange', () => { const a = audioCtx(); if (!a.ac) return; if (document.hidden) a.ac.suspend(); else a.ac.resume(); });
 
 // ---------- テスト用: オフラインで 曲を レンダリングして 音のおおきさ・エラーを しらべる ----------

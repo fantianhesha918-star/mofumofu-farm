@@ -39,8 +39,8 @@ export function questData() {
 }
 const img = (p) => 'quest/' + p;
 // 2ひきバトル用の はいけい(そとの ばしょごとに 2ひき ならぶ ばしょの えが ある ものだけ)。あしもとの いちは DBL_AN(800x1200の ざひょう)
-const DBL_BG = new Set([]);
-const DBL_AN = {};
+const DBL_BG = new Set(['battle_grass.webp']);
+const DBL_AN = { 'battle_grass_d.webp': { e: [[330, 395], [585, 395]], a: [[215, 885], [538, 885]] } };
 // 画像の下の透明な余白の割合(足もとを台に合わせるため)
 function bottomPad(el) {
   try { const c = document.createElement('canvas'), W = 48, H = 48; c.width = W; c.height = H; const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(el, 0, 0, W, H); const d = g.getImageData(0, 0, W, H).data;
@@ -312,7 +312,7 @@ export async function runBattle(enemyId0, opts = {}) {
     const place = (el, cx, cy, W) => { const dispH = el.naturalWidth ? W * el.naturalHeight / el.naturalWidth : 0, extra = (el._pad || 0) * dispH; el.style.width = W + 'px'; el.style.left = (cx - W / 2) + 'px'; el.style.bottom = (h - cy - 4 * s - extra) + 'px'; el.style.top = 'auto'; el.style.right = 'auto'; el.style.maxHeight = (cy - 8) + 'px'; };
     const eK = (k) => { const f = slotsE[k] || cur; return sizeMul(f.id, bossNow(f)); }, aK = (k) => { const sl = slotsA[k]; return sl && state.party[sl.ai] ? sizeMul(state.party[sl.ai].id) : 1; };
     if (!dbl) { place(eImgs[0], ex, ey, Math.min(ew * eK(0), w * 0.72)); place(aImgs[0], ax, ay, aw * aK(0)); return; }   // しんかの だんかいで おおきさを かえる(ぬしは 2しんかより ひとまわり おおきく)
-    const DA = DBL_AN[bgFile], sp = opts.bg === 'battle_volcano.webp' ? [66, 92] : [72, 100], EP = DA ? DA.e : [[AN.e[0] - sp[0], AN.e[1] + 28], [AN.e[0] + sp[0], AN.e[1] + 28]], AP = DA ? DA.a : [[AN.a[0] - sp[1], AN.a[1] - 48], [AN.a[0] + sp[1], AN.a[1] - 48]], ewd = Math.min(400 * s * 0.38, w * 0.3), awd = Math.min(480 * s * 0.4, w * 0.3);   // 1つの 足場に 2ひき のる(足場の はばに おさまる おおきさ)
+    const DA = DBL_AN[bgFile], sp = opts.bg === 'battle_volcano.webp' ? [92, 118] : [112, 138], EP = DA ? DA.e : [[AN.e[0] - sp[0], AN.e[1] + 28], [AN.e[0] + sp[0], AN.e[1] + 28]], AP = DA ? DA.a : [[AN.a[0] - sp[1], AN.a[1] - 48], [AN.a[0] + sp[1], AN.a[1] - 48]], ewd = Math.min(400 * s * 0.5, w * 0.36), awd = Math.min(480 * s * 0.52, w * 0.38);   // 1つの 足場に 2ひき のる(足場の はばに おさまる おおきさ)
     EP.forEach((pt, k) => place(eImgs[k], ...P(...pt), ewd * eK(k))); AP.forEach((pt, k) => place(aImgs[k], ...P(...pt), awd * aK(k)));
   };
   layout(); const onR = () => layout(); addEventListener('resize', onR); setTimeout(layout, 60); const ro = new ResizeObserver(layout); ro.observe($('.bt-field', root));
