@@ -39,8 +39,8 @@ export function questData() {
 }
 const img = (p) => 'quest/' + p;
 // 2ひきバトル用の はいけい(そとの ばしょごとに 2ひき ならぶ ばしょの えが ある ものだけ)。あしもとの いちは DBL_AN(800x1200の ざひょう)
-const DBL_BG = new Set(['battle_grass.webp']);
-const DBL_AN = { 'battle_grass_d.webp': { e: [[330, 395], [585, 395]], a: [[215, 885], [538, 885]] } };
+const DBL_BG = new Set(['battle_grass.webp','battle_castle.webp','battle_cave.webp','battle_cosmos.webp','battle_dragon.webp','battle_end.webp','battle_forest.webp','battle_ghost.webp','battle_grove.webp','battle_sky.webp','battle_sun.webp','battle_temple.webp','battle_volcano.webp','battle_water.webp']);
+const DBL_AN = { 'battle_castle_d.webp': { e: [[441, 430], [640, 430]], a: [[218, 850], [521, 850]] }, 'battle_cave_d.webp': { e: [[386, 404], [593, 404]], a: [[220, 850], [519, 850]] }, 'battle_cosmos_d.webp': { e: [[445, 430], [644, 430]], a: [[218, 850], [521, 850]] }, 'battle_dragon_d.webp': { e: [[435, 430], [634, 430]], a: [[218, 850], [521, 850]] }, 'battle_end_d.webp': { e: [[435, 430], [638, 430]], a: [[216, 850], [523, 850]] }, 'battle_forest_d.webp': { e: [[446, 430], [643, 430]], a: [[222, 850], [517, 850]] }, 'battle_ghost_d.webp': { e: [[445, 430], [644, 430]], a: [[218, 850], [521, 850]] }, 'battle_grove_d.webp': { e: [[449, 426], [648, 426]], a: [[224, 850], [515, 850]] }, 'battle_sky_d.webp': { e: [[445, 430], [644, 430]], a: [[222, 850], [517, 850]] }, 'battle_sun_d.webp': { e: [[441, 424], [640, 424]], a: [[222, 846], [517, 846]] }, 'battle_temple_d.webp': { e: [[439, 430], [630, 430]], a: [[218, 850], [521, 850]] }, 'battle_volcano_d.webp': { e: [[386, 570], [585, 570]], a: [[245, 920], [494, 920]] }, 'battle_water_d.webp': { e: [[369, 390], [622, 390]], a: [[213, 940], [526, 940]] }, 'battle_grass_d.webp': { e: [[330, 395], [585, 395]], a: [[215, 885], [538, 885]] } };
 // 画像の下の透明な余白の割合(足もとを台に合わせるため)
 function bottomPad(el) {
   try { const c = document.createElement('canvas'), W = 48, H = 48; c.width = W; c.height = H; const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(el, 0, 0, W, H); const d = g.getImageData(0, 0, W, H).data;

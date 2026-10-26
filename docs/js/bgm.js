@@ -329,7 +329,7 @@ function voice(inst, f, t, dur, vol, o = {}) {
     case 'pulse': case 'pulse25': { end = env(g, t, dur, vol, 0.003, 0.06, 0.7, 0.04); const o = ac.createOscillator(); o.setPeriodicWave(pulseWave(inst === 'pulse' ? 0.5 : 0.25)); o.frequency.value = f; o.start(t); o.stop(end); outTo(g, r ?? 0.04, 0); o.connect(g); break; }
     case 'wavebass': { end = env(g, t, dur, vol, 0.002, 0.03, 0.9, 0.02); osc('triangle', f, t, end).connect(g); outTo(g, 0, 0); break; }
     case 'synpad': { end = env(g, t, dur, vol, 0.05, 0.15, 0.8, 0.2); const fl = lp(Math.min(2800, f * 4)); fl.connect(g); [-10, 0, 10].forEach(d => osc('sawtooth', f, t, end, d, true).connect(fl)); outTo(g, r ?? 0.3, dl); break; }
-    case 'subbass': { end = env(g, t, dur, vol, 0.012, 0.1, 0.85, 0.08); const sh = ac.createWaveShaper(); if (!subCurve) { subCurve = new Float32Array(256); for (let i = 0; i < 256; i++) subCurve[i] = Math.tanh((i / 128 - 1) * 2.6); } sh.curve = subCurve; osc('sine', f, t, end).connect(sh); sh.connect(g); outTo(g, 0, 0); break; }   // 小さな スピーカーでも きこえるよう 倍音(ひずみ)つき
+    case 'subbass': { end = env(g, t, dur, vol, 0.012, 0.1, 0.85, 0.08); osc('triangle', f, t, end).connect(g); outTo(g, 0, 0); break; }   // 小さな スピーカーでも きこえる 軽い ひくい音(三角波=倍音つき。ノード数を ふやさない)
     case 'sleg': { end = env(g, t, dur, vol, 0.04, 0.1, 0.85, 0.12); const fl = lp(Math.min(3400, f * 5)); fl.connect(g); [-8, 8].forEach(d => osc('sawtooth', f, t, end, d, true).connect(fl)); outTo(g, r ?? 0.35, dl); break; }
     case 'sstac': { end = env(g, t, Math.min(dur, 0.11), vol, 0.006, 0.05, 0.5, 0.04); const fl = lp(Math.min(3000, f * 6)); fl.connect(g); [-7, 7].forEach(d => osc('sawtooth', f, t, end, d, true).connect(fl)); outTo(g, r ?? 0.18, dl); break; }
     case 'ebass': { end = env(g, t, dur, vol, 0.004, 0.07, 0.65, 0.05); const fl = lp(1100); fl.frequency.setValueAtTime(1100, t); fl.frequency.exponentialRampToValueAtTime(380, t + 0.12); fl.connect(g); osc('sawtooth', f, t, end).connect(fl); const sb = osc('sine', f, t, end), sg = ac.createGain(); sg.gain.value = 0.8; sb.connect(sg); sg.connect(g); outTo(g, 0, 0); break; }
@@ -404,7 +404,7 @@ function tick() {
   if (!ac || !cur) return; const tr = TRACKS[cur], sd = 60 / tr.bpm / 4;
   if (ac.state !== 'running') { try { ac.resume(); } catch {} return; }   // iPhoneで 中断(interrupted/suspended)されたら ふっきする
   if (nextT < ac.currentTime) nextT = ac.currentTime + 0.05;
-  while (nextT < ac.currentTime + 1.0) {   // 先よみ1秒: 画面が重くて タイマーが おくれても 音が とぎれにくい
+  while (nextT < ac.currentTime + 0.6) {   // 先よみ0.6秒: 画面が重くて タイマーが おくれても 音が とぎれにくい
     try { scheduleStep(tr, step, nextT, sd); } catch (e) { (window.__bgmErr || (window.__bgmErr = [])).push(String(e && e.message || e)); }   // 1音の しっぱいで 曲ぜんたいが 止まらないように
     step++; if (step >= tr.n * 16) step = 0; nextT += sd;
   }
