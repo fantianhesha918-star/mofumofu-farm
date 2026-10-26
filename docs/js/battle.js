@@ -39,6 +39,9 @@ export function questData() {
 }
 const img = (p) => 'quest/' + p;
 // 2ひきバトル用の はいけい(そとの ばしょごとに 2ひき ならぶ ばしょの えが ある ものだけ)。あしもとの いちは DBL_AN(800x1200の ざひょう)
+// 2ひき どうじに あたる(ぜんたい)わざ。いりょくは 1ひきぶんより すこし おさえる(×0.8)
+const SPREAD_IDS = new Set(['fire2_1', 'fire2_2', 'fire2_4', 'fire3_1', 'fire4_1', 'fire4_2', 'fire4_3', 'fire4_4', 'shitennou_yougan_blast', 'water2_1', 'water2_2', 'water2_4', 'water2_5', 'water3_3', 'water4_1', 'water4_2', 'water4_3', 'water4_4', 'shitennou_yeti_zero', 'grass1_1', 'grass1_5', 'grass2_2', 'grass3_1', 'grass3_3', 'grass3_4', 'grass4_1', 'grass4_2', 'grass4_4', 'wind1_1', 'wind1_2', 'wind1_3', 'wind1_4', 'wind2_1', 'wind2_2', 'wind2_3', 'wind3_1', 'wind3_2', 'wind3_4', 'wind4_1', 'wind4_2', 'wind4_4', 'earth1_2', 'earth1_4', 'earth2_1', 'earth2_3', 'earth2_5', 'earth3_1', 'earth3_2', 'earth4_1', 'earth4_2', 'earth4_4', 'shitennou_oni_split', 'thunder2_1', 'thunder2_2', 'thunder2_4', 'thunder3_2', 'thunder3_4', 'thunder3_5', 'thunder4_1', 'thunder4_2', 'thunder4_3', 'thunder4_4', 'thunder4_5', 'heaven1_2', 'heaven1_5', 'heaven2_5', 'heaven3_1', 'heaven3_3', 'heaven3_4', 'heaven4_1', 'heaven4_2', 'heaven4_4', 'dark1_2', 'dark2_1', 'dark2_4', 'dark2_5', 'dark3_3', 'dark3_5', 'dark4_1', 'dark4_2', 'dark4_4', 'dark4_5', 'magic2_1', 'magic2_3', 'magic2_4', 'magic3_1', 'magic3_2', 'magic4_1', 'magic4_2', 'magic4_3', 'magic4_4', 'magic4_5', 'shitennou_madoushi_ultima', 'beast1_5', 'beast2_3', 'beast2_4', 'beast3_1', 'beast4_4', 'kami_judgement', 'sig_tempest', 'sig_bloom', 'sig_crash', 'sig_captain', 'sig_twintail', 'sig_ninetail', 'sig_blizzard', 'sig_mist', 'sig_ocean', 'sig_magma', 'sig_meteor', 'sig_comet', 'sig_rainbow', 'sig_crystal', 'sig_silver']);
+export const isSpread = (s) => !!s && s.power > 0 && (SPREAD_IDS.has(s.id) || /^n_\w+_(sweep|vortex|rain|quake)$/.test(s.id) || /^t_\w+_wing$/.test(s.id) || /^sp_(fubuki|jiware|taifuu|tsunami)$/.test(s.id));
 const DBL_BG = new Set(['battle_grass.webp','battle_castle.webp','battle_cave.webp','battle_cosmos.webp','battle_dragon.webp','battle_end.webp','battle_forest.webp','battle_ghost.webp','battle_grove.webp','battle_sky.webp','battle_sun.webp','battle_temple.webp','battle_volcano.webp','battle_water.webp']);
 const DBL_AN = { 'battle_castle_d.webp': { e: [[441, 430], [640, 430]], a: [[218, 850], [521, 850]] }, 'battle_cave_d.webp': { e: [[386, 404], [593, 404]], a: [[220, 850], [519, 850]] }, 'battle_cosmos_d.webp': { e: [[445, 430], [644, 430]], a: [[218, 850], [521, 850]] }, 'battle_dragon_d.webp': { e: [[435, 430], [634, 430]], a: [[218, 850], [521, 850]] }, 'battle_end_d.webp': { e: [[435, 430], [638, 430]], a: [[216, 850], [523, 850]] }, 'battle_forest_d.webp': { e: [[446, 430], [643, 430]], a: [[222, 850], [517, 850]] }, 'battle_ghost_d.webp': { e: [[445, 430], [644, 430]], a: [[218, 850], [521, 850]] }, 'battle_grove_d.webp': { e: [[449, 426], [648, 426]], a: [[224, 850], [515, 850]] }, 'battle_sky_d.webp': { e: [[445, 430], [644, 430]], a: [[222, 850], [517, 850]] }, 'battle_sun_d.webp': { e: [[441, 424], [640, 424]], a: [[222, 846], [517, 846]] }, 'battle_temple_d.webp': { e: [[439, 430], [630, 430]], a: [[218, 850], [521, 850]] }, 'battle_volcano_d.webp': { e: [[386, 570], [585, 570]], a: [[245, 920], [494, 920]] }, 'battle_water_d.webp': { e: [[369, 390], [622, 390]], a: [[213, 940], [526, 940]] }, 'battle_grass_d.webp': { e: [[330, 395], [585, 395]], a: [[215, 885], [538, 885]] } };
 // 画像の下の透明な余白の割合(足もとを台に合わせるため)
@@ -130,7 +133,7 @@ const PHYS_NAME = /アタック|たいあたり|ずつき|タックル|スラッ
 const MAGIC_NAME = /ブラスト|ウェーブ|フィールド|ストーム|ネイチャー|ヒール|クエイク|ノヴァ|ガイア|ブレス|ハウリング|ビーム|オーラ|のろい|ねむり/;
 export const skillKind = (sk) => { const n = sk.name || ''; if (PHYS_NAME.test(n)) return 'phys'; if (MAGIC_EL.has(sk.element)) return 'magic'; return MAGIC_NAME.test(n) ? 'magic' : 'phys'; };
 export const kindLabel = (sk) => isStatusSkill(sk) ? 'へんか' : skillKind(sk) === 'magic' ? 'まほう' : 'ぶつり';
-export const skillShort = (s) => s.power > 0 ? `いりょく ${s.power}　${kindLabel(s)}${fxText(s) ? '　' + fxText(s) : ''}` : `へんか　${fxText(s)}`;
+export const skillShort = (s) => s.power > 0 ? `いりょく ${s.power}　${kindLabel(s)}${isSpread(s) ? '　ぜんたい' : ''}${fxText(s) ? '　' + fxText(s) : ''}` : `へんか　${fxText(s)}`;
 export function abilityOf(id) { const el = (GD.MONSTERS[id] && GD.MONSTERS[id].element) || 'none', list = ABILITY_BY_ELEMENT[el] || ABILITY_BY_ELEMENT.none; return list[(hashId(id) >>> 3) % list.length]; }
 export const holdOf = (m) => (m && m.held && HOLD[m.held]) || {};
 export const abilityName = (id) => ABILITIES[abilityOf(id)].name;
@@ -599,23 +602,35 @@ export async function runBattle(enemyId0, opts = {}) {
     if (ail.k === 'confuse') {
       if (--ail.t <= 0) { S.ail = null; draw(); msg(`${nm} の こんらんが とけた!`); await sleep(800); return true; }
       msg(`${nm} は こんらんしている…`); playAil(side, 'confuse', 1); await sleep(900);
-      if (Math.random() < 0.4) { const n = Math.max(1, Math.round(maxOf(side) * 0.1)); msg(`${nm} は わけも わからず じぶんを こうげきした!`); sfx('no'); hurt(side, n); await hit(imgOf(side)); pop(side, '-' + n, ''); await sleep(700); return false; }
+      if (Math.random() < 0.4) {   // こんらん: わざは でず、じぶん / (2たい2なら) みかた / あいてに あたってしまう
+        const n = Math.max(1, Math.round(maxOf(side) * 0.1)), mine = side === 'a' ? slotsA : slotsE, myK = side === 'a' ? curA : curE, oth = side === 'a' ? liveE() : liveA();
+        const mateK = mine.findIndex((m, i) => m && i !== myK && (side === 'a' ? hpOf(state.party[m.ai]) > 0 : m.e.hp > 0));
+        const opts2 = ['self', 'foe']; if (mateK >= 0) opts2.push('mate'); const ch = oth.length ? opts2[Math.floor(Math.random() * opts2.length)] : 'self';
+        const keepA = curA, keepE = curE, go = (sd2, k) => { if (sd2 === 'a') useA(k); else useE(k); };
+        if (ch === 'self') { msg(`${nm} は わけも わからず じぶんを こうげきした!`); sfx('no'); hurt(side, n); await hit(imgOf(side)); pop(side, '-' + n, ''); await sleep(700); }
+        else {
+          const ts = ch === 'mate' ? side : side === 'a' ? 'e' : 'a', tk = ch === 'mate' ? mateK : oth[Math.floor(Math.random() * oth.length)];
+          go(ts, tk); msg(ch === 'mate' ? `${nm} の わざは まちがって ${nameOf(ts)} に あたってしまった!` : `${nm} の わざは でずに ${nameOf(ts)} に ぶつかってしまった!`); sfx('no'); hurt(ts, n); await hit(imgOf(ts)); pop(ts, '-' + n, ''); await sleep(700);
+          if (side === 'a') { useA(keepA); useE(keepE); } else { useE(keepE); useA(keepA); }
+        }
+        return false;
+      }
     }
     return true;
   };
   const fogMiss = (sk) => battleWx(opts.wx) === 'fog' && skillKind(sk) === 'phys' && Math.random() < 0.25;
-  const allyAttack = async (sk) => {
-    if (!(await actCheck('a'))) return;
+  const allyAttack = async (sk, o = {}) => {
+    if (!o.more && !(await actCheck('a'))) return false;
     const a = state.party[ai], st = allyStats(), ad = GD.MONSTERS[a.id], ab = abilityOf(a.id), fx = fxOf(sk), el = sk.element || ad.element;
-    if (sk.id !== 'struggle') { a.pp = a.pp || {}; a.pp[sk.id] = Math.max(0, ppOf(a, sk) - 1); }
-    msg(`${monName(a)} の ${sk.name}!`); sfx('pick'); await sleep(350);
+    if (!o.more) { if (sk.id !== 'struggle') { a.pp = a.pp || {}; a.pp[sk.id] = Math.max(0, ppOf(a, sk) - 1); }
+    msg(`${monName(a)} の ${sk.name}!`); sfx('pick'); await sleep(350); }
     if (sk.power === 0) {   // へんかわざ(ダメージなし)
       if (fx.foe || fx.st) await playFx(aImg, eImg, sk, el); else { aImg.classList.add('glow'); await sleep(500); aImg.classList.remove('glow'); }
       await useFx('a', fx, true); return;
     }
     if (fogMiss(sk)) { msg('きりで わざが あたらなかった!'); sfx('no'); await sleep(1000); return; }
     await playFx(aImg, eImg, sk, el);
-    const mg = skillKind(sk) === 'magic', r = calc(mg ? st.matk : st.atk, sk.power, eS(mg ? 'mdef' : 'def'), el, def.element, st.crit / 100);
+    const mg = skillKind(sk) === 'magic', r = calc(mg ? st.matk : st.atk, Math.round(sk.power * (o.mul != null ? o.mul : isSpread(sk) && liveE().length > 1 ? 0.8 : 1)), eS(mg ? 'mdef' : 'def'), el, def.element, st.crit / 100);
     let dmg = Math.round(r.dmg * envMul(opts.wx, opts.hour, el)); if (ab === 'pinch' && hpOf(a) < st.maxHp / 3) dmg = Math.round(dmg * 1.3); if (ab === 'typeboost' && el === ad.element) dmg = Math.round(dmg * 1.15); if (e.ab === 'thick') dmg = Math.max(1, Math.round(dmg * 0.88));
     let held = false; if (e.ab === 'fortress' && !cur.fort && dmg >= e.hp && e.hp > 1) { dmg = e.hp - 1; cur.fort = true; held = true; }
     if (E.ail && E.ail.k === 'freeze' && el === 'fire') { E.ail = null; }
@@ -646,25 +661,25 @@ export async function runBattle(enemyId0, opts = {}) {
     if (bossPhase < 2 && e.hp <= e.maxHp * 0.25) { bossPhase = 2; e.atk = Math.round(e.atk * 1.15); e.matk = Math.round(e.matk * 1.15); fieldEl.classList.add('quake'); sfx('no'); msg(`${def.name} は おいつめられて いかりに もえている!`); await sleep(1300); fieldEl.classList.remove('quake'); }
   };
   let finalAlt = 0;
-  const enemyAttack = async () => {
+  const enemyAttack = async (o = {}) => {
     if (hpOf(state.party[ai]) <= 0) return;
-    await bossCheck(); if (e.hp <= 0) return;
-    if (!(await actCheck('e'))) return;
+    if (!o.sk) { await bossCheck(); if (e.hp <= 0) return; if (!(await actCheck('e'))) return; }
     let big = false, sk;
-    if (charged && enemyId === 'mame_chin_kami') { charged = false; big = true; chargeT = 0; sk = bossPhase >= 2 ? { ...BOSS_MOVES.eclipse, power: 118 } : { ...(finalAlt++ % 2 ? BOSS_MOVES.hole : BOSS_MOVES.sun), power: 92 }; }
+    if (o.sk) sk = o.sk;
+    else if (charged && enemyId === 'mame_chin_kami') { charged = false; big = true; chargeT = 0; sk = bossPhase >= 2 ? { ...BOSS_MOVES.eclipse, power: 118 } : { ...(finalAlt++ % 2 ? BOSS_MOVES.hole : BOSS_MOVES.sun), power: 92 }; }
     else if (charged) { charged = false; big = true; chargeT = 0; sk = { id: 'x_big', name: `${def.name} の ぜんりょく こうげき`, power: bossPhase >= 2 ? 105 : 88, element: def.element }; }
     else if (bossPhase >= 1 && ++chargeT >= (bossPhase >= 2 ? 2 : 3)) { chargeT = 0; charged = true; msg(`${def.name} は ちからを ためている…!`); sfx('no'); eImg.classList.add('glow'); await sleep(1400); eImg.classList.remove('glow'); return; }
     else sk = enemyId === 'mame_chin_kami' && Math.random() < 0.45 ? (bossPhase < 1 ? BOSS_MOVES.sun : Math.random() < 0.5 ? BOSS_MOVES.sun : BOSS_MOVES.hole) : enemyPick();
     const a = state.party[ai], st = allyStats(), aab = abilityOf(a.id), fx = fxOf(sk), el = sk.element || def.element;
     if (sk.id === 'boss_eclipse') { msg('たいようと ブラックホールが かさなっていく…!'); sfx('no'); await sleep(1200); }
-    msg(`${sk.id === 'x_big' ? sk.name : def.name + ' の ' + sk.name}!`); await sleep(350);
+    if (!o.sk) { msg(`${sk.id === 'x_big' ? sk.name : def.name + ' の ' + sk.name}!`); await sleep(350); }
     if (sk.power === 0) {
       if (fx.foe || fx.st) await playFx(eImg, aImg, sk, el); else { eImg.classList.add('glow'); await sleep(500); eImg.classList.remove('glow'); }
       await useFx('e', fx, true); return;
     }
     if (!big && fogMiss(sk)) { msg('きりで わざが あたらなかった!'); sfx('no'); await sleep(1000); return; }
     await playFx(eImg, aImg, sk, el);
-    const mg = skillKind(sk) === 'magic', r = calc(eS(mg ? 'matk' : 'atk'), sk.power, mg ? st.mdef : st.def, el, GD.MONSTERS[a.id].element, GD.CRIT_CHANCE + (e.ab === 'sharp' ? 0.1 : 0));
+    const mg = skillKind(sk) === 'magic', r = calc(eS(mg ? 'matk' : 'atk'), Math.round(sk.power * (o.mul != null ? o.mul : !big && isSpread(sk) && liveA().length > 1 ? 0.8 : 1)), mg ? st.mdef : st.def, el, GD.MONSTERS[a.id].element, GD.CRIT_CHANCE + (e.ab === 'sharp' ? 0.1 : 0));
     let dmg = Math.round(r.dmg * envMul(opts.wx, opts.hour, el)); if (guarding) dmg = Math.max(1, Math.round(dmg * (big ? 0.35 : 0.5))); if (e.ab === 'pinch' && e.hp < e.maxHp / 3) dmg = Math.round(dmg * 1.3); if (e.ab === 'typeboost' && el === def.element) dmg = Math.round(dmg * 1.15); if (aab === 'thick') dmg = Math.max(1, Math.round(dmg * 0.88));
     let held = false; if ((aab === 'fortress' || holdOf(a).sash) && !aFort && dmg >= hpOf(a) && hpOf(a) > 1) { dmg = hpOf(a) - 1; aFort = true; held = true; }
     const A = sd('a'); if (A.ail && A.ail.k === 'freeze' && el === 'fire') A.ail = null;
@@ -672,6 +687,7 @@ export async function runBattle(enemyId0, opts = {}) {
     const t = tierText(r.tier, r.crit); if (t) { msg(t); await sleep(650); } else await sleep(250);
     if (held) { msg(`${monName(a)} は ふくつの こころで こらえた!`); await sleep(800); }
     if (fx && hpOf(a) > 0) await useFx('e', fx, false);
+    return !big && !o.sk && isSpread(sk) ? sk : null;   // ぜんたいわざなら、のこりの みかたにも あてる
   };
   // ラウンドの おわり: じこさいせい / りょうりバフの ターンを へらす
   // ---- ボールの えんしゅつ(だす・もどす)。こちらは つかまえた ときの ボールを つかう ----
@@ -933,7 +949,7 @@ export async function runBattle(enemyId0, opts = {}) {
         let v; if (rows.every(r => r.off)) { msg('つかえる わざが ない! わるあがきを するしか ない…'); await sleep(1100); v = STRUGGLE; } else v = await menu(rows, true);
         if (v === '__back') continue; cmd.innerHTML = '';
         let t = liveE()[0];
-        if (v !== '__guard' && liveE().length > 1) { const fx = fxOf(v); if (v.power > 0 || (fx && (fx.foe || fx.st))) { const tv = await pickTarget(); if (tv === '__back') continue; t = tv; } }
+        if (v !== '__guard' && liveE().length > 1 && !isSpread(v)) { const fx = fxOf(v); if (v.power > 0 || (fx && (fx.foe || fx.st))) { const tv = await pickTarget(); if (tv === '__back') continue; t = tv; } }
         return { k, kind: 'skill', sk: v, t };
       }
       if (top === 'item') {
@@ -962,6 +978,7 @@ export async function runBattle(enemyId0, opts = {}) {
     useA(x.k); const a = state.party[ai]; let tj = x.t; if (tj == null || !slotsE[tj] || slotsE[tj].e.hp <= 0) tj = liveE()[0]; if (tj == null) return; useE(tj);
     if (x.kind === 'skill') {
       if (x.sk === '__guard') { sl.guard = true; msg(`${monName(a)} は みを まもっている!`); sfx('pick'); playStrip('fx_guard', aImg, 1.7, 200); sfx('guard'); aImg.classList.add('glow'); await sleep(800); aImg.classList.remove('glow'); }
+      else if (isSpread(x.sk) && liveE().length > 1) { for (const [n, j] of liveE().entries()) { if (!slotsE[j] || slotsE[j].e.hp <= 0 || result) continue; useE(j); if ((await allyAttack(x.sk, n ? { more: true, mul: 0.8 } : {})) === false) break; } }   // ぜんたいわざ: あいて 2ひきに じゅんばんに あたる
       else await allyAttack(x.sk);
     } else if (x.kind === 'item') {
       const v = x.v;
@@ -996,7 +1013,8 @@ export async function runBattle(enemyId0, opts = {}) {
   const doFoe = async (x) => {
     const f = slotsE[x.j]; if (f !== x.foe || f.e.hp <= 0) return;
     const L = liveA(); if (!L.length) return; const k = L[Math.floor(Math.random() * L.length)];
-    useE(x.j); useA(k); guarding = !!slotsA[k].guard; await enemyAttack();
+    const others = L.filter(i => i !== k); useE(x.j); useA(k); guarding = !!slotsA[k].guard; const spk = await enemyAttack();
+    if (spk) for (const k2 of others) { if (result || f.e.hp <= 0 || !slotsA[k2] || hpOf(state.party[slotsA[k2].ai]) <= 0) continue; useE(x.j); useA(k2); guarding = !!slotsA[k2].guard; await enemyAttack({ sk: spk, mul: 0.8 }); }
   };
   let firstRound = true;
   while (!result) {

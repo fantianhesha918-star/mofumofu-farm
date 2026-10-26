@@ -414,6 +414,23 @@ async function talkBoss() {
   const k = await dlgShow(bossBeaten() ? ['……また きたのか。', 'いちど みとめた あいてだ。もう いちど ちからを みせてもらおう!', '(さいせん: 1日1回。かつと ごほうびが もらえるよ。ぬしは つよくなっているよ)'] : (BOSS.lines || ['……']), ['たたかう', 'まだ やめておく']);
   busy = false; if (k === 0) challengeBoss();
 }
+// ---- レベルの そろえ: やせい・トレーナー・してんのうの てしたの レベルを、ぬしの レベルの すこし した(ぬし-12〜ぬし-4)に おさめる ----
+// ステータスは なかまの せいちょう式 × 0.87(これまでの つよさと おなじ くらい)で、レベルに あわせて きめる。ぬしは そのまま。
+let lvMap = null;
+async function foeLevels() {
+  if (lvMap) return lvMap; const GD = await questData(); lvMap = {};
+  const bl = (F.boss && F.boss.over && F.boss.over.level) || 99, hi = bl - 4, lo = Math.max(2, Math.max(bl - 12, Math.round(bl * 0.6)));
+  const ids = [...new Set((F.wild || []).map(([id]) => id))].filter(id => GD.MONSTERS[id]).sort((a, b) => GD.MONSTERS[a].level - GD.MONSTERS[b].level);
+  ids.forEach((id, i) => { lvMap[id] = Math.round(lo + (hi - lo) * (ids.length > 1 ? i / (ids.length - 1) : 0.5)); });
+  return lvMap;
+}
+const STAT_K = 0.87;
+function foeOver(GD, id, lm, bonus = 0, m = {}) {   // bonus: レベルの たしざん / m: hp・atk・def・exp・money の ばいりつ
+  const b = GD.MONSTERS[id], k = F.scale || { lv: 0, hp: 1, atk: 1, def: 1, spd: 1, exp: 1, money: 1 }, bl = (F.boss && F.boss.over && F.boss.over.level) || 99;
+  if (!F.scale || lm[id] == null) { const lv = b.level + k.lv + bonus; return { level: lv, hp: Math.round(b.hp * k.hp * (m.hp || 1)), atk: Math.round(b.atk * k.atk * (m.atk || 1)), def: Math.round(b.def * k.def * (m.def || 1)), spd: Math.round(b.spd * k.spd), exp: Math.round(b.exp * k.exp * (m.exp || 1)), money: Math.round(b.money * k.money * (m.money || 1)) }; }
+  const lv = Math.min(lm[id] + bonus, bl - 2), st = GD.getCompanionStats(b, lv), bo = F.boss.over;   // ぬしの ステータスを こえない(HPは はんぶんちょっと、こうげきは ぬしまで、ぼうぎょは 1.3ばいまで)
+  return { level: lv, hp: Math.round(Math.min(st.maxHp * STAT_K, bo.hp * 0.6) * (m.hp || 1)), atk: Math.round(Math.min(st.atk * STAT_K, bo.atk) * (m.atk || 1)), def: Math.round(Math.min(st.def * STAT_K, bo.def * 1.3) * (m.def || 1)), spd: Math.round(st.spd * 0.95), exp: Math.round(b.exp * k.exp * (m.exp || 1)), money: Math.round(b.money * k.money * (m.money || 1)) };
+}
 // ---- ジムリーダーふう: ぬしの まえに してんのう(てした)が なんたいか れんせんで たたかう ----
 async function gymTeam() {
   const GD = await questData(), k = F.scale || { lv: 0, hp: 1, atk: 1, def: 1, spd: 1, exp: 1, money: 1 }, n = FI < 4 ? 2 : FI === 11 ? 4 : 3;
@@ -422,7 +439,8 @@ async function gymTeam() {
   for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
   // てしたの レベルは ぬしより ひくく(さいごの こほど ぬしに ちかい)。ひくく したぶん ステータスも すこし おとす
   const bossLv = (F.boss && F.boss.over && F.boss.over.level) || 99;
-  return pool.slice(0, n).sort((a, b) => a.level - b.level).map((b, i, arr) => { const lv0 = b.level + k.lv + 3, lv = Math.max(2, Math.min(lv0, bossLv - 2 - (arr.length - 1 - i))), r = lv < lv0 ? Math.max(0.55, lv / lv0) : 1; return ({ id: b.id, name: b.name, over: { level: lv, hp: Math.round(b.hp * k.hp * 1.15 * r), atk: Math.round(b.atk * k.atk * 1.05 * r), def: Math.round(b.def * k.def * 1.05 * r), spd: Math.round(b.spd * k.spd), exp: Math.round(b.exp * k.exp), money: Math.round(b.money * k.money) } }); });
+  const lm = await foeLevels();
+  return pool.slice(0, n).sort((a, b) => (lm[a.id] ?? a.level) - (lm[b.id] ?? b.level)).map((b, i, arr) => { const base = lm[b.id] ?? b.level + k.lv, lvT = Math.min(base + 3, bossLv - 2 - (arr.length - 1 - i)); return { id: b.id, name: b.name, over: foeOver(GD, b.id, { ...lm, [b.id]: lvT }, F.scale ? 0 : lvT - (b.level + k.lv), { hp: 1.15, atk: 1.05, def: 1.05 }) }; });
 }
 async function hallOfFame() {
   const GD = await questData(); state.hof = state.hof || { day: state.day || 1, party: state.party.map(m => m.id) }; save();
@@ -460,7 +478,7 @@ const TRAINER_NAMES = [['ケンジ', 'male'], ['ミサキ', 'female'], ['タク�
 const trainers = [];
 async function makeTrainers() {
   state.trainers = state.trainers || {};
-  const GD = await questData(), fi = Math.max(0, FIDS.indexOf(FID)), n = fi < 2 ? 2 : 3, k = F.scale || { lv: 0, hp: 1, atk: 1, def: 1, spd: 1, exp: 1, money: 1 };
+  const GD = await questData(), lm = await foeLevels(), fi = Math.max(0, FIDS.indexOf(FID)), n = fi < 2 ? 2 : 3, k = F.scale || { lv: 0, hp: 1, atk: 1, def: 1, spd: 1, exp: 1, money: 1 };
   const spots = TRAINER_SPOTS.filter(([x, z]) => !inZone(x, z) && !ZONES.some(([cx, cz, r]) => Math.hypot(x - cx, z - cz) < r + 2) && !isWater(x, z) && !(LC && hAt(x, z) < WATER_Y + 1) && !LAVA.some(([cx, cz, r]) => Math.hypot(x - cx, z - cz) < r + 4) && Math.hypot(x - BOSS.x, z - BOSS.z) > 14 && !circles.some(c => Math.hypot(c.x - x, c.z - z) < 3)).slice(0, n);
   const models = {};
   for (const g of ['male', 'female']) { try { models[g] = await loader.loadAsync(`./assets/human_${g}_lite.glb`); } catch (e) { console.warn('trainer model failed', e); return; } }
@@ -471,7 +489,7 @@ async function makeTrainers() {
     const team = [], used = new Set();
     for (let j = 0; team.length < size && j < 12; j++) {
       const wid = WILD[(fi + i + j * 3) % WILD.length][0]; if (used.has(wid) || !GD.MONSTERS[wid]) continue; used.add(wid); const b = GD.MONSTERS[wid];
-      team.push({ id: wid, over: { level: b.level + k.lv + 2 + (size === 1 ? 3 : 0), hp: Math.round(b.hp * k.hp * 1.15), atk: Math.round(b.atk * k.atk * 1.05), def: Math.round(b.def * k.def * 1.05), spd: Math.round(b.spd * k.spd), exp: Math.round(b.exp * k.exp * 1.6 * share), money: Math.round(b.money * k.money * 2.5 * share) } });
+      team.push({ id: wid, over: foeOver(GD, wid, lm, 2 + (size === 1 ? 3 : 0), { hp: 1.15, atk: 1.05, def: 1.05, exp: 1.6 * share, money: 2.5 * share }) });
     }
     const wild = team[0].id, over = team[0].over;
     const root = models[gender].scene.clone(true); root.traverse(o => { if (o.isMesh && !o.geometry.attributes.normal) o.geometry.computeVertexNormals(); });
@@ -605,7 +623,7 @@ const fade = (on) => { const f = $('#fade'); f.textContent = ''; f.classList.tog
 async function startEncounter(forceId) {
   if (busy) return; busy = true; sfx('quest'); fade(true); await new Promise(r => setTimeout(r, 700));
   const id = forceId || await pickWild(); let over = null;
-  if (F.scale) { const GD = await questData(), b = GD.MONSTERS[id], k = F.scale; over = { level: b.level + k.lv, hp: Math.round(b.hp * k.hp), atk: Math.round(b.atk * k.atk), def: Math.round(b.def * k.def), spd: Math.round(b.spd * k.spd), exp: Math.round(b.exp * k.exp), money: Math.round(b.money * k.money) }; }   // おくの ばしょは すこし つよい
+  if (F.scale) { const GD = await questData(); over = foeOver(GD, id, await foeLevels()); }   // おくの ばしょは すこし つよい
   const res = await runBattle(id, { over, bg: F.bg, wx: WX, hour: hourNow() }); save();
   fade(false); grace = 6; encDist = 0;
   if (res === 'lose') { goVillage(true); return; }
