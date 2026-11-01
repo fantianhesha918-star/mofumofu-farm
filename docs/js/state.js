@@ -52,6 +52,7 @@ const fresh = () => ({
   hour: 7.5,
   day: 1,
   pos: null,
+  where: null,   // いま もりに いるとき { f: フィールド名, x, z }(つづきから で そこから はじめる)
   savedAt: 0,
 });
 export const state = fresh();

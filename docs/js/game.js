@@ -1112,7 +1112,7 @@ function openGate() { if (!state.boss.forest) return goOut('forest'); ui.openPan
 bus.on('goField', (id) => goOut(id));
 function goOut(dest) {
   if (sleeping) return; sleeping = true; const f = $('#fade'); f.textContent = ''; f.classList.add('on'); sfx('quest');
-  setTimeout(() => { state.pos = { x: GATE.x, z: GATE.z + 3.6 }; save(); location.href = (dest === 'lake' ? 'field.html?f=lake' : dest !== 'forest' && dest !== 'lake' ? 'field.html?f=' + dest : 'field.html?f=forest') + '&_=' + Date.now(); }, 800);   // _= は ふるい ページの キャッシュを つかわせない ため
+  setTimeout(() => { state.pos = { x: GATE.x, z: GATE.z + 3.6 }; state.where = null; save(); location.href = (dest === 'lake' ? 'field.html?f=lake' : dest !== 'forest' && dest !== 'lake' ? 'field.html?f=' + dest : 'field.html?f=forest') + '&_=' + Date.now(); }, 800);   // _= は ふるい ページの キャッシュを つかわせない ため
 }
 
 // ---------- 村づくり: 草を刈る・畑・いど・牛舎・鶏小屋を すきな ばしょに ----------
@@ -1605,7 +1605,7 @@ function startGame(isNew) {
 }
 let bakDay = -1;
 function dailyBackup() { try { if (bakDay === state.day) return; const cur = localStorage.getItem('chinchilla-ranch-v2'); const last = +localStorage.getItem('chinchilla-ranch-v2-bakday') || 0; if (cur && last !== state.day) { localStorage.setItem('chinchilla-ranch-v2-bak', cur); localStorage.setItem('chinchilla-ranch-v2-bakday', String(state.day)); } bakDay = state.day; } catch {} }
-function doSave() { if (!started) return false; dailyBackup(); state.pos = { x: P.pos.x, z: P.pos.z }; const ok = save(); if (ok) ui.showSaved(); return ok; }
+function doSave() { if (!started) return false; dailyBackup(); state.pos = { x: P.pos.x, z: P.pos.z }; state.where = null; const ok = save(); if (ok) ui.showSaved(); return ok; }
 addEventListener('pagehide', doSave); document.addEventListener('visibilitychange', () => { if (document.hidden) doSave(); });
 bus.on('saveFail', () => ui.toast('セーブできないよ!', 'ブラウザの ほぞんスペースが つかえないみたい', '「せってい」の「かきだす」で バックアップしてね', 9000));
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch {}   // ブラウザに じどうで けされにくく してもらう
@@ -1632,7 +1632,7 @@ function askStarter() {
   });
 }
 $('#btnNew').onclick = async () => { if (hasSave() && !confirm('いまのセーブデータは きえます。はじめから あそびますか?')) return; const n = await askPlayerName(), sid = await askStarter(); startGame(true); state.names = state.names || {}; state.names.player = n; state.party = [{ id: sid, lv: 5, exp: 0, hp: null }]; state.mdex[sid] = 2; applyPlayerName(); doSave(); };
-$('#btnContinue').onclick = () => startGame(false);
+$('#btnContinue').onclick = () => { load(); if (state.where && state.where.f) { location.href = 'field.html?f=' + state.where.f + '&resume=1&_=' + Date.now(); return; } startGame(false); };   // もりで おわった ときは、もりの そのばしょから
 
 // ---------- メインループ ----------
 const clock = new THREE.Clock(); let T = 0, mmT = 0, lastFrame = 0;

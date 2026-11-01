@@ -580,7 +580,7 @@ function buildGate2() {
 }
 function goNext() {
   busy = true; fading = true; save(); fade(true);
-  setTimeout(() => { state.pos = { x: 0, z: 46 }; save(); location.href = 'field.html?f=' + NEXT + '&_=' + Date.now(); }, 800);
+  setTimeout(() => { state.pos = { x: 0, z: 46 }; state.where = null; save(); location.href = 'field.html?f=' + NEXT + '&_=' + Date.now(); }, 800);
 }
 
 // ---- 入力・移動 ----
@@ -631,7 +631,7 @@ async function startEncounter(forceId) {
 }
 function goVillage(lost) {
   busy = true; fading = true; save(); fade(true);
-  setTimeout(() => { if (lost) healParty(); state.pos = { x: 5, z: -34.4 }; save(); location.href = 'index.html?resume=1&_=' + Date.now(); }, 800);
+  setTimeout(() => { if (lost) healParty(); state.pos = { x: 5, z: -34.4 }; state.where = null; save(); location.href = 'index.html?resume=1&_=' + Date.now(); }, 800);
 }
 
 // ---- ターゲット(ゲート) ----
@@ -879,16 +879,18 @@ async function boot() {
   if (F.flyers) buildFlyers(F.flyers);
   await questData(); const first = giveStarter(); save();
   ui.setCoins(); ui.setClock && ui.setClock(); ui.setLevel && ui.setLevel();
-  P.pos.set(0, hAt(0, SPZ), SPZ); cam.yaw = 0; cam.pitch = 0.36; updateCamera(0, true);
+  { const w = params.has('resume') && state.where && state.where.f === FID ? state.where : null, sx = w ? w.x : 0, sz = w ? w.z : SPZ; if (w && !isWater(sx, sz)) P.pos.set(sx, hAt(sx, sz), sz); else P.pos.set(0, hAt(0, SPZ), SPZ); posReady = true; } cam.yaw = 0; cam.pitch = 0.36; updateCamera(0, true);
   setFieldBgm(FID); $('#loading2').classList.add('done'); updateWxLabel();
   { const h = hourNow(), hints = [WX_HINT[WX], nightK(h) > 0.9 ? 'よるは やみや まほうの モンスターが でやすいよ' : (h >= 7 && h < 17 ? 'ひるまは てんや くさの モンスターが でやすいよ' : '')].filter(Boolean); if (WX !== 'clear' || hints.length) setTimeout(() => ui.toast(`てんき: ${WX_NAME[WX]} / ${timeName(h)}`, hints.join(' / ') || 'おだやかな ひだよ', '', 4200), 1500); } busy = false; fade(false); document.title = 'ready';
   if (first) ui.toast('なかまが できた!', 'まめちんちらが ついてきたよ', 'くさむらを あるくと モンスターが でてくるよ', 5200);
   else ui.toast(F.name, 'くさむらを あるくと モンスターが でてくるよ', FID === 'lake' ? 'ここの モンスターは すこし つよいよ' : '', 3600);
   window.__f = { BOSS, gymTeam, challengeBoss, shrines, challengeLegend, trainers, talkTrainer, talkBoss, cam, hAt, isWater, P, state, startEncounter, runBattle, scene, camera, renderer, goVillage, ZONES, count, addItem, circles };
 }
+let posReady = false;
 unlockAudio(); frame(); boot();
-addEventListener('pagehide', () => { try { save(); } catch {} });
-document.addEventListener('visibilitychange', () => { if (document.hidden) { try { save(); } catch {} } });
-setInterval(() => { if (!busy) { try { save(); } catch {} } }, 15000);   // もりでも じどうセーブ
+const saveHere = () => { try { if (posReady) state.where = { f: FID, x: +P.pos.x.toFixed(1), z: +P.pos.z.toFixed(1) }; save(); } catch {} };   // いまの ばしょも いっしょに セーブ
+addEventListener('pagehide', saveHere);
+document.addEventListener('visibilitychange', () => { if (document.hidden) saveHere(); });
+setInterval(() => { if (!busy) saveHere(); }, 15000);   // もりでも じどうセーブ
 bus.on('saveFail', () => ui.toast('セーブできないよ!', 'ブラウザの ほぞんスペースが つかえないみたい', 'むらで「せってい」から かきだしてね', 9000));
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch {}
