@@ -295,7 +295,7 @@ export async function runBattle(enemyId0, opts = {}) {
   const useA = (k) => { curA = k; ai = slotsA[k].ai; aImg = aImgs[k]; };
   const bgFile = dbl && DBL_BG.has(opts.bg) ? opts.bg.replace('.webp', '_d.webp') : opts.bg;
   const root = document.createElement('div'); root.id = 'bt';
-  const fitName = (el) => { const L = el.textContent.length; el.style.fontSize = L > 11 ? '0.72em' : L > 8 ? '0.84em' : ''; };
+  const fitName = (el) => { el.style.fontSize = ''; requestAnimationFrame(() => { let k = 1; while (el.scrollWidth > el.clientWidth + 1 && k > 0.5) { k -= 0.04; el.style.fontSize = k + 'em'; } }); };
   const cardH = (c, ally) => `<div class="bt-card ${c}"><b class="n"></b><span class="lv"></span><div class="tys"></div><div class="hp"><i></i></div>${ally ? '<small class="hpn"></small><div class="xp"><i></i></div>' : ''}</div>`;
   root.innerHTML = `<div class="bt-field" style="--bg:url(${img('assets/battlefields/' + (bgFile || 'battle_grass.webp'))})"><div class="bt-bg"></div>
     ${cardH('bt-e')}<img class="bt-img bt-eimg" alt="">${cardH('bt-e bt-e2')}<img class="bt-img bt-eimg bt-eimg2" alt="" hidden>

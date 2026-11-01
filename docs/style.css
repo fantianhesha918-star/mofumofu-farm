@@ -215,7 +215,7 @@ body:not(.touch) #prompt { bottom: calc(26px + var(--sab)); }
 .bt-img.faint { opacity: 0; transform: translateY(24px) scale(.8); }
 .bt-aimg.faint { transform: scaleX(-1) translateY(24px) scale(.8); }
 .bt-card { position: absolute; z-index: 5; padding: 8px 12px; min-width: 150px; background: #2c1f14ee; border: 1px solid #ffffff2a; border-radius: 14px; font-size: 13px; }
-.bt-card .n { font-weight: 700; margin-right: 6px; display: inline-block; max-width: calc(100% - 3.6em); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+.bt-card .n { font-weight: 700; margin-right: 6px; display: inline-block; max-width: calc(100% - 3.6em); overflow: hidden; white-space: nowrap; vertical-align: bottom; }
 .bt-card .lv { color: #e8c868; font-size: 12px; white-space: nowrap; }
 .bt-card .hp { height: 9px; margin-top: 5px; background: #00000066; border-radius: 6px; overflow: hidden; }
 .bt-card .hp i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #6ad07a, #b8e86a); transition: width .5s; }
