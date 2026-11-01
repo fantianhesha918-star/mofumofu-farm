@@ -855,7 +855,7 @@ export async function runBattle(enemyId0, opts = {}) {
     const cdir = CB2_DIR[prefix] || 'capture2', bm = prefix === 'master_ball' ? 'normal' : 'screen';   // くろい マスターは、ひかりを たさず そのまま かさねる
     const field = $('.bt-field', root), fr = field.getBoundingClientRect(), pr = aImg.getBoundingClientRect(), er = eImg.getBoundingClientRect();
     const sx = pr.left + pr.width / 2 - fr.left, sy = pr.top + pr.height * 0.45 - fr.top, ex = er.left + er.width / 2 - fr.left, ey = er.top + er.height * 0.55 - fr.top;
-    const k = Math.max(116, Math.min(170, er.width * 0.55)) / CB2.ballW, bw = CB2.W * k, bh = CB2.H * k, bcx = CB2.cx * k, bcy = CB2.cy * k;
+    const k = Math.max(84, Math.min(118, er.width * 0.4)) / CB2.ballW, bw = CB2.W * k, bh = CB2.H * k, bcx = CB2.cx * k, bcy = CB2.cy * k;
     const frames = [0, 1, 2, 3, 4, 5].map(i => { const im = cbImg(`assets/${cdir}/ball_${i}.webp`); im.style.cssText = `position:absolute;left:0;top:0;width:${bw}px;height:${bh}px;visibility:hidden;`; return im; });
     const fxs = (n, a) => Array.from({ length: a }, (_, i) => cbImg(`assets/${cdir}/fx_${n}_${i}.webp`)), swirl = fxs('swirl', 5), ring = fxs('ring', 5), burst = fxs('burst', 5), tailI = cbImg(`assets/${cdir}/fx_tail.webp`);
     try { await Promise.all([...frames, ...swirl, ...ring, ...burst, tailI].map(i => i.decode ? i.decode().catch(() => {}) : 0)); } catch (e) {}
@@ -873,7 +873,7 @@ export async function runBattle(enemyId0, opts = {}) {
     const dx = ex - sx, dy = ey - sy, arc = Math.min(120, Math.hypot(dx, dy) * 0.35), kf = [];
     for (let i = 0; i <= 14; i++) { const t = i / 14; kf.push({ transform: `translate(${sx + dx * t}px, ${sy + dy * t - Math.sin(Math.PI * t) * arc}px)` }); }
     wa(tpos, kf, { duration: 800, easing: 'linear' });
-    wa(spin, [{ transform: 'rotate(0deg) scale(.55)' }, { transform: 'rotate(560deg) scale(1)' }], { duration: 800, easing: 'ease-out' });
+    wa(spin, [{ transform: 'rotate(0deg) scale(.55)' }, { transform: 'rotate(720deg) scale(1)' }], { duration: 800, easing: 'ease-out' });
     sfx('pick'); await wa(pos, kf, { duration: 800, easing: 'linear' });
     wa(tpos, [{ opacity: 1 }, { opacity: 0 }], { duration: 250 }); setTimeout(() => tpos.remove(), 400);
     // 2) パカッと ひらいて すいこむ
