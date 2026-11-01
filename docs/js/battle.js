@@ -934,6 +934,7 @@ export async function runBattle(enemyId0, opts = {}) {
   const xpOf = (a) => Math.round(def.exp * expLevelMul(a.lv, eLv) * (opts.trainer && !bossNow() ? 1.5 : 1) * (1 + villageBoost() * 0.5) * (hasBadge('forest') ? 1.15 : 1) * (hasBadge('sky') ? 1.15 : 1) * (hasBadge('dragon') ? 1.15 : 1) * (abilityOf(a.id) === 'wise' ? 1.15 : 1) * (holdOf(a).exp || 1) * ((buff && buff.exp) || 1));
   const gainExp = async () => {
     const a = state.party[ai], ad = GD.MONSTERS[a.id], xp = xpOf(a);
+    if (hpOf(a) > 0) {   // たおれた なかまには けいけんちを あげない
     xpLog.push([monName(a), xp, false]); msg(`${xp} の けいけんちを てにいれた!`); a.exp = (a.exp || 0) + xp; await sleep(900);
     a.bond = (a.bond || 0) + 1;   // いっしょに たたかうと なかよしに
     while (a.lv < MAX_LV && a.exp >= needExp(a.lv, a.id)) {
@@ -942,9 +943,10 @@ export async function runBattle(enemyId0, opts = {}) {
       const ev = GD.MONSTERS[a.id].evolvesTo; if (ev && a.lv >= ev.level && GD.MONSTERS[ev.id]) await evolve(a, ev.id);
     }
     draw();
-    // たたかった なかま(こうたいした なかま)は ぜんがく、ひかえは はんぶん もらえる
+    }
+    // たたかった なかま(こうたいした なかま)は ぜんがく、ひかえは はんぶん もらえる(たおれている なかまは もらえない)
     for (const m of state.party.slice()) {
-      if (m === a) continue; const full = fought.has(m), gain = Math.max(1, Math.round(xpOf(m) * (full ? 1 : 0.5))), nm = monName(m);
+      if (m === a || hpOf(m) <= 0) continue; const full = fought.has(m), gain = Math.max(1, Math.round(xpOf(m) * (full ? 1 : 0.5))), nm = monName(m);
       xpLog.push([nm, gain, !full]); m.exp = (m.exp || 0) + gain; if (full) m.bond = (m.bond || 0) + 1;
       msg(`${nm} も ${gain} の けいけんちを てにいれた!${full ? '' : '(ひかえ)'}`); await sleep(800);
       while (m.lv < MAX_LV && m.exp >= needExp(m.lv, m.id)) {
