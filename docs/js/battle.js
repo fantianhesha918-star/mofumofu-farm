@@ -850,12 +850,14 @@ export async function runBattle(enemyId0, opts = {}) {
   // ---- チモシーボールの あたらしい ほかく えんしゅつ(ふたが パカッと ひらく。assets/capture2) ----
   const CB2 = { W: 373, H: 636, cx: 176.5, cy: 491, ballW: 265, bottom: 626 };   // ボールの コマ(6まい)の だいたいの サイズと、とじた ボールの ちゅうしん・そこ
   const cbImg = (src) => { const i = new Image(); i.src = img(src); i.decoding = 'async'; return i; };
-  const captureAnim2 = async (ok) => {
+  const CB2_DIR = { ball: 'capture2', super_ball: 'capture2_super', hyper_ball: 'capture2_hyper', master_ball: 'capture2_master' };
+  const captureAnim2 = async (ok, prefix = 'ball') => {
+    const cdir = CB2_DIR[prefix] || 'capture2', bm = prefix === 'master_ball' ? 'normal' : 'screen';   // くろい マスターは、ひかりを たさず そのまま かさねる
     const field = $('.bt-field', root), fr = field.getBoundingClientRect(), pr = aImg.getBoundingClientRect(), er = eImg.getBoundingClientRect();
     const sx = pr.left + pr.width / 2 - fr.left, sy = pr.top + pr.height * 0.45 - fr.top, ex = er.left + er.width / 2 - fr.left, ey = er.top + er.height * 0.55 - fr.top;
     const k = Math.max(116, Math.min(170, er.width * 0.55)) / CB2.ballW, bw = CB2.W * k, bh = CB2.H * k, bcx = CB2.cx * k, bcy = CB2.cy * k;
-    const frames = [0, 1, 2, 3, 4, 5].map(i => { const im = cbImg(`assets/capture2/ball_${i}.webp`); im.style.cssText = `position:absolute;left:0;top:0;width:${bw}px;height:${bh}px;visibility:hidden;`; return im; });
-    const fxs = (n, a) => Array.from({ length: a }, (_, i) => cbImg(`assets/capture2/fx_${n}_${i}.webp`)), swirl = fxs('swirl', 5), ring = fxs('ring', 5), burst = fxs('burst', 5), tailI = cbImg('assets/capture2/fx_tail.webp');
+    const frames = [0, 1, 2, 3, 4, 5].map(i => { const im = cbImg(`assets/${cdir}/ball_${i}.webp`); im.style.cssText = `position:absolute;left:0;top:0;width:${bw}px;height:${bh}px;visibility:hidden;`; return im; });
+    const fxs = (n, a) => Array.from({ length: a }, (_, i) => cbImg(`assets/${cdir}/fx_${n}_${i}.webp`)), swirl = fxs('swirl', 5), ring = fxs('ring', 5), burst = fxs('burst', 5), tailI = cbImg(`assets/${cdir}/fx_tail.webp`);
     try { await Promise.all([...frames, ...swirl, ...ring, ...burst, tailI].map(i => i.decode ? i.decode().catch(() => {}) : 0)); } catch (e) {}
     const setF = (i) => frames.forEach((f, j) => { f.style.visibility = j === i ? 'visible' : 'hidden'; });
     const pos = document.createElement('div'), spin = document.createElement('div'), body = document.createElement('div');
@@ -863,10 +865,10 @@ export async function runBattle(enemyId0, opts = {}) {
     spin.style.cssText = `position:absolute;left:${-bcx}px;top:${-bcy}px;width:${bw}px;height:${bh}px;transform-origin:${bcx}px ${bcy}px;`;
     body.style.cssText = `position:absolute;left:0;top:0;width:${bw}px;height:${bh}px;transform-origin:${bcx}px ${CB2.bottom * k - 4}px;`;
     frames.forEach(f => body.appendChild(f)); spin.appendChild(body);
-    const ang = Math.atan2(ey - sy, ex - sx), tw = bw * 2.6; const tpos = document.createElement('div'); tpos.style.cssText = 'position:absolute;left:0;top:0;width:0;height:0;z-index:11;pointer-events:none;mix-blend-mode:screen;';
+    const ang = Math.atan2(ey - sy, ex - sx), tw = bw * 2.6; const tpos = document.createElement('div'); tpos.style.cssText = 'position:absolute;left:0;top:0;width:0;height:0;z-index:11;pointer-events:none;mix-blend-mode:'+bm+';';
     tailI.style.cssText = `position:absolute;width:${tw}px;left:${-tw}px;top:${-tw * 0.27}px;opacity:.9;transform-origin:100% 50%;transform:rotate(${ang}rad);pointer-events:none;`;
     tpos.appendChild(tailI); field.appendChild(tpos); pos.appendChild(spin); setF(0); field.appendChild(pos);
-    const fx = (set, cx, cy, size, ms, out) => new Promise(done => { const el = set[0].cloneNode(); el.style.cssText = `position:absolute;left:${cx - size / 2}px;top:${cy - size / 2}px;width:${size}px;height:${size}px;object-fit:contain;mix-blend-mode:screen;pointer-events:none;z-index:13;`; field.appendChild(el); let i = 0; const step = () => { if (i >= set.length) { el.remove(); done(); return; } el.src = set[i].src; i++; setTimeout(step, ms / battleSpeed()); }; step(); });
+    const fx = (set, cx, cy, size, ms, out) => new Promise(done => { const el = set[0].cloneNode(); el.style.cssText = `position:absolute;left:${cx - size / 2}px;top:${cy - size / 2}px;width:${size}px;height:${size}px;object-fit:contain;mix-blend-mode:${bm};pointer-events:none;z-index:13;`; field.appendChild(el); let i = 0; const step = () => { if (i >= set.length) { el.remove(); done(); return; } el.src = set[i].src; i++; setTimeout(step, ms / battleSpeed()); }; step(); });
     // 1) とぶ(ゆるい アーチ + ぐるぐる)
     const dx = ex - sx, dy = ey - sy, arc = Math.min(120, Math.hypot(dx, dy) * 0.35), kf = [];
     for (let i = 0; i <= 14; i++) { const t = i / 14; kf.push({ transform: `translate(${sx + dx * t}px, ${sy + dy * t - Math.sin(Math.PI * t) * arc}px)` }); }
@@ -888,7 +890,7 @@ export async function runBattle(enemyId0, opts = {}) {
     if (ok) { jingle('catch'); fx(ring, ex, ey - bh * 0.1, bw * 2.8, 150); wa(body, [{ filter: 'brightness(1)' }, { filter: 'brightness(1.5) saturate(1.2)', offset: .3 }, { filter: 'brightness(1)' }], { duration: 900 }); await sleep(1500); wa(pos, [{ opacity: 1 }, { opacity: 0 }], { duration: 250 }); await sleep(260); pos.remove(); }
     else { sfx('no'); eImg.style.visibility = ''; eImg.classList.add('pop-out'); setTimeout(() => eImg.classList.remove('pop-out'), 400); fx(burst, ex, ey - bh * 0.1, bw * 2.8, 90); for (const i of [2, 3, 4, 5]) { setF(i); await sleep(60); } await sleep(220); wa(pos, [{ opacity: 1 }, { opacity: 0 }], { duration: 260 }); await sleep(280); pos.remove(); }
   };
-  const captureAnim = (prefix, ok) => prefix === 'ball' ? captureAnim2(ok) : new Promise(res => {
+  const captureAnim = (prefix, ok) => CB2_DIR[prefix] ? captureAnim2(ok, prefix) : new Promise(res => {
     const field = $('.bt-field', root), fr = field.getBoundingClientRect(), pr = aImg.getBoundingClientRect(), er = eImg.getBoundingClientRect();
     const src = (n) => img(`assets/capture/capture_${prefix}_${n}.webp`), sx = pr.left + pr.width / 2 - fr.left, sy = pr.top + pr.height / 2 - fr.top, ex = er.left + er.width / 2 - fr.left, ey = er.top + er.height / 2 - fr.top;
     const ball = document.createElement('img'); ball.className = 'capture-ball-anim'; ball.src = src('fly'); ball.style.left = sx + 'px'; ball.style.top = sy + 'px'; field.appendChild(ball);
