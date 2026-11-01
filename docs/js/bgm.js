@@ -289,7 +289,7 @@ function trackBus() {   // きょくごとの ミキサー(きりかえの と�
 }
 function ensure() {
   const a = audioCtx(); if (!a.ac) return false;
-  if (ac !== a.ac) { ac = a.ac; G = buildChain(ac); G.out.connect(ac.destination); }
+  if (ac !== a.ac) { ac = a.ac; G = buildChain(ac); G.out.connect(ac.destination); try { G.an = ac.createAnalyser(); G.an.fftSize = 512; G.out.connect(G.an); G.buf = new Float32Array(G.an.fftSize); } catch (e) {} }
   G.out.gain.value = cfg.bgm * 0.55; return true;
 }
 const outTo = (node, r = 0.25, dly = 0) => {
@@ -416,12 +416,13 @@ function startNow(name) {
   cur = name; step = -(TRACKS[name].intro || 0) * 16; nextT = 0; tbus = trackBus(); timer = setInterval(tick, 80); tick();
 }
 const GBA_ALT = { battle_trainer: ['gba_trainer', 'pf_trainer'], battle_legend: ['gba_legend'], boss: ['gba_boss', 'pf_boss'], boss2: ['gba_boss2', 'pf_boss2'] };
-function resolve(name) {
+function resolve(name) { const r = resolve0(name); return TRACKS[r] ? r : (TRACKS[name] ? name : 'battle'); }   // ない きょくは えらばない(むおんに ならない ように)
+function resolve0(name) {
   if (name === 'field') return fieldTheme;
   if (name === 'battle') { const pool = ['battle', 'battle2', 'battle3', 'chip_battle', 'chip_battle2', 'chip_battle3', 'pf_battle', 'pf_battle2', 'pf_battle3'].filter(x => x !== lastBattle); lastBattle = pool[Math.floor(Math.random() * pool.length)]; return lastBattle; }
   const alt = GBA_ALT[name];
   if (alt) { const o = [name, ...alt]; return o[Math.floor(Math.random() * o.length)]; }
-  return name;
+  return TRACKS[name] ? name : 'battle';
 }
 export function playBgm(name) {
   want = name; if (!ensure()) return;   // まだ音が使えない(タッチしたら はじまる)
@@ -446,10 +447,20 @@ export function jingle(kind = 'win') {
 function trackBusTmp() { const b = trackBus(); tbus = b; return b; }
 function voiceTmp(i, f, t, d, v, b) { tbus = b; voice(i, f, t, d, v, {}); }
 // さいしょの タッチで 音を ゆるす(ページを開きなおしても ならせる)
-const unlock = () => { unlockAudio(); const a = audioCtx(); if (a.master) a.master.gain.value = 0.35 * cfg.sfx * 1.6; if (want && !timer) { if (ensure()) startNow(resolve(want)); } };
+const unlock = () => { unlockAudio(); try { if (ac && ac.state !== 'running') ac.resume(); } catch (e) {} const a = audioCtx(); if (a.master) a.master.gain.value = 0.35 * cfg.sfx * 1.6; if (want && !timer) { if (ensure()) startNow(resolve(want)); } };
 ['pointerdown', 'touchend', 'keydown'].forEach(ev => addEventListener(ev, unlock, { once: false, passive: true }));
 setInterval(() => { try { if (cfg.bgm && want && !timer && ac && ac.state !== 'closed' && !jingleBusy) { if (ensure()) startNow(resolve(want)); } } catch {} }, 3000);   // 見はり番: 曲が とまっていたら かけなおす
 document.addEventListener('visibilitychange', () => { const a = audioCtx(); if (!a.ac) return; if (document.hidden) a.ac.suspend(); else a.ac.resume(); });
+// むおん けんち: 曲が なっている はずなのに おとが ぜんぜん 出ていない(6びょう いじょう)ときは、曲を さいしょから かけなおす
+let quiet = 0;
+setInterval(() => {
+  try {
+    if (!cfg.bgm || !want || !ac || !G || !G.an || document.hidden || jingleBusy) { quiet = 0; return; }
+    if (ac.state !== 'running') { quiet = 0; try { ac.resume(); } catch (e) {} return; }
+    G.an.getFloatTimeDomainData(G.buf); let s2 = 0; for (let i = 0; i < G.buf.length; i++) s2 += G.buf[i] * G.buf[i];
+    if (Math.sqrt(s2 / G.buf.length) < 0.00002) { if (++quiet >= 4) { quiet = 0; (window.__bgmLog || (window.__bgmLog = [])).push('silent restart ' + (cur || '-')); startNow(resolve(want)); } } else quiet = 0;
+  } catch (e) { quiet = 0; }
+}, 1500);
 
 // ---------- テスト用: オフラインで 曲を レンダリングして 音のおおきさ・エラーを しらべる ----------
 export async function __bgmTest(names, secs = 20) {

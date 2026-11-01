@@ -1,7 +1,7 @@
 // 外部音源なしのWebAudio効果音(試作用。Unity移行時は本番音源に差し替える)
 let ac = null, master = null;
 export function unlockAudio() {
-  if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
+  if (ac) { if (ac.state !== 'running') { try { ac.resume(); } catch (e) {} } return; }   // iPhoneの 'interrupted' も ふっきさせる
   try { ac = new (window.AudioContext || window.webkitAudioContext)(); master = ac.createGain(); master.gain.value = 0.35; master.connect(ac.destination); } catch { ac = null; }
 }
 export const audioCtx = () => ({ ac, master });
