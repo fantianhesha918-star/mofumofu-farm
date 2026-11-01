@@ -1,6 +1,7 @@
 import { seasonOf } from './season.js';
 import { BUCKET, APPEAR, FIELD_NAMES, HOLD, EVO_STONES, MON_GROUPS, ALL_MONS, CRAFT_RECIPES, MDEX_REWARDS, ELEMENT_REWARD, ABILITIES, BADGES, MON_HEAL, ITEMS, SHOP_SEEDS, CROPS, QUESTS, RECIPES, HEAL, DECOR, SHOP_GOODS, FURNI, DECO, DEX, FIELD_MONS } from './data.js';
 import { blockSave, SAVE_KEY, ECO, ECO_KEY, lastSaveOk, state, bus, save, addItem, count, addStat, activeQuests, villageLevel, villagePoints, villageBoost, sellOf, hasBadge } from './state.js';
+import { titlesHtml, bindTitles } from './titles.js';
 import { sfx } from './audio.js';
 
 const $ = (s) => document.querySelector(s);
@@ -438,7 +439,8 @@ function renderPanel() {
       <div class="row"><div class="grow">1日の みこみ<small>ぎゅうにゅう ${cn}〜${cn * 3}本(${cn * ms}〜${cn * 3 * ms}コイン)・たまご さいだい ${hn}こ(エサを あげたとき)</small></div></div>
       <div class="row"><div class="grow">きょう<small>${dt(state.daily)}</small></div></div>
       <div class="row"><div class="grow">きのう<small>${dt(state.prevDaily)}</small></div></div>
-      <p class="hint">これまでの うりあげ ごうけい: ${state.stats.earned || 0}コイン</p>`;
+      <p class="hint">これまでの うりあげ ごうけい: ${state.stats.earned || 0}コイン</p>` + titlesHtml();
+    bindTitles(body, renderPanel, () => ui.onRenamed && ui.onRenamed());
   } else if (panelKind === 'settings') {
     h2.textContent = 'せってい';
     import('./battle.js').then((B) => {
@@ -567,7 +569,7 @@ function renderPanel() {
       const ok = Object.entries(r.need).every(([id, n]) => count(id) >= n), mats = Object.entries(r.need).map(([id, n]) => `<span class="mat ${count(id) >= n ? '' : 'lack'}">${ITEMS[id].name} ${count(id)}/${n}</span>`).join(' ');
       return `<div class="row">${itemIcon(r.id)}<div class="grow">${ITEMS[r.id].name}<small>${mats}</small></div><span class="price">${sellOf(r.id)}</span><button class="pill" data-cook="${r.id}" ${ok ? '' : 'disabled'}>つくる</button></div>`;
     }).join('');
-    body.querySelectorAll('[data-cook]').forEach(b => b.onclick = () => { const r = RECIPES.find(x => x.id === b.dataset.cook); if (!r || !Object.entries(r.need).every(([id, n]) => count(id) >= n)) return sfx('no'); for (const [id, n] of Object.entries(r.need)) addItem(id, -n); addItem(r.id, 1); addStat('cook', 1); feed(r.id, 1); sfx('harvest'); renderPanel(); });
+    body.querySelectorAll('[data-cook]').forEach(b => b.onclick = () => { const r = RECIPES.find(x => x.id === b.dataset.cook); if (!r || !Object.entries(r.need).every(([id, n]) => count(id) >= n)) return sfx('no'); for (const [id, n] of Object.entries(r.need)) addItem(id, -n); addItem(r.id, 1); state.cookKinds = state.cookKinds || {}; state.cookKinds[r.id] = 1; addStat('cook', 1); feed(r.id, 1); sfx('harvest'); renderPanel(); });
   } else if (panelKind === 'ship') {
     h2.textContent = 'しゅっかばこ';
     const ids = Object.keys(state.inv).filter(i => !i.startsWith('seed_') && !ITEMS[i].tool && !ITEMS[i].noSell), inBox = Object.entries(state.ship), sum = inBox.reduce((t, [id, n]) => t + sellOf(id) * n, 0);

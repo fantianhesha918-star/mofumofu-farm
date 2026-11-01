@@ -17,6 +17,7 @@ import { input, pollInput, setupInput } from './input.js';
 import { sfx, unlockAudio } from './audio.js';
 import { STARTERS } from './monsters_extra.js';
 import { openCasinoMenu } from './casino.js';
+import { fullName, checkTitles } from './titles.js';
 
 const $ = (s) => document.querySelector(s);
 const V3 = THREE.Vector3;
@@ -379,7 +380,7 @@ function plotTarget(i, tool) {
     return { label: 'たがやした はたけ', sub: 'たねが ないよ。たねやで かえるよ', short: 'はたけ', can: false };
   }
   const def = CROPS[s.crop];
-  if (isReady(s)) return { label: `${def.name}を しゅうかく`, sub: 'おいしそうに そだったよ', short: 'しゅうかく', can: true, act: () => { const n = def.yield[0] + Math.floor(rng() * (def.yield[1] - def.yield[0] + 1)); addItem(def.item, n); ui.feed(def.item, n); addStat('harvest', n); s.crop = null; s.days = 0; s.watered = false; sfx('harvest'); burst('spark', plots[i].pos.clone().setY(0.8), 12, { size: 0.35, up: 2, life: 1.2 }); } };
+  if (isReady(s)) return { label: `${def.name}を しゅうかく`, sub: 'おいしそうに そだったよ', short: 'しゅうかく', can: true, act: () => { const n = def.yield[0] + Math.floor(rng() * (def.yield[1] - def.yield[0] + 1)); addItem(def.item, n); ui.feed(def.item, n); state.cropKinds = state.cropKinds || {}; state.cropKinds[def.item] = 1; addStat('harvest', n); s.crop = null; s.days = 0; s.watered = false; sfx('harvest'); burst('spark', plots[i].pos.clone().setY(0.8), 12, { size: 0.35, up: 2, life: 1.2 }); } };
   const left = need(s) - s.days;
   if (!s.watered && count('bucket') < 1) return { label: `${def.name}を そだてちゅう`, sub: 'みずを やるには バケツが いるよ(よろずやで かえるよ)', short: 'バケツが ひつよう', can: false };
   if (!s.watered && state.water < 1) return { label: 'バケツが からっぽ', sub: 'かわや いどで みずを くんでこよう', short: 'みずが ない', can: false };
@@ -1599,7 +1600,7 @@ function startGame(isNew) {
   titleMode = false; started = true; $('#title').classList.add('gone'); if (document.documentElement.classList.contains('resuming')) { document.documentElement.classList.remove('resuming'); $('#fade').style.transition = ''; $('#fade').classList.remove('on'); } $('#hud').hidden = false;
   if (state.pos) P.pos.set(state.pos.x, heightAt(state.pos.x, state.pos.z), state.pos.z); else P.pos.set(0, heightAt(0, 6), 6);
   rebuildPlaced().catch(e => console.warn('rebuild failed', e)); placeNodes(); state.plots.forEach((s, i) => plots[i] && refreshPlot(i)); ensureSeed(); applyDecor(); applyLook(); yardRebuild();
-  ui.setCoins(); ui.setClock(); ui.setGoal(); checkQuests(); updateCamera(0, true); applyPlayerName();
+  ui.setCoins(); ui.setClock(); ui.setGoal(); checkQuests(); checkTitles(); updateCamera(0, true); applyPlayerName();
   const q = activeQuests()[0];
   if (isNew && params.has('trial')) { Object.assign(state.inv, { seed_cabbage: 3, seed_carrot: 3, hay: 5, milk_can: 1, chicken_feed: 6 }); state.coins = 500; state.selSeed = 'seed_cabbage'; ui.setCoins(); }   // お試しモード(?trial)
   if (isNew) { setTimeout(() => { if (q) ui.toast('NEW QUEST', q.title, 'クエストの ひょうじは 右上の ボタンから', 4800); sfx('quest'); }, 900); setTimeout(() => ui.toast('HINT', isTouch ? '画面を さわって いどう(スティック) / ボタンで アクション' : 'WASD: いどう / Shift: ダッシュ / E: アクション / ドラッグ: カメラ', '', 6000), 5800); }
@@ -1617,7 +1618,7 @@ bus.on('saveFail', () => ui.toast('セーブできないよ!', 'ブラウザの 
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch {}   // ブラウザに じどうで けされにくく してもらう
 // ---- プレイヤーの なまえ(はじめるとき きめる。あとから「なまえ」の がめんで かえられる) ----
 const playerName = () => nm('player', 'Chino');
-const applyPlayerName = () => { const el = document.querySelector('#bars .nm'); if (el) el.textContent = playerName(); };
+const applyPlayerName = () => { const el = document.querySelector('#bars .nm'); if (el) el.textContent = fullName(playerName()); };
 function askPlayerName() {
   return new Promise(res => {
     const m = document.createElement('div'); m.id = 'namemodal';

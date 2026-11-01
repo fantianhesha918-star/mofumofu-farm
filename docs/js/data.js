@@ -113,6 +113,29 @@ export const RECIPES = [
   { id: 'octo_marinade', need: { tako: 1, tomato: 1 } },
   { id: 'tai_shio',      need: { tai: 1 } },
 ];
+// しょうごう(なまえの まえ・うしろに つけられる)。src: stat名 / 'ranch'(ミルク+たまご) / 'cookKinds' 'cropKinds'(つくった しゅるいの かず)。cat の しょうごうを 1つ とるごとに その カテゴリの うりねが +2%
+export const TITLES = [
+  { id: 'cook1', cat: 'cook', name: 'みならい料理人', src: 'cook', goal: 3, desc: 'りょうりを 3かい つくる' },
+  { id: 'cook2', cat: 'cook', name: '料理人', src: 'cook', goal: 15, desc: 'りょうりを 15かい つくる' },
+  { id: 'cook3', cat: 'cook', name: '一流シェフ', src: 'cook', goal: 50, desc: 'りょうりを 50かい つくる' },
+  { id: 'cook4', cat: 'cook', name: '料理マスター', src: 'cook', goal: 150, desc: 'りょうりを 150かい つくる' },
+  { id: 'menu1', cat: 'cook', name: 'まかない上手', src: 'cookKinds', goal: 5, desc: 'ちがう りょうりを 5しゅるい つくる' },
+  { id: 'menu2', cat: 'cook', name: 'メニューの達人', src: 'cookKinds', goal: 10, desc: 'ちがう りょうりを 10しゅるい つくる' },
+  { id: 'menu3', cat: 'cook', name: '全メニュー制覇', src: 'cookKinds', goal: 17, desc: 'ぜんぶの りょうりを つくる' },
+  { id: 'farm1', cat: 'farm', name: 'みならい農家', src: 'harvest', goal: 10, desc: 'さくもつを 10こ しゅうかくする' },
+  { id: 'farm2', cat: 'farm', name: '農家', src: 'harvest', goal: 50, desc: 'さくもつを 50こ しゅうかくする' },
+  { id: 'farm3', cat: 'farm', name: '名人農家', src: 'harvest', goal: 200, desc: 'さくもつを 200こ しゅうかくする' },
+  { id: 'farm4', cat: 'farm', name: '農業マスター', src: 'harvest', goal: 600, desc: 'さくもつを 600こ しゅうかくする' },
+  { id: 'crop1', cat: 'farm', name: 'やさいコレクター', src: 'cropKinds', goal: 3, desc: 'ちがう さくもつを 3しゅるい そだてる' },
+  { id: 'crop2', cat: 'farm', name: 'はたけの達人', src: 'cropKinds', goal: 6, desc: 'ぜんぶの さくもつを そだてきる' },
+  { id: 'ranch1', cat: 'ranch', name: '牧場のひよっこ', src: 'ranch', goal: 20, desc: 'ミルクと たまごを あわせて 20こ あつめる' },
+  { id: 'ranch2', cat: 'ranch', name: '牧場主', src: 'ranch', goal: 100, desc: 'ミルクと たまごを あわせて 100こ あつめる' },
+  { id: 'ranch3', cat: 'ranch', name: '名物牧場主', src: 'ranch', goal: 400, desc: 'ミルクと たまごを あわせて 400こ あつめる' },
+  { id: 'fish1', cat: 'fish', name: 'つり見習い', src: 'fish', goal: 5, desc: 'さかなを 5ひき つる' },
+  { id: 'fish2', cat: 'fish', name: 'つり人', src: 'fish', goal: 30, desc: 'さかなを 30ひき つる' },
+  { id: 'fish3', cat: 'fish', name: 'つり名人', src: 'fish', goal: 100, desc: 'さかなを 100ひき つる' },
+];
+export const TITLE_CATS = { cook: ['りょうり', 'りょうりの うりね'], farm: ['のうぎょう', 'さくもつの うりね'], ranch: ['ぼくじょう', 'ミルク・たまごの うりね'], fish: ['つり', 'さかなの うりね'] };
 // たべると たいりょくが かいふくする量(0〜100)
 // ボスを たおすと もらえる バッジ(key = state.boss のキー)。もっていると ずっと おんけい
 export const BADGES = [

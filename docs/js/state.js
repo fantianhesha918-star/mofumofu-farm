@@ -1,4 +1,4 @@
-import { QUESTS, DAY_SECONDS, DEX, ITEMS } from './data.js';
+import { QUESTS, DAY_SECONDS, DEX, ITEMS, TITLES, CROPS, RECIPES } from './data.js';
 import { festivalNow } from './season.js';
 const DEX_IDS = new Set(DEX.flatMap(g => g.ids));
 
@@ -52,13 +52,18 @@ const fresh = () => ({
   hour: 7.5,
   day: 1,
   pos: null,
+  cookKinds: {}, cropKinds: {},   // つくった りょうり・そだてた さくもつの しゅるい
+  titles: {}, titleSel: null,   // とった しょうごう {id: 1} / つけている しょうごう {id, pos:'pre'|'post'}
   casinoAt: null,   // カジノを たてた ばしょ {x,z}
   where: null,   // いま もりに いるとき { f: フィールド名, x, z }(つづきから で そこから はじめる)
   savedAt: 0,
 });
 export const state = fresh();
 export const hasBadge = (k) => !!(state.boss && state.boss[k]);
-export const sellOf = (id) => Math.round(((ITEMS[id] && ITEMS[id].sell) || 0) * (hasBadge('lake') ? 1.1 : 1) * (festivalNow(state.day) ? 1.25 : 1));   // おまつりの 日は うりね+25%   // みずうみの バッジで うりね+10%
+const TITLE_CAT = Object.fromEntries(TITLES.map(t => [t.id, t.cat])), CROP_ITEMS = new Set(Object.values(CROPS).map(c => c.item)), DISH_IDS = new Set(RECIPES.map(r => r.id));
+const sellCat = (id) => DISH_IDS.has(id) ? 'cook' : CROP_ITEMS.has(id) ? 'farm' : (id === 'milk' || id === 'egg' || id === 'golden_egg') ? 'ranch' : ITEMS[id] && ITEMS[id].kind === 'fish' ? 'fish' : null;
+const titleSell = (id) => { const c = sellCat(id); return c ? 1 + 0.02 * Object.keys(state.titles || {}).filter(k => TITLE_CAT[k] === c).length : 1; };   // しょうごう 1つで その ぶんやの うりねが +2%
+export const sellOf = (id) => Math.round(((ITEMS[id] && ITEMS[id].sell) || 0) * (hasBadge('lake') ? 1.1 : 1) * titleSell(id) * (festivalNow(state.day) ? 1.25 : 1));   // おまつりの 日は うりね+25%   // みずうみの バッジで うりね+10%
 export function reset() { Object.assign(state, fresh()); }
 
 const listeners = {};
@@ -80,7 +85,7 @@ export function load() {
   try {
     const d = readSave();
     if (!d) return false;
-    const base = fresh(); Object.assign(state, d); if (!d.barns) state.barns = d.barn ? [d.barn] : []; if (!d.coops) state.coops = d.coop ? [d.coop] : []; delete state.barn; delete state.coop; for (const k of ['cows', 'chickens', 'eggs', 'ship', 'decor', 'nori', 'furni', 'furniOwn', 'deco', 'decoOwn', 'look', 'dex', 'party', 'mdex', 'boss', 'wells', 'cleared', 'fences', 'hayCut']) if (!d[k]) state[k] = base[k]; state.stats = Object.assign(base.stats, d.stats); state.eggs = (state.eggs || []).filter(e => e.nest !== undefined); state.daily = state.daily || {}; state.prevDaily = state.prevDaily || {};
+    const base = fresh(); Object.assign(state, d); if (!d.barns) state.barns = d.barn ? [d.barn] : []; if (!d.coops) state.coops = d.coop ? [d.coop] : []; delete state.barn; delete state.coop; for (const k of ['cows', 'chickens', 'eggs', 'ship', 'decor', 'nori', 'furni', 'furniOwn', 'deco', 'decoOwn', 'look', 'dex', 'party', 'mdex', 'boss', 'wells', 'cleared', 'fences', 'hayCut', 'cookKinds', 'cropKinds', 'titles']) if (!d[k]) state[k] = base[k]; state.stats = Object.assign(base.stats, d.stats); state.eggs = (state.eggs || []).filter(e => e.nest !== undefined); state.daily = state.daily || {}; state.prevDaily = state.prevDaily || {};
     state.bucketLv = state.bucketLv || 0; state.pasture = state.pasture || []; state.villagers = state.villagers || {}; state.tips = state.tips || {}; state.names = state.names || {}; state.chests = state.chests || {}; state.legends = state.legends || {}; state.bossRe = state.bossRe || {}; state.mdexClaimed = state.mdexClaimed || {}; state.trainers = state.trainers || {};
     if (state.inv && state.inv.friend_ball) { state.inv.nakama_ball = (state.inv.nakama_ball || 0) + state.inv.friend_ball; delete state.inv.friend_ball; }
     return true;
