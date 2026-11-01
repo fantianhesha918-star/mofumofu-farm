@@ -641,6 +641,30 @@ export async function runBattle(enemyId0, opts = {}) {
     if (sk.id === 'struggle') { const rc = Math.max(1, Math.round(dmg / 4)); hurt('a', rc); pop('a', '-' + rc, ''); msg(`${monName(a)} は はんどうを うけた!`); await sleep(700); }
     if (fx && e.hp > 0) await useFx('a', fx, false);
   };
+  // ぜんたいわざ: あいて 2ひきに おなじ ときに えんしゅつ・ヒットさせる
+  const allySpread = async (sk) => {
+    if (!(await actCheck('a'))) return;
+    const a = state.party[ai], st = allyStats(), ad = GD.MONSTERS[a.id], ab = abilityOf(a.id), fx = fxOf(sk), el = sk.element || ad.element;
+    a.pp = a.pp || {}; a.pp[sk.id] = Math.max(0, ppOf(a, sk) - 1);
+    msg(`${monName(a)} の ${sk.name}!`); sfx('pick'); await sleep(350);
+    if (fogMiss(sk)) { msg('きりで わざが あたらなかった!'); sfx('no'); await sleep(1000); return; }
+    const js = liveE(), keepE = curE; if (!js.length) return;
+    await Promise.all(js.map(j => playFx(aImg, eImgs[j], sk, el)));   // どうじに とばす
+    const res = [];
+    for (const j of js) {
+      useE(j); const mg = skillKind(sk) === 'magic', r = calc(mg ? st.matk : st.atk, Math.round(sk.power * 0.8), eS(mg ? 'mdef' : 'def'), el, def.element, st.crit / 100);
+      let dmg = Math.round(r.dmg * envMul(opts.wx, opts.hour, el)); if (ab === 'pinch' && hpOf(a) < st.maxHp / 3) dmg = Math.round(dmg * 1.3); if (ab === 'typeboost' && el === ad.element) dmg = Math.round(dmg * 1.15); if (e.ab === 'thick') dmg = Math.max(1, Math.round(dmg * 0.88));
+      let held = false; if (e.ab === 'fortress' && !cur.fort && dmg >= e.hp && e.hp > 1) { dmg = e.hp - 1; cur.fort = true; held = true; }
+      if (E.ail && E.ail.k === 'freeze' && el === 'fire') { E.ail = null; }
+      e.hp = Math.max(0, e.hp - dmg); res.push({ j, dmg, r, held, name: def.name });
+    }
+    sfx(hitSnd(res[0].r)); draw();
+    await Promise.all(js.map(j => hit(eImgs[j])));   // りょうほうが いっせいに ゆれる
+    for (const q of res) { useE(q.j); pop('e', '-' + q.dmg, q.r.crit ? 'crit' : ''); await sleep(160); }
+    for (const q of res) { const t = tierText(q.r.tier, q.r.crit); if (t) { msg(`${q.name}: ${t}`); await sleep(650); } if (q.held) { msg(`${q.name} は ふくつの こころで こらえた!`); await sleep(800); } }
+    if (fx) for (const q of res) { useE(q.j); if (e.hp > 0) await useFx('a', fx, false); }
+    useE(keepE);
+  };
   const enemyPick = () => {
     if (Math.random() < 0.28) {
       const A = sd('a'), pool = enemyStatusPool(GD, def.element).filter(id => { const f = GD.SKILLS[id].fx; if (f.st) return !A.ail; if (f.self) return Object.keys(f.self).every(k => E.stg[k] < 2); if (f.foe) return Object.keys(f.foe).every(k => A.stg[k] > -2); if (f.heal) return e.hp < e.maxHp * 0.5; return true; });
@@ -679,7 +703,7 @@ export async function runBattle(enemyId0, opts = {}) {
       await useFx('e', fx, true); return;
     }
     if (!big && fogMiss(sk)) { msg('きりで わざが あたらなかった!'); sfx('no'); await sleep(1000); return; }
-    await playFx(eImg, aImg, sk, el);
+    if (!o.noFx) { const spr2 = !big && !o.sk && isSpread(sk) ? liveA().filter(i => i !== curA) : []; await Promise.all([playFx(eImg, aImg, sk, el), ...spr2.map(i => playFx(eImg, aImgs[i], sk, el))]); }   // ぜんたいわざは りょうほうに どうじに
     const mg = skillKind(sk) === 'magic', r = calc(eS(mg ? 'matk' : 'atk'), Math.round(sk.power * (o.mul != null ? o.mul : !big && isSpread(sk) && liveA().length > 1 ? 0.8 : 1)), mg ? st.mdef : st.def, el, GD.MONSTERS[a.id].element, GD.CRIT_CHANCE + (e.ab === 'sharp' ? 0.1 : 0));
     let dmg = Math.round(r.dmg * envMul(opts.wx, opts.hour, el)); if (guarding) dmg = Math.max(1, Math.round(dmg * (big ? 0.35 : 0.5))); if (e.ab === 'pinch' && e.hp < e.maxHp / 3) dmg = Math.round(dmg * 1.3); if (e.ab === 'typeboost' && el === def.element) dmg = Math.round(dmg * 1.15); if (aab === 'thick') dmg = Math.max(1, Math.round(dmg * 0.88));
     let held = false; if ((aab === 'fortress' || holdOf(a).sash) && !aFort && dmg >= hpOf(a) && hpOf(a) > 1) { dmg = hpOf(a) - 1; aFort = true; held = true; }
@@ -1022,7 +1046,7 @@ export async function runBattle(enemyId0, opts = {}) {
     useA(x.k); const a = state.party[ai]; let tj = x.t; if (tj == null || !slotsE[tj] || slotsE[tj].e.hp <= 0) tj = liveE()[0]; if (tj == null) return; useE(tj);
     if (x.kind === 'skill') {
       if (x.sk === '__guard') { sl.guard = true; msg(`${monName(a)} は みを まもっている!`); sfx('pick'); playStrip('fx_guard', aImg, 1.7, 200); sfx('guard'); aImg.classList.add('glow'); await sleep(800); aImg.classList.remove('glow'); }
-      else if (isSpread(x.sk) && liveE().length > 1) { for (const [n, j] of liveE().entries()) { if (!slotsE[j] || slotsE[j].e.hp <= 0 || result) continue; useE(j); if ((await allyAttack(x.sk, n ? { more: true, mul: 0.8 } : {})) === false) break; } }   // ぜんたいわざ: あいて 2ひきに じゅんばんに あたる
+      else if (isSpread(x.sk) && liveE().length > 1) await allySpread(x.sk);   // ぜんたいわざ: あいて 2ひきに どうじに
       else await allyAttack(x.sk);
     } else if (x.kind === 'item') {
       const v = x.v;
@@ -1058,7 +1082,7 @@ export async function runBattle(enemyId0, opts = {}) {
     const f = slotsE[x.j]; if (f !== x.foe || f.e.hp <= 0) return;
     const L = liveA(); if (!L.length) return; const k = L[Math.floor(Math.random() * L.length)];
     const others = L.filter(i => i !== k); useE(x.j); useA(k); guarding = !!slotsA[k].guard; const spk = await enemyAttack();
-    if (spk) for (const k2 of others) { if (result || f.e.hp <= 0 || !slotsA[k2] || hpOf(state.party[slotsA[k2].ai]) <= 0) continue; useE(x.j); useA(k2); guarding = !!slotsA[k2].guard; await enemyAttack({ sk: spk, mul: 0.8 }); }
+    if (spk) for (const k2 of others) { if (result || f.e.hp <= 0 || !slotsA[k2] || hpOf(state.party[slotsA[k2].ai]) <= 0) continue; useE(x.j); useA(k2); guarding = !!slotsA[k2].guard; await enemyAttack({ sk: spk, mul: 0.8, noFx: true }); }
   };
   let firstRound = true;
   while (!result) {
