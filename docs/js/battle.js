@@ -295,6 +295,7 @@ export async function runBattle(enemyId0, opts = {}) {
   const useA = (k) => { curA = k; ai = slotsA[k].ai; aImg = aImgs[k]; };
   const bgFile = dbl && DBL_BG.has(opts.bg) ? opts.bg.replace('.webp', '_d.webp') : opts.bg;
   const root = document.createElement('div'); root.id = 'bt';
+  const fitName = (el) => { const L = el.textContent.length; el.style.fontSize = L > 11 ? '0.72em' : L > 8 ? '0.84em' : ''; };
   const cardH = (c, ally) => `<div class="bt-card ${c}"><b class="n"></b><span class="lv"></span><div class="tys"></div><div class="hp"><i></i></div>${ally ? '<small class="hpn"></small><div class="xp"><i></i></div>' : ''}</div>`;
   root.innerHTML = `<div class="bt-field" style="--bg:url(${img('assets/battlefields/' + (bgFile || 'battle_grass.webp'))})"><div class="bt-bg"></div>
     ${cardH('bt-e')}<img class="bt-img bt-eimg" alt="">${cardH('bt-e bt-e2')}<img class="bt-img bt-eimg bt-eimg2" alt="" hidden>
@@ -350,14 +351,14 @@ export async function runBattle(enemyId0, opts = {}) {
   const draw = () => {
     for (let k = 0; k < 2; k++) {
       const f = slotsE[k], c = cardsE[k], im = eImgs[k]; c.hidden = !f; im.hidden = !f; if (!f) continue;
-      $('.n', c).innerHTML = f.def.name + (state.mdex[f.id] === 2 ? '<img class="gotmark" src="quest/assets/items/icon_ball_timothy.webp" alt="つかまえずみ">' : ''); $('.lv', c).textContent = 'Lv' + f.e.lv; $('.hp i', c).style.width = Math.max(0, f.e.hp / f.e.maxHp * 100) + '%';
+      $('.n', c).innerHTML = f.def.name + (state.mdex[f.id] === 2 ? '<img class="gotmark" src="quest/assets/items/icon_ball_timothy.webp" alt="つかまえずみ">' : ''); $('.lv', c).textContent = 'Lv' + f.e.lv; fitName($('.n', c)); $('.hp i', c).style.width = Math.max(0, f.e.hp / f.e.maxHp * 100) + '%';
       $('.tys', c).innerHTML = elemChip(f.def.element) + chips(f.E) + `<div class="wkrow">${weakLine(f.def.element)}</div>`;
       if (im.dataset.src !== f.def.image) { im.dataset.src = f.def.image; im.onload = () => { im._pad = bottomPad(im); layout(); }; im.src = img(f.def.image); }
     }
     for (let k = 0; k < 2; k++) {
       const sl = slotsA[k], c = cardsA[k], im = aImgs[k]; c.hidden = !sl; im.hidden = !sl; if (!sl) continue;
       const a = state.party[sl.ai], st = monStats(a); fought.add(a); const ad = GD.MONSTERS[a.id], aHp = hpOf(a);
-      $('.n', c).textContent = monName(a); $('.lv', c).textContent = 'Lv' + a.lv; $('.hp i', c).style.width = Math.max(0, aHp / st.maxHp * 100) + '%';
+      $('.n', c).textContent = monName(a); $('.lv', c).textContent = 'Lv' + a.lv; fitName($('.n', c)); $('.hp i', c).style.width = Math.max(0, aHp / st.maxHp * 100) + '%';
       $('.tys', c).innerHTML = elemChip(ad.element) + (buff ? `<span class="bf">UP ${buff.turns}</span>` : '') + chips(sdOf(a));
       $('.hpn', c).textContent = `HP ${Math.max(0, aHp)} / ${st.maxHp}`; $('.xp i', c).style.width = Math.min(100, (a.exp || 0) / needExp(a.lv, a.id) * 100) + '%';
       if (im.dataset.src !== ad.image) { im.dataset.src = ad.image; im.onload = () => { im._pad = bottomPad(im); layout(); }; im.src = img(ad.image); }
