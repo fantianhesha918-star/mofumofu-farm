@@ -665,6 +665,8 @@ export async function runBattle(enemyId0, opts = {}) {
     if (fx) for (const q of res) { useE(q.j); if (e.hp > 0) await useFx('a', fx, false); }
     useE(keepE);
   };
+  // じこさいせいは とくべつな じょうけん: 「かいふくわざ」を おぼえている なかま(ほか: いやしのきのみ・りょうりバフ)だけ
+  const regenMove = (m) => movesOf(m).some(sk => { const f = fxOf(sk); return !!(f && f.heal); });
   const enemyPick = () => {
     if (Math.random() < 0.28) {
       const A = sd('a'), pool = enemyStatusPool(GD, def.element).filter(id => { const f = GD.SKILLS[id].fx; if (f.st) return !A.ail; if (f.self) return Object.keys(f.self).every(k => E.stg[k] < 2); if (f.foe) return Object.keys(f.foe).every(k => A.stg[k] > -2); if (f.heal) return e.hp < e.maxHp * 0.5; return true; });
@@ -807,11 +809,11 @@ export async function runBattle(enemyId0, opts = {}) {
     await settle(); if (result) return;
     for (const k of liveA()) {
       useA(k); const a = state.party[ai];
-      if (abilityOf(a.id) === 'regen') { const mx = monStats(a).maxHp, add = Math.min(mx - hpOf(a), Math.max(1, Math.round(mx / 12))); if (add > 0) { a.hp = hpOf(a) + add; draw(); pop('a', '+' + add, 'heal'); msg(`${monName(a)} は じこさいせいで かいふくした`); await sleep(600); } }
+      if (regenMove(a)) { const mx = monStats(a).maxHp, add = Math.min(mx - hpOf(a), Math.max(1, Math.round(mx / 12))); if (add > 0) { a.hp = hpOf(a) + add; draw(); pop('a', '+' + add, 'heal'); msg(`${monName(a)} は かいふくわざの ちからで じこさいせいした`); await sleep(600); } }
       { const ho = holdOf(a); if (hpOf(a) > 0 && ho.regen) { const mx = monStats(a).maxHp, add = Math.min(mx - hpOf(a), Math.max(1, Math.round(mx / ho.regen))); if (add > 0) { a.hp = hpOf(a) + add; draw(); pop('a', '+' + add, 'heal'); msg(`${monName(a)} は ${ITEMS[a.held].name}で かいふくした`); await sleep(600); } } }
       if (buff && buff.regen && hpOf(a) > 0) { const mx = monStats(a).maxHp, add = Math.min(mx - hpOf(a), Math.max(1, Math.round(mx * buff.regen))); if (add > 0) { healSide('a', add); msg(`${monName(a)} は ごちそうの ちからで かいふくした`); await sleep(600); } }
     }
-    for (const j of liveE()) { useE(j); if (e.ab === 'regen') { const add = Math.min(e.maxHp - e.hp, Math.max(1, Math.round(e.maxHp / 12))); if (add > 0) { e.hp += add; draw(); pop('e', '+' + add, 'heal'); await sleep(500); } } }
+    for (const j of liveE()) { useE(j); if ((def.skillIds || []).some(id => { const f = GD.SKILLS[id] && fxOf(GD.SKILLS[id]); return f && f.heal; })) { const add = Math.min(e.maxHp - e.hp, Math.max(1, Math.round(e.maxHp / 12))); if (add > 0) { e.hp += add; draw(); pop('e', '+' + add, 'heal'); await sleep(500); } } }
     if (buff && --buff.turns <= 0) { msg('りょうりの こうかが きれた'); buff = null; draw(); await sleep(600); }
   };
   // 新しい技: 4つに空きがあれば おぼえる。いっぱいなら どれと入れかえるか えらぶ

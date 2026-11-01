@@ -288,7 +288,7 @@ export const ABILITIES = {
   pinch:     { name: 'ピンチで ばりき',   desc: 'HPが 1/3いかに なると ダメージ ×1.3' },
   thick:     { name: 'あつい ひふ',       desc: 'うける ダメージが 12%へる' },
   swift:     { name: 'せんそく',         desc: 'すばやさが 15%あがる' },
-  regen:     { name: 'じこさいせい',     desc: 'まいターン HPが 1/12 かいふくする' },
+  regen:     { name: 'じこさいせい',     desc: 'まいターン HPが 1/12 かいふくする(いまは「かいふくわざ」を おぼえた なかまの こうか)' },
   sharp:     { name: 'かいしんの め',     desc: 'かいしんりつが +10%' },
   typeboost: { name: 'タイプいっち',     desc: 'じぶんと おなじタイプの わざが ×1.15' },
   fortress:  { name: 'ふくつの こころ',   desc: 'たおされる ダメージを 1かいだけ HP1で たえる' },
@@ -296,7 +296,7 @@ export const ABILITIES = {
   greedy:    { name: 'ごうつく',         desc: 'しょうきんが +15%' },
   wise:      { name: 'けんじゃ',         desc: 'けいけんちが +15%' },
 };
-export const ABILITY_BY_ELEMENT = { fire: ['pinch', 'typeboost', 'sharp'], water: ['regen', 'thick', 'typeboost'], grass: ['regen', 'wise', 'catcher'], wind: ['swift', 'sharp', 'catcher'], earth: ['thick', 'fortress', 'typeboost'], thunder: ['swift', 'pinch', 'sharp'], heaven: ['regen', 'fortress', 'wise'], dark: ['sharp', 'pinch', 'greedy'], magic: ['wise', 'typeboost', 'catcher'], beast: ['pinch', 'swift', 'greedy'], kami: ['fortress', 'typeboost', 'wise'], none: ['thick', 'greedy', 'catcher'] };
+export const ABILITY_BY_ELEMENT = { fire: ['pinch', 'typeboost', 'sharp'], water: ['thick', 'typeboost', 'sharp'], grass: ['wise', 'catcher', 'typeboost'], wind: ['swift', 'sharp', 'catcher'], earth: ['thick', 'fortress', 'typeboost'], thunder: ['swift', 'pinch', 'sharp'], heaven: ['fortress', 'wise', 'typeboost'], dark: ['sharp', 'pinch', 'greedy'], magic: ['wise', 'typeboost', 'catcher'], beast: ['pinch', 'swift', 'greedy'], kami: ['fortress', 'typeboost', 'wise'], none: ['thick', 'greedy', 'catcher'] };
 
 // ---- モンスターずかんの ほうしゅう(なかまに した しゅるいの かず) ----
 export const MDEX_REWARDS = [
