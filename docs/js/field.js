@@ -431,6 +431,14 @@ function foeOver(GD, id, lm, bonus = 0, m = {}) {   // bonus: レベルの た�
   const lv = Math.min(lm[id] + bonus, bl - 2), st = GD.getCompanionStats(b, lv), bo = F.boss.over;   // ぬしの ステータスを こえない(HPは はんぶんちょっと、こうげきは ぬしまで、ぼうぎょは 1.3ばいまで)
   return { level: lv, hp: Math.round(Math.min(st.maxHp * STAT_K, bo.hp * 0.6) * (m.hp || 1)), atk: Math.round(Math.min(st.atk * STAT_K, bo.atk) * (m.atk || 1)), def: Math.round(Math.min(st.def * STAT_K, bo.def * 1.3) * (m.def || 1)), spd: Math.round(st.spd * 0.95), exp: Math.round(b.exp * k.exp * (m.exp || 1)), money: Math.round(b.money * k.money * (m.money || 1)) };
 }
+// ぬしの つよさを、おなじレベルの なかまに おいつかせる(レベルが たかい ぬしほど なかまの せいちょうに まけて いたため)。ひくい ぶんだけ ひきあげる
+async function bossScaled(o) {
+  const GD = await questData(), lv = o.level;
+  let pool = Object.values(GD.MONSTERS).filter(x => x.level <= lv && x.level >= lv - 18);
+  if (pool.length < 5) pool = Object.values(GD.MONSTERS).filter(x => x.level <= lv).sort((a, b) => b.level - a.level).slice(0, 15);
+  const med = (f) => pool.map(x => f(GD.getCompanionStats(x, Math.max(x.level, lv - 4)))).sort((a, b) => a - b)[Math.floor(pool.length / 2)];
+  return { ...o, hp: Math.max(o.hp, Math.round(med(s => s.maxHp) * 1.3)), atk: Math.max(o.atk, Math.round(med(s => s.atk) * 0.75)), def: Math.max(o.def, Math.round(med(s => s.def) * 0.75)) };
+}
 // ---- ジムリーダーふう: ぬしの まえに してんのう(てした)が なんたいか れんせんで たたかう ----
 async function gymTeam() {
   const GD = await questData(), k = F.scale || { lv: 0, hp: 1, atk: 1, def: 1, spd: 1, exp: 1, money: 1 }, n = FI < 4 ? 2 : FI === 11 ? 4 : 3;
@@ -453,7 +461,7 @@ async function hallOfFame() {
 }
 async function challengeBoss() {
   if (busy) return; busy = true; sfx('quest'); fade(true); await new Promise(r => setTimeout(r, 700));
-  const re = bossBeaten(), o = BOSS.over, cap = ELITE ? { left: 3 } : null;   // してんのうは かいふくの たべものが 3かいまで
+  const re = bossBeaten(), o = await bossScaled(BOSS.over), cap = ELITE ? { left: 3 } : null;   // してんのうは かいふくの たべものが 3かいまで
   if (cap) { ui.toast('してんのうの たたかい', 'かいふくの たべものは 3かいまで!', 'てしたも ぬしも れんせん。とちゅうで かいふくは できないよ', 3600); await new Promise(r => setTimeout(r, 1200)); }
   const over = re ? { ...o, level: o.level + 3, hp: Math.round(o.hp * 1.2), atk: Math.round(o.atk * 1.1), def: Math.round(o.def * 1.1), exp: Math.round(o.exp * 0.8), money: Math.round(o.money * 0.5) } : o;
   const team = re ? null : (await gymTeam()).map(u => ({ id: u.id, over: u.over })).concat([{ id: BOSS.id, over, isBoss: true }]);   // はじめては てしたを たおしてから ぬし(1つの たたかいで つづける)
