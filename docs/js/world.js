@@ -53,7 +53,24 @@ export function lawnKit() {
   const time = { value: 0 }, mat = new THREE.MeshLambertMaterial({ vertexColors: true });
   mat.onBeforeCompile = (sh) => { sh.uniforms.uTime = time; sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uTime;').replace('#include <begin_vertex>', '#include <begin_vertex>\n#ifdef USE_INSTANCING\nfloat ph=instanceMatrix[3].x*0.35+instanceMatrix[3].z*0.27;\nfloat hh=position.y*position.y;\ntransformed.x+=(sin(uTime*1.7+ph)*0.09+sin(uTime*3.3+ph*2.)*0.03)*hh;\ntransformed.z+=cos(uTime*1.3+ph*1.3)*0.06*hh;\n#endif'); };
   const LAW = { h0: 0.2, h1: 0.5, spread: 0.3, lo: '#557f30', hi: '#b4d860', wide: 0.8 };
-  return { geos: [bladeTuft(15, 11, LAW), bladeTuft(15, 12, LAW), bladeTuft(15, 13, LAW), bladeTuft(12, 14, { ...LAW, h0: 0.15, h1: 0.34 })], mat, time };
+  // ---- くさむら(モンスターが でる ばしょ)むけ: せの たかい くさ と はな ----
+  const WILD = { h0: 0.5, h1: 1.05, spread: 0.36, lo: '#3f6a22', hi: '#bfe070', wide: 1.0 };
+  const wild = [bladeTuft(20, 21, WILD), bladeTuft(20, 22, WILD), bladeTuft(18, 23, { ...WILD, h0: 0.4, h1: 0.8 })];
+  const flowerTuft = (seed, colors) => {
+    const r2 = mulberry32(seed), pos = [], col = [], idx = [], stem = new THREE.Color('#4f8a2c'), ctr = new THREE.Color('#ffd040'), tmp = new THREE.Color();
+    const quad = (a, b, c, d, cc) => { const q = pos.length / 3; for (const p of [a, b, c, d]) { pos.push(...p); col.push(cc.r, cc.g, cc.b); } idx.push(q, q + 1, q + 2, q, q + 2, q + 3, q + 2, q + 1, q, q + 3, q + 2, q); };
+    for (let f = 0; f < 5; f++) {
+      const ang = r2() * 6.283, rad = Math.sqrt(r2()) * 0.3, bx = Math.cos(ang) * rad, bz = Math.sin(ang) * rad, h = 0.32 + r2() * 0.3, lean = (r2() - 0.5) * 0.12, w = 0.012;
+      quad([bx - w, 0, bz], [bx + w, 0, bz], [bx + w + lean, h, bz], [bx - w + lean, h, bz], stem);
+      const cx = bx + lean, cz = bz, pc = new THREE.Color(colors[Math.floor(r2() * colors.length)]).multiplyScalar(0.92 + r2() * 0.16), pr = 0.07 + r2() * 0.035, n = 6, tilt = 0.18 * (r2() - 0.5);
+      const c0 = pos.length / 3; pos.push(cx, h + 0.012, cz); col.push(ctr.r, ctr.g, ctr.b);
+      for (let k = 0; k < n; k++) { const a = k / n * 6.283; pos.push(cx + Math.cos(a) * pr, h + 0.012 + Math.sin(a + tilt) * 0.0 + (k % 2) * 0.012, cz + Math.sin(a) * pr); col.push(pc.r, pc.g, pc.b); }
+      for (let k = 0; k < n; k++) { const q1 = c0 + 1 + k, q2 = c0 + 1 + (k + 1) % n; idx.push(c0, q1, q2, c0, q2, q1); }
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    const nrm = new Float32Array(pos.length); for (let i = 0; i < nrm.length; i += 3) nrm[i + 1] = 1; g.setAttribute('normal', new THREE.BufferAttribute(nrm, 3)); g.setIndex(idx); return g;
+  };
+  return { geos: [bladeTuft(15, 11, LAW), bladeTuft(15, 12, LAW), bladeTuft(15, 13, LAW), bladeTuft(12, 14, { ...LAW, h0: 0.15, h1: 0.34 })], wild, flowers: (colors) => [flowerTuft(41, colors), flowerTuft(42, colors)], mat, time };
 }
 export function heightAt(x, z) {
   const d = Math.hypot(x, z + 5), r = Math.hypot(x, z);

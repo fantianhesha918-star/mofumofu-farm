@@ -228,6 +228,7 @@ for (const [pc, pa, glow, pn, r0, r1] of (F.patch || [])) {
 let lawnTime = null;
 const ZONES = F.zones;
 const inZone = (x, z) => ZONES.some(([cx, cz, r]) => Math.hypot(x - cx, z - cz) < r);
+const ZPAL = { def: ['#fff6e0', '#ffd84a', '#ff9ac0', '#b89cff'], volcano: ['#ff7a2a', '#ffd04a', '#ff5a3a'], sun: ['#ff7a2a', '#ffd04a', '#ff5a3a'], ghost: ['#9ff0d0', '#c8a8ff', '#e0fff0'], castle: ['#b080ff', '#e060a0', '#8a60d0'], cosmos: ['#8ad0ff', '#ff9aff', '#fff0a0'], end: ['#8ad0ff', '#ff9aff', '#fff0a0'], sky: ['#ffffff', '#ffe9a0', '#a8e0ff'], temple: ['#ffffff', '#ffe9a0', '#a8e0ff'], dragon: ['#ffffff', '#c8ffe8', '#a8e0ff'], grove: ['#fff6e0', '#d8f8a8', '#ffd0e8'] };
 {
   const dtex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); const gr = g.createRadialGradient(64, 64, 10, 64, 64, 64); const zd = F.zd || ['#3a7a2ccc', '#4a8a36aa', '#4a8a3600']; gr.addColorStop(0, zd[0]); gr.addColorStop(0.75, zd[1]); gr.addColorStop(1, zd[2]); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); const t0 = new THREE.CanvasTexture(c); t0.colorSpace = THREE.SRGBColorSpace; return t0; })();
   const kit = lawnKit(); lawnTime = kit.time; const mt = new THREE.Matrix4(), col = new THREE.Color();
@@ -236,6 +237,13 @@ const inZone = (x, z) => ZONES.some(([cx, cz, r]) => Math.hypot(x - cx, z - cz) 
     const per = Math.round(r * r * (isTouch ? 5 : 7.5)), lists = kit.geos.map(() => []);   // 草のかたまりを村と同じ形で敷く
     for (let i = 0; i < per; i++) { const a = R(0, 6.28), rr = r * Math.sqrt(rnd()); lists[i % lists.length].push([cx + Math.cos(a) * rr, cz + Math.sin(a) * rr]); }
     lists.forEach((arr, gi) => { const im = new THREE.InstancedMesh(kit.geos[gi], kit.mat, arr.length); arr.forEach(([x, z], i) => { const s = R(0.9, 1.5); mt.compose(new V3(x, hAt(x, z) - 0.01, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, R(0, 6.28), 0)), new V3(s, s * R(0.9, 1.4), s)); im.setMatrixAt(i, mt); const l = R(0.85, 1.12); const gt = F.tint || [[0.68, 0.82], [0.92, 0.92], [0.6, 0.78]]; col.setRGB(l * R(gt[0][0], gt[0][1]), l * R(gt[1][0], gt[1][1]), l * R(gt[2][0], gt[2][1])); im.setColorAt(i, col); }); im.computeBoundingSphere(); scene.add(im); });
+    {   // せの たかい くさ と はな(くさむらを それらしく)
+      const wl = kit.wild.map(() => []), fl = [[], []], Pf = ZPAL[FID] || ZPAL.def, fgeo = kit.flowers(Pf);
+      for (let i = 0; i < Math.round(per * 0.3); i++) { const a = R(0, 6.28), rr = r * Math.sqrt(rnd()) * 0.97; wl[i % wl.length].push([cx + Math.cos(a) * rr, cz + Math.sin(a) * rr]); }
+      for (let i = 0; i < Math.round(per * 0.07); i++) { const a = R(0, 6.28), rr = r * Math.sqrt(rnd()) * 0.95; fl[i % 2].push([cx + Math.cos(a) * rr, cz + Math.sin(a) * rr]); }
+      wl.forEach((arr, gi) => { const im = new THREE.InstancedMesh(kit.wild[gi], kit.mat, arr.length); arr.forEach(([x, z], i) => { const s = R(0.9, 1.4); mt.compose(new V3(x, hAt(x, z) - 0.01, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, R(0, 6.28), 0)), new V3(s, s * R(0.85, 1.25), s)); im.setMatrixAt(i, mt); const l = R(0.85, 1.12), gt = F.tint || [[0.68, 0.82], [0.92, 0.92], [0.6, 0.78]]; col.setRGB(l * R(gt[0][0], gt[0][1]), l * R(gt[1][0], gt[1][1]), l * R(gt[2][0], gt[2][1])); im.setColorAt(i, col); }); im.computeBoundingSphere(); scene.add(im); });
+      fl.forEach((arr, gi) => { const im = new THREE.InstancedMesh(fgeo[gi], kit.mat, arr.length); arr.forEach(([x, z], i) => { const s = R(0.9, 1.3); mt.compose(new V3(x, hAt(x, z) - 0.01, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, R(0, 6.28), 0)), new V3(s, s, s)); im.setMatrixAt(i, mt); col.setRGB(1, 1, 1); im.setColorAt(i, col); }); im.computeBoundingSphere(); scene.add(im); });
+    }
   }
 }
 
