@@ -37,6 +37,25 @@ export function riverDist(x, z) {
   return best;
 }
 // 村の「背の低い草」を、ほかのマップでも使えるようにした部品(葉1枚ずつ曲線で作った芝)
+// みずの ゆれ: ちょうてんを なみで うごかし、めんの むきを うねらせて ひかりを きらきらさせ、ななめから みると そらいろに ひかる
+function waterPatch(mat, timeU, amp) {
+  mat.onBeforeCompile = (sh) => {
+    sh.uniforms.uTime = timeU;
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uTime;\nvarying vec3 vWP;')
+      .replace('#include <begin_vertex>', `#include <begin_vertex>
+float wv=sin(position.x*0.18+uTime*0.9)*cos(position.z*0.15+uTime*0.7)+sin((position.x+position.z)*0.31+uTime*1.3)*0.5;
+transformed.y+=wv*${amp.toFixed(3)};
+vWP=(modelMatrix*vec4(transformed,1.)).xyz;`);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float uTime;\nvarying vec3 vWP;')
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+      { float t=uTime; vec2 p=vWP.xz;
+        float dx=cos(p.x*0.35+t*1.1)*0.35+cos((p.x+p.y)*0.8+t*1.9)*0.2+cos(p.x*1.7-p.y*1.1+t*2.7)*0.1;
+        float dz=cos(p.y*0.3-t*0.9)*0.3+cos((p.x+p.y)*0.8+t*1.9)*0.2-cos(p.x*1.7-p.y*1.1+t*2.7)*0.1;
+        vec3 nw=normalize(vec3(-dx*0.22,1.,-dz*0.22)); normal=normalize((viewMatrix*vec4(nw,0.)).xyz);
+        float fr=pow(1.0-clamp(dot(normalize(vViewPosition),normal),0.,1.),3.0); diffuseColor.rgb=mix(diffuseColor.rgb,vec3(0.78,0.92,1.0),fr*0.35);
+        float sp=smoothstep(0.9,1.0,sin(p.x*2.7+t*2.1)*sin(p.y*3.3-t*1.7)); diffuseColor.rgb+=vec3(sp*0.25); }`);
+  };
+}
 export function lawnKit() {
   const bladeTuft = (n, seed, { h0, h1, spread, lo, hi, wide }) => {
     const r2 = mulberry32(seed), pos = [], col = [], idx = [], c0 = new THREE.Color(lo), c1 = new THREE.Color(hi), tmp = new THREE.Color();
@@ -289,8 +308,9 @@ export function buildWorld(scene) {
       for (let i = 0; i < 50; i++) { c.fillStyle = 'rgba(120,180,215,.25)'; c.beginPath(); c.ellipse(Math.random() * w, Math.random() * h, 10 + Math.random() * 18, 3 + Math.random() * 3, 0, 0, 7); c.fill(); }
     });
     rip.wrapS = rip.wrapT = THREE.RepeatWrapping; rip.repeat.set(26, 26);
-    const wg = new THREE.RingGeometry(58, 340, 56, 14, -(SEA_A + 0.85), 1.7); wg.rotateX(-Math.PI / 2);
+    const wg = new THREE.RingGeometry(58, 340, 150, 56, -(SEA_A + 0.85), 1.7); wg.rotateX(-Math.PI / 2);
     const wmat = new THREE.MeshPhongMaterial({ color: '#4fb0d6', map: rip, transparent: true, opacity: 0.8, shininess: 100, specular: '#e8f8ff', depthWrite: false });
+    world.waterTime = world.waterTime || { value: 0 }; waterPatch(wmat, world.waterTime, 0.12);
     const water = new THREE.Mesh(wg, wmat); water.position.y = SEA_Y; water.renderOrder = 2; scene.add(water);
     world.water = { mesh: water, tex: rip };
     world.seaGlint = null;
@@ -306,7 +326,8 @@ export function buildWorld(scene) {
       if (i < P.length - 1) { const k = i * 2; idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); }
     }
     const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); rg.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); rg.setIndex(idx);
-    const rm = new THREE.Mesh(rg, new THREE.MeshPhongMaterial({ color: '#4fb0d6', map: world.water ? world.water.tex : null, transparent: true, opacity: 0.82, shininess: 100, specular: '#e8f8ff', depthWrite: false, side: THREE.DoubleSide })); rm.renderOrder = 2; scene.add(rm);
+    world.waterTime = world.waterTime || { value: 0 }; const rmat = new THREE.MeshPhongMaterial({ color: '#4fb0d6', map: world.water ? world.water.tex : null, transparent: true, opacity: 0.82, shininess: 100, specular: '#e8f8ff', depthWrite: false, side: THREE.DoubleSide }); waterPatch(rmat, world.waterTime, 0.0);
+    const rm = new THREE.Mesh(rg, rmat); rm.renderOrder = 2; scene.add(rm);
     // 釣りば(岸の上): 立つ場所と、うきを投げる先
     const spots = [];
     for (let i = 4; i < P.length - 4; i += 6) {
@@ -807,6 +828,7 @@ export function buildWorld(scene) {
     lodT -= dt; if (lodT <= 0) { lodT = 0.3; const f = world.focus; for (const c of world.lodChunks) { const d = Math.hypot(c.c.x - f.x, c.c.z - f.z) - c.r; c.m.visible = d < c.max; } }
     if (world.lanternGlows) { const h = world.hour ?? 12, n = h > 18.2 || h < 5.8 ? 1 : h > 17 ? (h - 17) / 1.2 : h < 7 ? (7 - h) / 1.2 : 0; for (const g of world.lanternGlows) g.material.opacity = n * (0.75 + Math.sin(t * 5 + g.position.x) * 0.06); }
     world.grassTime.value = t;
+    if (world.waterTime) world.waterTime.value = t;
     if (world.water) { world.water.tex.offset.set(t * 0.012, t * 0.006); world.water.mesh.position.y = SEA_Y + Math.sin(t * 0.6) * 0.04; }
     if (world.windmill) world.windmill.rotation.z -= dt * 0.35;
     if (world.cloudMats) { const h = world.hour ?? 12, d = h > 7 && h < 17.5 ? 1 : h > 19.5 || h < 5 ? 0.22 : h >= 17.5 ? 1 - (h - 17.5) / 2 * 0.78 : 0.22 + (h - 5) / 2 * 0.78; const warm = (h > 16.5 && h < 19.5) || (h > 5 && h < 7.5) ? 0.12 : 0; for (const m of world.cloudMats) m.color.setRGB(d, d * (1 - warm * 0.5), d * (1 - warm)); }
