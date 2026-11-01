@@ -878,11 +878,11 @@ export async function runBattle(enemyId0, opts = {}) {
   const CB2 = { W: 373, H: 636, cx: 176.5, cy: 491, ballW: 265, bottom: 626 };   // ボールの コマ(6まい)の だいたいの サイズと、とじた ボールの ちゅうしん・そこ
   const cbImg = (src) => { const i = new Image(); i.src = img(src); i.decoding = 'async'; return i; };
   const CB2_DIR = { ball: 'capture2', super_ball: 'capture2_super', hyper_ball: 'capture2_hyper', master_ball: 'capture2_master' };
-  const captureAnim2 = async (ok, prefix = 'ball') => {
+  const captureAnim2 = async (ok, prefix = 'ball', shakes = 3) => {
     const cdir = CB2_DIR[prefix] || 'capture2', bm = prefix === 'master_ball' ? 'normal' : 'screen';   // くろい マスターは、ひかりを たさず そのまま かさねる
     const field = $('.bt-field', root), fr = field.getBoundingClientRect(), pr = aImg.getBoundingClientRect(), er = eImg.getBoundingClientRect();
-    const sx = pr.left + pr.width / 2 - fr.left, sy = pr.top + pr.height * 0.45 - fr.top, ex = er.left + er.width / 2 - fr.left, ey = er.top + er.height * 0.55 - fr.top;
-    const k = Math.max(84, Math.min(118, er.width * 0.4)) / CB2.ballW, bw = CB2.W * k, bh = CB2.H * k, bcx = CB2.cx * k, bcy = CB2.cy * k;
+    const sx = pr.left + pr.width / 2 - fr.left, sy = pr.top + pr.height * 0.45 - fr.top, ex = er.left + er.width / 2 - fr.left;
+    const k = Math.max(64, Math.min(92, er.width * 0.32)) / CB2.ballW, bw = CB2.W * k, bh = CB2.H * k, bcx = CB2.cx * k, bcy = CB2.cy * k, ey = er.bottom - fr.top - (CB2.bottom - CB2.cy) * k - 4;   // ボールは あいての だいざの まんなかに おりる(ボールの そこが だいざの ちゅうしん)
     const frames = [0, 1, 2, 3, 4, 5].map(i => { const im = cbImg(`assets/${cdir}/ball_${i}.webp`); im.style.cssText = `position:absolute;left:0;top:0;width:${bw}px;height:${bh}px;visibility:hidden;`; return im; });
     const fxs = (n, a) => Array.from({ length: a }, (_, i) => cbImg(`assets/${cdir}/fx_${n}_${i}.webp`)), swirl = fxs('swirl', 5), ring = fxs('ring', 5), burst = fxs('burst', 5), tailI = cbImg(`assets/${cdir}/fx_tail.webp`);
     try { await Promise.all([...frames, ...swirl, ...ring, ...burst, tailI].map(i => i.decode ? i.decode().catch(() => {}) : 0)); } catch (e) {}
@@ -912,12 +912,13 @@ export async function runBattle(enemyId0, opts = {}) {
     for (const i of [4, 3, 2, 0]) { setF(i); await sleep(85); }
     wa(body, [{ transform: 'scale(1,1)' }, { transform: 'scale(1.16,.86)', offset: .4 }, { transform: 'scale(1,1)' }], { duration: 260, easing: 'ease-out' }); await sleep(380);
     // 4) 3かい ゆれる
-    for (let w = 1; w <= 3; w++) { sfx('wobble'); await wa(body, [{ transform: 'rotate(0deg)' }, { transform: 'rotate(-17deg)', offset: .3 }, { transform: 'rotate(15deg)', offset: .7 }, { transform: 'rotate(0deg)' }], { duration: 640, easing: 'ease-in-out' }); await sleep(w === 3 ? 700 : 380); }
+    if (shakes === 0) await sleep(260);
+    for (let w = 1; w <= shakes; w++) { sfx('wobble'); await wa(body, [{ transform: 'rotate(0deg)' }, { transform: 'rotate(-17deg)', offset: .3 }, { transform: 'rotate(15deg)', offset: .7 }, { transform: 'rotate(0deg)' }], { duration: 640, easing: 'ease-in-out' }); await sleep(w === 3 ? 700 : 380); }   // しっぱいは 0〜2かい ゆれた ところで でてくる
     // 5) けっか
     if (ok) { jingle('catch'); fx(ring, ex, ey - bh * 0.1, bw * 2.8, 150); wa(body, [{ filter: 'brightness(1)' }, { filter: 'brightness(1.5) saturate(1.2)', offset: .3 }, { filter: 'brightness(1)' }], { duration: 900 }); await sleep(1500); wa(pos, [{ opacity: 1 }, { opacity: 0 }], { duration: 250 }); await sleep(260); pos.remove(); }
     else { sfx('no'); eImg.style.visibility = ''; eImg.classList.add('pop-out'); setTimeout(() => eImg.classList.remove('pop-out'), 400); fx(burst, ex, ey - bh * 0.1, bw * 2.8, 90); for (const i of [2, 3, 4, 5]) { setF(i); await sleep(60); } await sleep(220); wa(pos, [{ opacity: 1 }, { opacity: 0 }], { duration: 260 }); await sleep(280); pos.remove(); }
   };
-  const captureAnim = (prefix, ok) => CB2_DIR[prefix] ? captureAnim2(ok, prefix) : new Promise(res => {
+  const captureAnim = (prefix, ok, shakes = 3) => CB2_DIR[prefix] ? captureAnim2(ok, prefix, shakes) : new Promise(res => {
     const field = $('.bt-field', root), fr = field.getBoundingClientRect(), pr = aImg.getBoundingClientRect(), er = eImg.getBoundingClientRect();
     const src = (n) => img(`assets/capture/capture_${prefix}_${n}.webp`), sx = pr.left + pr.width / 2 - fr.left, sy = pr.top + pr.height / 2 - fr.top, ex = er.left + er.width / 2 - fr.left, ey = er.top + er.height / 2 - fr.top;
     const ball = document.createElement('img'); ball.className = 'capture-ball-anim'; ball.src = src('fly'); ball.style.left = sx + 'px'; ball.style.top = sy + 'px'; field.appendChild(ball);
@@ -1058,14 +1059,16 @@ export async function runBattle(enemyId0, opts = {}) {
       if (ITEMS[v] && ITEMS[v].ball) {
         const bl = ITEMS[v].ball; addItem(v, -1); msg(`${ITEMS[v].name}を なげた!`); sfx('pick');
         const hpR = e.hp / e.maxHp, base = Math.min(0.9, 0.15 + (1 - hpR) * 0.6), luckB = monStats(a).luck * 0.004;
-        const chance = bl.mult === Infinity ? 1 : Math.min(1, base * bl.mult * (def.catchPenalty || 1) + luckB + (abilityOf(a.id) === 'catcher' ? 0.06 : 0)), ok = Math.random() < chance;
-        await captureAnim(bl.anim, ok);
+        const chance = bl.mult === Infinity ? 1 : Math.min(1, base * bl.mult * (def.catchPenalty || 1) + luckB + (abilityOf(a.id) === 'catcher' ? 0.06 : 0)), q = Math.pow(chance, 1 / 3);   // 3かい ゆれる あいだに 1かいずつ ふんばられる。なんかいめで でてくるかは あいての HPや つよさしだい
+        let shk = 0; while (shk < 3 && Math.random() < q) shk++;
+        const ok = shk >= 3;
+        await captureAnim(bl.anim, ok, shk);
         if (ok) { msg(`${def.name} を なかまに した!`); await sleep(1900); state.mdex[enemyId] = 2; if (state.party.length < 6) { const nmon = { id: enemyId, lv: e.lv, exp: 0, hp: null, ball: v }; state.party.push(nmon); await askNick(nmon); } else {   // てもちが 6ぴきなら ぼくじょうへ おくる(むらで いれかえできる)
           state.pasture = state.pasture || [];
           if (state.pasture.length < 12) { const nmon = { id: enemyId, lv: e.lv, exp: 0, hp: null, ball: v }; state.pasture.push(nmon); msg(`てもちが いっぱいなので ${def.name} は なかまの ぼくじょうに おくられた!`); await sleep(1500); msg('むらの あずかりパソコンで てもちと いれかえられるよ'); await sleep(1500); }
           else { msg('ぼくじょうも いっぱいなので 野に かえした…'); await sleep(1100); }
         } result = 'caught'; return; }
-        msg(`ああっ、${def.name} が とびだしてしまった!`); await sleep(900);
+        msg([`だめだ! すぐに ${def.name} が とびだしてきた!`, `ああっ、${def.name} が とびだしてしまった!`, `おしい! あと すこしで つかまえられたのに!`][Math.min(2, shk)]); await sleep(1000);
       } else if (ITEMS[v] && ITEMS[v].battle) {
         const bu = ITEMS[v].battle; addItem(v, -1); sfx('feed'); msg(`${ITEMS[v].name}を つかった!`); await sleep(700);
         if (bu.cure) { const S = sd('a'); if (S.ail) { S.ail = null; draw(); msg(`${monName(a)} の じょうたいいじょうが なおった!`); } else msg('でも なにも おこらなかった…'); await sleep(900); }
