@@ -1192,6 +1192,11 @@ function buildCasinoRoom() {
 }
 async function buildCasino(announce) {
   if (casinoBuilt || count('casino_deed') < 1) return; casinoBuilt = true;
+  if (!state.casinoAt) {   // ぼくじょうや はたけと かさならない ばしょを さがして きめる(いちど きめたら ずっと そこ)
+    const C = [[15, 7], [-15, 7], [15, -14], [-15, -14], [28, 7], [-28, 7], [0, 24], [0, -24], [26, -16], [-26, -16], [22, 22], [-22, 22], [32, 20], [-32, 20]];
+    const ok = C.find(([cx, cz]) => !placeCheck(cx, cz, 13, 11, false)) || C[0]; state.casinoAt = { x: ok[0], z: ok[1] }; save();
+  }
+  CASINO.x = state.casinoAt.x; CASINO.z = state.casinoAt.z;
   const { x, z, sc, rot } = CASINO;
   try {
     const gl = await loader.loadAsync('./assets/casino_lite.glb'), obj = gl.scene; obj.traverse(o => { if (o.isMesh) { o.castShadow = !isTouch; o.receiveShadow = true; } });

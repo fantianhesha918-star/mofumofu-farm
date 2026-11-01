@@ -52,6 +52,7 @@ const fresh = () => ({
   hour: 7.5,
   day: 1,
   pos: null,
+  casinoAt: null,   // カジノを たてた ばしょ {x,z}
   where: null,   // いま もりに いるとき { f: フィールド名, x, z }(つづきから で そこから はじめる)
   savedAt: 0,
 });
