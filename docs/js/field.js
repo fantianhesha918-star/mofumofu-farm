@@ -789,7 +789,13 @@ function updateWxLabel() { const h = hourNow(); wxEl.innerHTML = `<b>${WX_NAME[W
 const CHEST_SPOTS = [[-20, 34], [22, 22], [-26, 6], [25, -8], [0, -30], [-22, -30], [28, -44], [-34, 20]];
 const chests = [];
 const chestMat = { wood: new THREE.MeshLambertMaterial({ color: '#8a5a2c' }), dark: new THREE.MeshLambertMaterial({ color: '#5a3818' }), gold: new THREE.MeshLambertMaterial({ color: '#e8c050', emissive: '#6a4a10' }) };
+let chestGeo = null;   // Blender で つくった たからばこ(ほんたい・ふた)。よみこめなければ したの かんたんな はこ
 function buildChest() {
+  if (chestGeo) {
+    const g = new THREE.Group(), body = chestGeo.base.clone(), lid = chestGeo.lid.clone(); lid.position.set(0, 0.7, -0.5); g.add(body, lid);
+    const gl = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTex, color: '#ffe080', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.8 })); gl.scale.set(2.6, 2.6, 1); gl.position.y = 1.0; g.add(gl);
+    g.userData = { lid, glow: gl }; return g;
+  }
   const g = new THREE.Group(), body = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.9, 1.0), chestMat.wood); body.position.y = 0.45; g.add(body);
   const lid = new THREE.Group(); lid.position.set(0, 0.9, -0.5); const lm = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.3, 1.06), chestMat.dark); lm.position.set(0, 0.15, 0.5); lid.add(lm); const lt = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.12, 0.9), chestMat.wood); lt.position.set(0, 0.34, 0.5); lid.add(lt); g.add(lid);
   const bandA = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.94, 1.04), chestMat.gold), bandB = bandA.clone(); bandA.position.set(-0.5, 0.45, 0); bandB.position.set(0.5, 0.45, 0); g.add(bandA, bandB);
@@ -813,6 +819,7 @@ function openChest(c) {
   c.open = 0.01; ui.toast('たからばこ!', [loot.coins ? `${loot.coins}コイン` : '', ...Object.entries(loot.items).map(([id, n]) => `${ITEMS[id].name}×${n}`)].filter(Boolean).join('、'), '', 4200); save();
 }
 async function makeChests() {
+  if (!chestGeo) { try { const [b, l] = await Promise.all([loader.loadAsync('./assets/chest_base_lite.glb'), loader.loadAsync('./assets/chest_lid_lite.glb')]); chestGeo = { base: b.scene, lid: l.scene }; chestGeo.base.traverse(o => { if (o.isMesh) o.castShadow = true; }); chestGeo.lid.traverse(o => { if (o.isMesh) o.castShadow = true; }); } catch (e) { console.warn('chest model', e); } }
   state.chests = state.chests || {}; const fi = FI, n = fi < 2 ? 3 : 4;
   const spots = CHEST_SPOTS.filter(([x, z]) => !inZone(x, z) && !ZONES.some(([cx, cz, r]) => Math.hypot(x - cx, z - cz) < r + 2) && !isWater(x, z) && !(LC && hAt(x, z) < WATER_Y + 1) && !LAVA.some(([cx, cz, r]) => Math.hypot(x - cx, z - cz) < r + 4) && Math.hypot(x - BOSS.x, z - BOSS.z) > 14 && !circles.some(c => Math.hypot(c.x - x, c.z - z) < 3)).slice(0, n);
   spots.forEach(([x, z], i) => { const m = buildChest(); m.position.set(x, hAt(x, z), z); m.rotation.y = rnd() * 6.28; scene.add(m); circles.push({ x, z, r: 0.9 }); chests.push({ key: FID + '_c' + i, x, z, m, open: 0 }); });
@@ -900,7 +907,7 @@ async function boot() {
   { const h = hourNow(), hints = [WX_HINT[WX], nightK(h) > 0.9 ? 'よるは やみや まほうの モンスターが でやすいよ' : (h >= 7 && h < 17 ? 'ひるまは てんや くさの モンスターが でやすいよ' : '')].filter(Boolean); if (WX !== 'clear' || hints.length) setTimeout(() => ui.toast(`てんき: ${WX_NAME[WX]} / ${timeName(h)}`, hints.join(' / ') || 'おだやかな ひだよ', '', 4200), 1500); } busy = false; fade(false); document.title = 'ready';
   if (first) ui.toast('なかまが できた!', 'まめちんちらが ついてきたよ', 'くさむらを あるくと モンスターが でてくるよ', 5200);
   else ui.toast(F.name, 'くさむらを あるくと モンスターが でてくるよ', FID === 'lake' ? 'ここの モンスターは すこし つよいよ' : '', 3600);
-  window.__f = { BOSS, gymTeam, challengeBoss, shrines, challengeLegend, trainers, talkTrainer, talkBoss, cam, hAt, isWater, P, state, startEncounter, runBattle, scene, camera, renderer, goVillage, ZONES, count, addItem, circles };
+  window.__f = { chests, BOSS, gymTeam, challengeBoss, shrines, challengeLegend, trainers, talkTrainer, talkBoss, cam, hAt, isWater, P, state, startEncounter, runBattle, scene, camera, renderer, goVillage, ZONES, count, addItem, circles };
 }
 let posReady = false;
 unlockAudio(); frame(); boot();
