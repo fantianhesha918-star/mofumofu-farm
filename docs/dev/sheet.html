@@ -3,7 +3,7 @@
 // 開発用: モデルの コンタクトシート(?m=名前,...&cols=6&yaw=0.6)
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
-const q=new URLSearchParams(location.search), names=q.get('m').split(','), cols=+(q.get('cols')||6), yaw=+(q.get('yaw')||0.6), CW=230, CH=230, rows=Math.ceil(names.length/cols);
+const q=new URLSearchParams(location.search), names=q.get('m').split(','), cols=+(q.get('cols')||6), yaw=+(q.get('yaw')||0.6), CW=+(q.get('cw')||230), CH=+(q.get('cw')||230), rows=Math.ceil(names.length/cols);
 const r=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});r.setSize(CW*cols,CH*rows);document.body.appendChild(r.domElement);r.setScissorTest(true);r.setClearColor(0x8fb0d0);
 const s=new THREE.Scene();s.add(new THREE.HemisphereLight(0xffffff,0x8a8a60,1.5));const d=new THREE.DirectionalLight(0xfff0d0,2.4);d.position.set(3,5,4);s.add(d);
 const cam=new THREE.PerspectiveCamera(30,1,.1,500);
