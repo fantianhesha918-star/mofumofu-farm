@@ -1600,7 +1600,7 @@ function startGame(isNew) {
   titleMode = false; started = true; $('#title').classList.add('gone'); if (document.documentElement.classList.contains('resuming')) { document.documentElement.classList.remove('resuming'); $('#fade').style.transition = ''; $('#fade').classList.remove('on'); } $('#hud').hidden = false;
   if (state.pos) P.pos.set(state.pos.x, heightAt(state.pos.x, state.pos.z), state.pos.z); else P.pos.set(0, heightAt(0, 6), 6);
   rebuildPlaced().catch(e => console.warn('rebuild failed', e)); placeNodes(); state.plots.forEach((s, i) => plots[i] && refreshPlot(i)); ensureSeed(); applyDecor(); applyLook(); yardRebuild();
-  ui.setCoins(); ui.setClock(); ui.setGoal(); checkQuests(); checkTitles(); updateCamera(0, true); applyPlayerName();
+  ui.setCoins(); ui.setClock(); ui.setGoal(); checkQuests(); checkTitles(); updatePortrait(); updateCamera(0, true); applyPlayerName();
   const q = activeQuests()[0];
   if (isNew && params.has('trial')) { Object.assign(state.inv, { seed_cabbage: 3, seed_carrot: 3, hay: 5, milk_can: 1, chicken_feed: 6 }); state.coins = 500; state.selSeed = 'seed_cabbage'; ui.setCoins(); }   // お試しモード(?trial)
   if (isNew) { setTimeout(() => { if (q) ui.toast('NEW QUEST', q.title, 'クエストの ひょうじは 右上の ボタンから', 4800); sfx('quest'); }, 900); setTimeout(() => ui.toast('HINT', isTouch ? '画面を さわって いどう(スティック) / ボタンで アクション' : 'WASD: いどう / Shift: ダッシュ / E: アクション / ドラッグ: カメラ', '', 6000), 5800); }
@@ -1618,6 +1618,14 @@ bus.on('saveFail', () => ui.toast('セーブできないよ!', 'ブラウザの 
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch {}   // ブラウザに じどうで けされにくく してもらう
 // ---- プレイヤーの なまえ(はじめるとき きめる。あとから「なまえ」の がめんで かえられる) ----
 const playerName = () => nm('player', 'Chino');
+// 左上の まるい アイコンは、てもちの せんとうの モンスター(いなければ もとの えがら)
+let portraitId = null;
+const updatePortrait = () => {
+  const el = document.getElementById('portrait'), lead = state.party && state.party[0], id = lead ? lead.id : null; if (!el || id === portraitId) return; portraitId = id;
+  if (!id) { el.classList.remove('mon'); el.style.backgroundImage = ''; return; }
+  el.classList.add('mon'); el.style.backgroundImage = `url(quest/assets/monsters/${id}.webp)`;
+};
+setInterval(updatePortrait, 1500);
 const applyPlayerName = () => { const el = document.querySelector('#bars .nm'); if (el) el.textContent = fullName(playerName()); };
 function askPlayerName() {
   return new Promise(res => {

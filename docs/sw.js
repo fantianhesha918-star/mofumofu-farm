@@ -2,7 +2,7 @@
    - 一度 ひらいた ファイルは たんまつに のこして、つぎからは つうしんしない(キャッシュ優先)
    - 「ぜんぶ ほぞん」を おすと、ぜんぶの そざいを まとめて ほぞん(files.json の いちらんを つかう)
    - あたらしい ばんが でたら、かわった ファイルだけ ダウンロード(ハッシュで くらべる) */
-const VER = '202611012142';
+const VER = '202611012144';
 const CACHE = 'mofumofu-files';
 const META = 'mofumofu-meta';
 const BASE = new URL('./', self.location).pathname;

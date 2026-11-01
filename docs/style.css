@@ -15,6 +15,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 #status { left: calc(10px + var(--sal)); top: calc(8px + var(--sat)); display: flex; gap: 8px; align-items: center; }
 #portrait { width: 54px; height: 54px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #5a4430, #2c1f14); border: 3px solid var(--gold); color: var(--cream); padding: 6px; box-shadow: 0 2px 8px #0008; }
 #portrait svg { width: 100%; height: 100%; }
+#portrait.mon { padding: 0; background-color: #f1e6cf; background-size: 118%; background-position: 50% 30%; background-repeat: no-repeat; }
+#portrait.mon svg { display: none; }
 #bars { background: var(--panel); border: 1.5px solid #d9b25a66; border-radius: 12px; padding: 5px 12px 6px 10px; min-width: 168px; box-shadow: 0 2px 8px #0006; backdrop-filter: blur(3px); }
 #bars .nm { font-size: 13px; font-weight: 700; letter-spacing: .06em; color: var(--gold2); line-height: 1.1; }
 .bar { position: relative; height: 13px; margin-top: 4px; background: #00000066; border-radius: 7px; overflow: hidden; border: 1px solid #0008; }
