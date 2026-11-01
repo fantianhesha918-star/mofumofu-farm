@@ -14,7 +14,7 @@ def lin(h):
 def mix(a, b, t):
     t = max(0.0, min(1.0, t)); return [a[i] * (1 - t) + b[i] * t for i in range(3)]
 
-def paint(o, col, noise_amt=0.12, freq=2.2, moss=None, top=None, glow=0.0, smooth=False, seed=0):
+def paint(o, col, noise_amt=0.12, freq=2.2, moss=None, top=None, glow=0.0, smooth=False, seed=0, shade=None, band=None):
     """いろを ぬる。noise_amt: いろむら / moss=(いろ, たかさ): したから その たかさまで コケ / top=(いろ, たかさ): うえを その いろに"""
     me = o.data; base = lin(col); mc = lin(moss[0]) if moss else None; tc = lin(top[0]) if top else None
     at = me.color_attributes.new(name='Col', type='FLOAT_COLOR', domain='POINT'); buf = []
@@ -27,6 +27,9 @@ def paint(o, col, noise_amt=0.12, freq=2.2, moss=None, top=None, glow=0.0, smoot
             c = mix(c, [min(1.0, mc[i] * (0.8 + 0.4 * m)) for i in range(3)], (moss[1] - p.z) / max(0.05, moss[1]) * 1.3 - 0.15 + (m - 0.5) * 0.5)
         if tc and p.z > top[1]: c = mix(c, tc, (p.z - top[1]) / 0.12)
         if glow: c = [min(1.0, x + glow) for x in c]
+        if band: c = mix(c, lin(band[0]), 0.5 + 0.5 * math.sin(p.z * band[1] + noise.noise(Vector((p.x, p.y, p.z)) * 0.8) * 1.5) - 0.5 if band[2] else 0.5 + 0.5 * math.sin(p.z * band[1]))
+        if shade:   # ライトを うけない ざいしつ(MeshBasic)むけに、めんの むきで あかるさを やきつける
+            nrm = (mw.to_3x3() @ v.normal).normalized(); L = Vector(shade[:3]).normalized(); f2 = shade[3] + (1 - shade[3]) * max(0.0, nrm.dot(L)); c = [min(1.0, x * f2) for x in c]
         buf += c + [1.0]
     at.data.foreach_set('color', buf); me.color_attributes.active_color = at
     if smooth: bpy.ops.object.shade_smooth()
