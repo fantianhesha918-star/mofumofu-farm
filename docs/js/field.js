@@ -618,6 +618,15 @@ function updateCamera(dt, instant) {
 
 // ---- エンカウント・バトル ----
 const WILD = F.wild;
+// やせいには「しんかごの すがた」を ださない(しんかまえの すがたに おきかえる。しんかは たたかって そだてて するもの)
+function normalizeWild(GD) {
+  const rev = {};
+  for (const m of Object.values(GD.MONSTERS)) { if (m.evolvesTo && GD.MONSTERS[m.evolvesTo.id]) rev[m.evolvesTo.id] = m.id; if (m.evolveStone && GD.MONSTERS[m.evolveStone.id]) rev[m.evolveStone.id] = m.id; }
+  for (const id of Object.keys(GD.MONSTERS)) if (/^mame_chin_(fire|water|grass|wind|earth|thunder|heaven|dark|magic|kami)$/.test(id)) rev[id] = 'mame_chin';
+  const root = (id) => { let n = 0; while (rev[id] && n++ < 8) id = rev[id]; return id; };
+  const by = new Map(); for (const [id, w] of F.wild) { const r = root(id); by.set(r, (by.get(r) || 0) + w); }
+  F.wild.length = 0; for (const [id, w] of by) F.wild.push([id, Math.max(1, Math.round(w))]);   // F.wild の ちゅうしんを そのまま かきかえる(WILD も おなじ はいれつ)
+}
 async function pickWild() { const GD = await questData(), h = hourNow(), ws = WILD.map(([id, w]) => [id, w * elemWeight((GD.MONSTERS[id] && GD.MONSTERS[id].element) || 'none', h)]), tot = ws.reduce((a, b) => a + b[1], 0); let r = rnd() * tot; for (const [id, w] of ws) { r -= w; if (r <= 0) return id; } return ws[0][0]; }
 const fade = (on) => { const f = $('#fade'); f.textContent = ''; f.classList.toggle('on', on); };
 async function startEncounter(forceId) {
@@ -877,7 +886,7 @@ async function boot() {
   chin = makeChin(0.95); scene.add(chin.outer); makePet(); makeBoss(); if (!ELITE) { await makeTrainers(); await makeChests(); } await makeShrines();
   for (const [nm, nT, nP, sc, r0, r1, tn, op] of [...F.trees, ...(F.props || [])]) await plant(nm, isTouch ? nT : nP, sc, r0, r1, tn, op);
   if (F.flyers) buildFlyers(F.flyers);
-  await questData(); const first = giveStarter(); save();
+  normalizeWild(await questData()); const first = giveStarter(); save();
   ui.setCoins(); ui.setClock && ui.setClock(); ui.setLevel && ui.setLevel();
   { const w = params.has('resume') && state.where && state.where.f === FID ? state.where : null, sx = w ? w.x : 0, sz = w ? w.z : SPZ; if (w && !isWater(sx, sz)) P.pos.set(sx, hAt(sx, sz), sz); else P.pos.set(0, hAt(0, SPZ), SPZ); posReady = true; } cam.yaw = 0; cam.pitch = 0.36; updateCamera(0, true);
   setFieldBgm(FID); $('#loading2').classList.add('done'); updateWxLabel();
