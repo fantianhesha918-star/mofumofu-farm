@@ -119,6 +119,8 @@ export const expLevelMul = (myLv, foeLv) => {
   const r = Math.pow((2 * foeLv + 10) / (foeLv + myLv + 10), 2.5);
   return Math.max(0.3, Math.min(3, r)) * (myLv <= 12 ? 1.25 - myLv * 0.02 : 1);
 };
+const GYM_KEYS = ['forest', 'lake', 'volcano', 'ghost', 'sky', 'sun', 'cosmos', 'grove', 'castle', 'temple', 'dragon', 'end'];
+export const obeyCap = () => { const n = GYM_KEYS.filter(k => hasBadge(k)).length; return n >= GYM_KEYS.length ? 999 : Math.max(15, 10 + n * 10); };   // バッジ1こで Lv20、2こで Lv30 まで いうことを きく
 export const bondLv = (m) => Math.min(5, Math.floor((m.bond || 0) / 5));   // なかよしレベル(0〜5): すこしだけ つよくなる
 // まほう系のステータス: こうげき・ぼうぎょを もとに、タイプとなまえで すこしずつ ちがいを つける
 const MAGIC_PROFILE = { fire: [1.2, 0.8], water: [1.05, 1.15], grass: [0.9, 1.1], wind: [1.1, 0.9], earth: [0.75, 0.9], thunder: [1.2, 0.8], heaven: [1.1, 1.25], dark: [1.15, 1.0], magic: [1.3, 1.2], beast: [0.75, 0.8], kami: [1.25, 1.25] };
@@ -139,10 +141,10 @@ export function abilityOf(id) { const el = (GD.MONSTERS[id] && GD.MONSTERS[id].e
 export const holdOf = (m) => (m && m.held && HOLD[m.held]) || {};
 export const abilityName = (id) => ABILITIES[abilityOf(id)].name;
 export function monStats(m) {
-  const def = GD.MONSTERS[m.id], st = GD.getCompanionStats(def, m.lv), b = 1 + villageBoost() + bondLv(m) * 0.03 + (hasBadge('volcano') ? 0.05 : 0) + (hasBadge('end') ? 0.1 : 0), q = (k) => (hasBadge(k) ? 1.08 : 1);
-  const atk = Math.round(st.atk * b * q('sun')), dfn = Math.round(st.def * b * q('castle')), mg = magicOf(m.id, def.element, atk, dfn);
+  const def = GD.MONSTERS[m.id], st = GD.getCompanionStats(def, m.lv), b = 1 + bondLv(m) * 0.01;   // むらレベル・バッジの のうりょくアップは なし(なかよしだけ すこし)
+  const atk = Math.round(st.atk * b), dfn = Math.round(st.def * b), mg = magicOf(m.id, def.element, atk, dfn);
   const crit = Math.min(35, Math.round(5 + m.lv * 0.1 + bondLv(m) * 1.5)), luck = 5 + (hashId(m.id) % 8) + Math.floor(m.lv / 6) + bondLv(m) * 2;
-  const out = { maxHp: Math.round(st.maxHp * b * q('cosmos')), atk, def: dfn, matk: mg.matk, mdef: mg.mdef, spd: Math.round(st.spd * b * q('temple')), crit, luck: luck + (holdOf(m).luck || 0) };
+  const out = { maxHp: Math.round(st.maxHp * b), atk, def: dfn, matk: mg.matk, mdef: mg.mdef, spd: Math.round(st.spd * b), crit, luck: luck + (holdOf(m).luck || 0) };
   const nt = natureOf(m); if (nt.up) { out[nt.up[0]] = Math.round(out[nt.up[0]] * 1.08); out[nt.down[0]] = Math.max(1, Math.round(out[nt.down[0]] * 0.94)); }
   return out;
 }
@@ -557,8 +559,8 @@ export async function runBattle(enemyId0, opts = {}) {
     for (const f of onHit) await fxFrame(f, toEl, 110, true);
   };
   const hit = async (img_, big) => { img_.classList.add('hit'); await sleep(big ? 420 : 320); img_.classList.remove('hit'); };
-  const calc = (atk, power, dfn, ae, de, critP = GD.CRIT_CHANCE) => {
-    const raw = Math.max(1, atk * power / 20 - dfn * 0.4), rand = 0.9 + Math.random() * 0.2, crit = Math.random() < critP, mu = GD.getElementMatchup(ae, de);
+  const calc = (atk, power, dfn, ae, de, critP = GD.CRIT_CHANCE, ld = 0) => {   // ld: こうげきがわの レベル - ぼうぎょがわの レベル(1レベルで 2.5%、0.5〜1.6ばい)
+    const raw = Math.max(1, atk * power / 20 - dfn * 0.4) * Math.max(0.5, Math.min(1.6, 1 + ld * 0.025)), rand = 0.9 + Math.random() * 0.2, crit = Math.random() < critP, mu = GD.getElementMatchup(ae, de);
     return { dmg: Math.max(1, Math.round(raw * rand * (crit ? GD.CRIT_MULT : 1) * mu.mult)), crit, tier: mu.tier };
   };
   const hitSnd = (r) => r.crit ? 'hit_crit' : r.tier === 'strong' ? 'hit_strong' : r.tier === 'weak' ? 'hit_weak' : 'hit';   // ダメージの おもさで おとを かえる
@@ -597,7 +599,16 @@ export async function runBattle(enemyId0, opts = {}) {
   };
   // こうげきの まえの チェック: ねむり・こおり・まひ・こんらん で うごけないことがある
   const actCheck = async (side) => {
-    const S = sd(side), ail = S.ail; if (!ail) return true; const nm = nameOf(side);
+    const S = sd(side), ail = S.ail, nm = nameOf(side);
+    if (side === 'a') {   // バッジが たりないと、レベルが たかい なかまは いうことを きかない
+      const am = state.party[ai], over = am ? am.lv - obeyCap() : 0;
+      if (over > 0 && Math.random() < Math.min(0.6, 0.1 + over * 0.02)) {
+        if (Math.random() < 0.3) { const n = Math.max(1, Math.round(maxOf('a') * 0.08)); msg(`${nm} は いうことを きかず じぶんを こうげきした!`); sfx('no'); hurt('a', n); await hit(imgOf('a')); pop('a', '-' + n, ''); await sleep(700); }
+        else { msg([`${nm} は いうことを きかない!`, `${nm} は そっぽを むいている`, `${nm} は なまけている…`][Math.floor(Math.random() * 3)]); sfx('no'); await sleep(1100); }
+        return false;
+      }
+    }
+    if (!ail) return true;
     if (ail.k === 'sleep') { if (--ail.t <= 0) { S.ail = null; draw(); msg(`${nm} は めを さました!`); await sleep(800); return true; } msg(`${nm} は ぐうぐう ねむっている…`); playAil(side, 'sleep', 1); await sleep(1100); return false; }
     if (ail.k === 'freeze') { if (Math.random() < 0.3 || --ail.t <= 0) { S.ail = null; draw(); msg(`${nm} の こおりが とけた!`); await sleep(800); return true; } msg(`${nm} は こおりついて うごけない!`); playAil(side, 'freeze', 1); await sleep(1100); return false; }
     if (ail.k === 'paralyze' && Math.random() < 0.25) { msg(`${nm} は からだが しびれて うごけない!`); sfx('no'); playAil(side, 'paralyze', 1); try { wa(imgOf(side), [{ translate: '0 0' }, { translate: '-6px 0' }, { translate: '6px 0' }, { translate: '-5px 0' }, { translate: '5px 0' }, { translate: '0 0' }], { duration: 560, fill: 'none' }); } catch (e) {} await sleep(1100); return false; }
@@ -632,7 +643,7 @@ export async function runBattle(enemyId0, opts = {}) {
     }
     if (fogMiss(sk)) { msg('きりで わざが あたらなかった!'); sfx('no'); await sleep(1000); return; }
     await playFx(aImg, eImg, sk, el);
-    const mg = skillKind(sk) === 'magic', r = calc(mg ? st.matk : st.atk, Math.round(sk.power * (o.mul != null ? o.mul : isSpread(sk) && liveE().length > 1 ? 0.8 : 1)), eS(mg ? 'mdef' : 'def'), el, def.element, st.crit / 100);
+    const mg = skillKind(sk) === 'magic', r = calc(mg ? st.matk : st.atk, Math.round(sk.power * (o.mul != null ? o.mul : isSpread(sk) && liveE().length > 1 ? 0.8 : 1)), eS(mg ? 'mdef' : 'def'), el, def.element, st.crit / 100, a.lv - e.lv);
     let dmg = Math.round(r.dmg * envMul(opts.wx, opts.hour, el)); if (ab === 'pinch' && hpOf(a) < st.maxHp / 3) dmg = Math.round(dmg * 1.3); if (ab === 'typeboost' && el === ad.element) dmg = Math.round(dmg * 1.15); if (e.ab === 'thick') dmg = Math.max(1, Math.round(dmg * 0.88));
     let held = false; if (e.ab === 'fortress' && !cur.fort && dmg >= e.hp && e.hp > 1) { dmg = e.hp - 1; cur.fort = true; held = true; }
     if (E.ail && E.ail.k === 'freeze' && el === 'fire') { E.ail = null; }
@@ -653,7 +664,7 @@ export async function runBattle(enemyId0, opts = {}) {
     await Promise.all(js.map(j => playFx(aImg, eImgs[j], sk, el)));   // どうじに とばす
     const res = [];
     for (const j of js) {
-      useE(j); const mg = skillKind(sk) === 'magic', r = calc(mg ? st.matk : st.atk, Math.round(sk.power * 0.8), eS(mg ? 'mdef' : 'def'), el, def.element, st.crit / 100);
+      useE(j); const mg = skillKind(sk) === 'magic', r = calc(mg ? st.matk : st.atk, Math.round(sk.power * 0.8), eS(mg ? 'mdef' : 'def'), el, def.element, st.crit / 100, state.party[ai].lv - e.lv);
       let dmg = Math.round(r.dmg * envMul(opts.wx, opts.hour, el)); if (ab === 'pinch' && hpOf(a) < st.maxHp / 3) dmg = Math.round(dmg * 1.3); if (ab === 'typeboost' && el === ad.element) dmg = Math.round(dmg * 1.15); if (e.ab === 'thick') dmg = Math.max(1, Math.round(dmg * 0.88));
       let held = false; if (e.ab === 'fortress' && !cur.fort && dmg >= e.hp && e.hp > 1) { dmg = e.hp - 1; cur.fort = true; held = true; }
       if (E.ail && E.ail.k === 'freeze' && el === 'fire') { E.ail = null; }
@@ -707,7 +718,7 @@ export async function runBattle(enemyId0, opts = {}) {
     }
     if (!big && fogMiss(sk)) { msg('きりで わざが あたらなかった!'); sfx('no'); await sleep(1000); return; }
     if (!o.noFx) { const spr2 = !big && !o.sk && isSpread(sk) ? liveA().filter(i => i !== curA) : []; await Promise.all([playFx(eImg, aImg, sk, el), ...spr2.map(i => playFx(eImg, aImgs[i], sk, el))]); }   // ぜんたいわざは りょうほうに どうじに
-    const mg = skillKind(sk) === 'magic', r = calc(eS(mg ? 'matk' : 'atk'), Math.round(sk.power * (o.mul != null ? o.mul : !big && isSpread(sk) && liveA().length > 1 ? 0.8 : 1)), mg ? st.mdef : st.def, el, GD.MONSTERS[a.id].element, GD.CRIT_CHANCE + (e.ab === 'sharp' ? 0.1 : 0));
+    const mg = skillKind(sk) === 'magic', r = calc(eS(mg ? 'matk' : 'atk'), Math.round(sk.power * (o.mul != null ? o.mul : !big && isSpread(sk) && liveA().length > 1 ? 0.8 : 1)), mg ? st.mdef : st.def, el, GD.MONSTERS[a.id].element, GD.CRIT_CHANCE + (e.ab === 'sharp' ? 0.1 : 0), e.lv - a.lv);
     let dmg = Math.round(r.dmg * envMul(opts.wx, opts.hour, el)); if (guarding) dmg = Math.max(1, Math.round(dmg * (big ? 0.35 : 0.5))); if (e.ab === 'pinch' && e.hp < e.maxHp / 3) dmg = Math.round(dmg * 1.3); if (e.ab === 'typeboost' && el === def.element) dmg = Math.round(dmg * 1.15); if (aab === 'thick') dmg = Math.max(1, Math.round(dmg * 0.88));
     let held = false; if ((aab === 'fortress' || holdOf(a).sash) && !aFort && dmg >= hpOf(a) && hpOf(a) > 1) { dmg = hpOf(a) - 1; aFort = true; held = true; }
     const A = sd('a'); if (A.ail && A.ail.k === 'freeze' && el === 'fire') A.ail = null;
