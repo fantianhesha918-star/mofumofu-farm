@@ -580,10 +580,10 @@
     yurei_ou: { id: "yurei_ou", name: "幽霊王", level: 42, hp: 350, atk: 84, def: 50, spd: 34, exp: 380, money: 290, skillIds: ["tackle", "sandkick", "headbutt", "renzoku"], isBoss: true, image: MON_DIR + "yurei_ou.webp", element: "dark" },
 
     // ---- 四天王(既存ボス4体のリベンジ版。同じイラストを再利用し別idで強化) ----
-    shitennou_yougan: { id: "shitennou_yougan", name: "してんのう・ようがんゴーレム", level: 45, hp: 380, atk: 90, def: 55, spd: 35, exp: 420, money: 320, skillIds: ["tackle", "sandkick", "headbutt", "renzoku"], isBoss: true, image: MON_DIR + "yougan_golem.webp", element: "fire" },
-    shitennou_yeti: { id: "shitennou_yeti", name: "してんのう・ゆきおとこ", level: 47, hp: 400, atk: 94, def: 58, spd: 37, exp: 440, money: 335, skillIds: ["tackle", "sandkick", "headbutt", "renzoku"], isBoss: true, image: MON_DIR + "yeti.webp", element: "water" },
+    shitennou_yougan: { id: "shitennou_yougan", name: "してんのう・ようがん", level: 45, hp: 380, atk: 90, def: 55, spd: 35, exp: 420, money: 320, skillIds: ["tackle", "sandkick", "headbutt", "renzoku"], isBoss: true, image: MON_DIR + "yougan_golem.webp", element: "fire" },
+    shitennou_yeti: { id: "shitennou_yeti", name: "してんのう・イエティ", level: 47, hp: 400, atk: 94, def: 58, spd: 37, exp: 440, money: 335, skillIds: ["tackle", "sandkick", "headbutt", "renzoku"], isBoss: true, image: MON_DIR + "yeti.webp", element: "water" },
     shitennou_oni: { id: "shitennou_oni", name: "してんのう・おにおう", level: 49, hp: 420, atk: 99, def: 61, spd: 39, exp: 460, money: 350, skillIds: ["tackle", "sandkick", "headbutt", "renzoku"], isBoss: true, image: MON_DIR + "oni_ou.webp", element: "earth" },
-    shitennou_madoushi: { id: "shitennou_madoushi", name: "してんのう・まじんまどうし", level: 52, hp: 450, atk: 106, def: 65, spd: 42, exp: 490, money: 375, skillIds: ["tackle", "sandkick", "headbutt", "renzoku"], isBoss: true, image: MON_DIR + "majin_madoushi.webp", element: "magic" },
+    shitennou_madoushi: { id: "shitennou_madoushi", name: "してんのう・まじん", level: 52, hp: 450, atk: 106, def: 65, spd: 42, exp: 490, money: 375, skillIds: ["tackle", "sandkick", "headbutt", "renzoku"], isBoss: true, image: MON_DIR + "majin_madoushi.webp", element: "magic" },
 
     // ---- 隠しエリア「奥津宮の霊域」上位ティア(ボス撃破後に解放、なかまボールで捕獲可・成功率は catchPenalty で低下) ----
     kodai_kyubi: { id: "kodai_kyubi", name: "きゅうびぎつね", level: 27, hp: 234, atk: 71, def: 58, spd: 42, exp: 116, money: 84, skillIds: ["tackle", "sandkick"], image: MON_DIR + "kodai_kyubi.webp", element: "fire", catchPenalty: 0.6 },
