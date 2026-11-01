@@ -953,7 +953,7 @@ export async function runBattle(enemyId0, opts = {}) {
       while (m.lv < MAX_LV && m.exp >= needExp(m.lv, m.id)) {
         const before = knownOf(m), oldLv = m.lv, oldSt = monStats(m), alive = hpOf(m) > 0; m.exp -= needExp(m.lv, m.id); m.lv++; if (alive) m.hp = null; sfx('levelup');
         msg(`${nm} は レベル ${m.lv} に あがった!`); await levelPopup(nm, oldLv, m.lv, oldSt, monStats(m));
-        movesOf(m); for (const sk of knownOf(m).filter(x => !before.includes(x))) if (m.moves.length < 4) { m.moves.push(sk); msg(`${nm} は ${GD.SKILLS[sk].name} を おぼえた!`); await sleep(1000); }
+        await learnNew(m, before);   // ひかえの なかまも せんとうの なかまと おなじ(わざが いっぱいなら えらべる)
         const ev2 = GD.MONSTERS[m.id].evolvesTo; if (ev2 && m.lv >= ev2.level && GD.MONSTERS[ev2.id]) { const old = nm; if (await evoOverlay(GD.MONSTERS[m.id].image, GD.MONSTERS[ev2.id].image, old, GD.MONSTERS[ev2.id].name)) { m.id = ev2.id; state.mdex[ev2.id] = 2; msg(`${old} は ${monName(m)} に しんかした!`); await sleep(1000); } else { msg('なにも おきなかった…'); await sleep(1000); } }
       }
     }
