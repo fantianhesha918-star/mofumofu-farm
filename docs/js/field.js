@@ -618,10 +618,9 @@ function updateCamera(dt, instant) {
 
 // ---- エンカウント・バトル ----
 const WILD = F.wild;
-// やせいには「しんかごの すがた」を ださない(しんかまえの すがたに おきかえる。しんかは たたかって そだてて するもの)
+// やせいには「まめちんちらの しんかご」(まほう・やみ・てん…・かみ)を ださない(まめちんちらに おきかえる)。ほかの モンスターは そのまま
 function normalizeWild(GD) {
   const rev = {};
-  for (const m of Object.values(GD.MONSTERS)) { if (m.evolvesTo && GD.MONSTERS[m.evolvesTo.id]) rev[m.evolvesTo.id] = m.id; if (m.evolveStone && GD.MONSTERS[m.evolveStone.id]) rev[m.evolveStone.id] = m.id; }
   for (const id of Object.keys(GD.MONSTERS)) if (/^mame_chin_(fire|water|grass|wind|earth|thunder|heaven|dark|magic|kami)$/.test(id)) rev[id] = 'mame_chin';
   const root = (id) => { let n = 0; while (rev[id] && n++ < 8) id = rev[id]; return id; };
   const by = new Map(); for (const [id, w] of F.wild) { const r = root(id); by.set(r, (by.get(r) || 0) + w); }
