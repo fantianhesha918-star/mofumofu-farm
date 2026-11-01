@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import './offline.js';   // オフライン(Service Worker)
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { FURNI, DECO } from './data.js';
 import { healParty, questData } from './battle.js';
