@@ -1,0 +1,19 @@
+<!doctype html><html><body style="margin:0;background:#8fb0d0;font:12px sans-serif"><script type="importmap">{"imports":{"three":"../vendor/three.module.js","three/addons/":"../vendor/addons/"}}</script>
+<script type="module">
+// 開発用: モデルの コンタクトシート(?m=名前,...&cols=6&yaw=0.6)
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const q=new URLSearchParams(location.search), names=q.get('m').split(','), cols=+(q.get('cols')||6), yaw=+(q.get('yaw')||0.6), CW=230, CH=230, rows=Math.ceil(names.length/cols);
+const r=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});r.setSize(CW*cols,CH*rows);document.body.appendChild(r.domElement);r.setScissorTest(true);r.setClearColor(0x8fb0d0);
+const s=new THREE.Scene();s.add(new THREE.HemisphereLight(0xffffff,0x8a8a60,1.5));const d=new THREE.DirectionalLight(0xfff0d0,2.4);d.position.set(3,5,4);s.add(d);
+const cam=new THREE.PerspectiveCamera(30,1,.1,500);
+const items=[];
+for(const n of names){try{const g=await new GLTFLoader().loadAsync((q.get('dir')||'../assets/')+n+'_lite.glb');g.scene.traverse(o=>{if(o.isMesh&&!o.geometry.attributes.normal)o.geometry.computeVertexNormals();});items.push([n,g.scene]);}catch(e){items.push([n,null]);}}
+items.forEach(([n,sc],i)=>{const x=(i%cols)*CW,y=(rows-1-Math.floor(i/cols))*CH;r.setViewport(x,y,CW,CH);r.setScissor(x,y,CW,CH);r.clear();
+ const lab=document.createElement('div');lab.textContent=n;lab.style.cssText=`position:absolute;left:${x+4}px;top:${(Math.floor(i/cols))*CH+2}px;background:#000a;color:#fff;padding:1px 4px`;document.body.appendChild(lab);
+ if(!sc)return;const b=new THREE.Box3().setFromObject(sc),sz=b.getSize(new THREE.Vector3()),c=b.getCenter(new THREE.Vector3()),R=Math.max(sz.x,sz.y,sz.z)*0.5;
+ const w=new THREE.Group();w.add(sc);sc.position.sub(c);const root=new THREE.Scene();root.add(w);w.rotation.y=yaw;
+ const sub=new THREE.Scene();sub.add(w);sub.add(new THREE.HemisphereLight(0xffffff,0x8a8a60,1.5));const dd=new THREE.DirectionalLight(0xfff0d0,2.4);dd.position.set(3,5,4);sub.add(dd);
+ cam.position.set(0,R*0.5,R*3.9);cam.lookAt(0,0,0);r.render(sub,cam);});
+document.title='ready';
+</script></body></html>
