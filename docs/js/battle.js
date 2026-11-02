@@ -46,6 +46,14 @@ export const isSpread = (s) => !!s && s.power > 0 && (SPREAD_IDS.has(s.id) || /^
 const DBL_BG = new Set(['battle_grass.webp','battle_castle.webp','battle_cave.webp','battle_cosmos.webp','battle_dragon.webp','battle_end.webp','battle_forest.webp','battle_ghost.webp','battle_grove.webp','battle_sky.webp','battle_sun.webp','battle_temple.webp','battle_volcano.webp','battle_water.webp']);
 const DBL_AN = { 'battle_castle_d.webp': { e: [[441, 430], [640, 430]], a: [[218, 850], [521, 850]] }, 'battle_cave_d.webp': { e: [[386, 404], [593, 404]], a: [[220, 850], [519, 850]] }, 'battle_cosmos_d.webp': { e: [[445, 430], [644, 430]], a: [[218, 850], [521, 850]] }, 'battle_dragon_d.webp': { e: [[435, 430], [634, 430]], a: [[218, 850], [521, 850]] }, 'battle_end_d.webp': { e: [[435, 430], [638, 430]], a: [[216, 850], [523, 850]] }, 'battle_forest_d.webp': { e: [[446, 430], [643, 430]], a: [[222, 850], [517, 850]] }, 'battle_ghost_d.webp': { e: [[445, 430], [644, 430]], a: [[218, 850], [521, 850]] }, 'battle_grove_d.webp': { e: [[449, 426], [648, 426]], a: [[224, 850], [515, 850]] }, 'battle_sky_d.webp': { e: [[445, 430], [644, 430]], a: [[222, 850], [517, 850]] }, 'battle_sun_d.webp': { e: [[441, 424], [640, 424]], a: [[222, 846], [517, 846]] }, 'battle_temple_d.webp': { e: [[439, 430], [630, 430]], a: [[218, 850], [521, 850]] }, 'battle_volcano_d.webp': { e: [[386, 570], [585, 570]], a: [[245, 920], [494, 920]] }, 'battle_water_d.webp': { e: [[369, 390], [622, 390]], a: [[213, 940], [526, 940]] }, 'battle_grass_d.webp': { e: [[330, 395], [585, 395]], a: [[215, 885], [538, 885]] } };
 // 画像の下の透明な余白の割合(足もとを台に合わせるため)
+// 絵の「見えている部分」の はば・たかさの わりあい(el._cb)と したの よはく(el._pad)を はかる。モンスターごとの よはく・たて長/よこ長の ちがいで 見た目の おおきさが ばらつかないように そろえる
+function measureBox(el) {
+  el._pad = bottomPad(el);
+  try { const c = document.createElement('canvas'), N = 64; c.width = N; c.height = N; const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(el, 0, 0, N, N); const d = g.getImageData(0, 0, N, N).data; let x0 = N, x1 = -1, y0 = N, y1 = -1;
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (d[(y * N + x) * 4 + 3] > 40) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    if (x1 >= 0) el._cb = [(x1 - x0 + 1) / N, (y1 - y0 + 1) / N]; } catch (e) {}
+}
+const sizeNorm = (el) => { if (!el._cb || !el.naturalWidth) return 1; const [fw, fh] = el._cb, asp = el.naturalHeight / el.naturalWidth; return Math.max(0.6, Math.min(1.5, 0.95 / Math.sqrt(fw * fh * asp))); };   // 見えている ぶぶんの めんせきが そろうように はばを かえる
 function bottomPad(el) {
   try { const c = document.createElement('canvas'), W = 48, H = 48; c.width = W; c.height = H; const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(el, 0, 0, W, H); const d = g.getImageData(0, 0, W, H).data;
     for (let y = H - 1; y >= 0; y--) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 40) return (H - 1 - y) / H; } catch (e) {} return 0;
@@ -318,7 +326,7 @@ export async function runBattle(enemyId0, opts = {}) {
     const bg = $('.bt-bg', root); bg.style.backgroundSize = `${800 * s}px ${1200 * s}px`; bg.style.backgroundPosition = `${ox}px ${oy}px`;
     const BG_AN = { 'battle_castle.webp': { e: [567, 433], a: [233, 817] }, 'battle_temple.webp': { e: [550, 417], a: [293, 867] }, 'battle_sun.webp': { e: [567, 433], a: [283, 817] }, 'battle_grove.webp': { e: [500, 383], a: [300, 850] }, 'battle_dragon.webp': { e: [500, 400], a: [300, 867] }, 'battle_end.webp': { e: [550, 433], a: [267, 833] }, 'battle_cosmos.webp': { e: [567, 433], a: [300, 817] }, 'battle_ghost.webp': { e: [533, 423], a: [293, 800] }, 'battle_forest.webp': { e: [567, 433], a: [293, 833] }, 'battle_sky.webp': { e: [650, 383], a: [267, 800] } };
     const AN = BG_AN[opts.bg] || (opts.bg === 'battle_water.webp' ? { e: [598, 388], a: [282, 932] } : opts.bg === 'battle_volcano.webp' ? { e: [590, 588], a: [282, 892] } : opts.bg === 'battle_cave.webp' ? { e: [600, 398], a: [292, 858] } : { e: [562, 392], a: [265, 890] }), [ex, ey] = P(...AN.e), [ax, ay] = P(...AN.a), ew = Math.min(400 * s * 0.62, w * 0.5), aw = Math.min(480 * s * 0.62, w * 0.55);
-    const place = (el, cx, cy, W) => { if (el.naturalWidth) W = Math.min(W, (cy - 12) * el.naturalWidth / el.naturalHeight); const dispH = el.naturalWidth ? W * el.naturalHeight / el.naturalWidth : 0, extra = (el._pad || 0) * dispH; el.style.width = W + 'px'; el.style.left = Math.max(2, Math.min(w - W - 2, cx - W / 2)) + 'px'; el.style.bottom = (h - cy - 4 * s - extra) + 'px'; el.style.top = 'auto'; el.style.right = 'auto'; el.style.maxHeight = (cy - 8) + 'px'; };
+    const place = (el, cx, cy, W) => { W = Math.min(W * sizeNorm(el), w * 0.85); if (el.naturalWidth) W = Math.min(W, (cy - 12) * el.naturalWidth / el.naturalHeight); const dispH = el.naturalWidth ? W * el.naturalHeight / el.naturalWidth : 0, extra = (el._pad || 0) * dispH; el.style.width = W + 'px'; el.style.left = Math.max(2, Math.min(w - W - 2, cx - W / 2)) + 'px'; el.style.bottom = (h - cy - 4 * s - extra) + 'px'; el.style.top = 'auto'; el.style.right = 'auto'; el.style.maxHeight = (cy - 8) + 'px'; };
     const eK = (k) => { const f = slotsE[k] || cur; return sizeMul(f.id, bossNow(f)); }, aK = (k) => { const sl = slotsA[k]; return sl && state.party[sl.ai] ? sizeMul(state.party[sl.ai].id) : 1; };
     if (!dbl) { place(eImgs[0], ex, ey, Math.min(ew * eK(0), w * 0.8)); place(aImgs[0], ax, ay, aw * aK(0)); return; }   // しんかの だんかいで おおきさを かえる(ぬしは 2しんかより ひとまわり おおきく)
     const DA = DBL_AN[bgFile], sp = opts.bg === 'battle_volcano.webp' ? [92, 118] : [112, 138], EP = DA ? DA.e : [[AN.e[0] - sp[0], AN.e[1] + 28], [AN.e[0] + sp[0], AN.e[1] + 28]], AP = DA ? DA.a : [[AN.a[0] - sp[1], AN.a[1] - 48], [AN.a[0] + sp[1], AN.a[1] - 48]], ewd = Math.min(400 * s * 0.5, w * 0.36), awd = Math.min(480 * s * 0.52, w * 0.38);   // 1つの 足場に 2ひき のる(足場の はばに おさまる おおきさ)
@@ -357,7 +365,7 @@ export async function runBattle(enemyId0, opts = {}) {
       const f = slotsE[k], c = cardsE[k], im = eImgs[k]; c.hidden = !f; im.hidden = !f; if (!f) continue;
       $('.n', c).innerHTML = f.def.name + (state.mdex[f.id] === 2 ? '<img class="gotmark" src="quest/assets/items/icon_ball_timothy.webp" alt="つかまえずみ">' : ''); $('.lv', c).textContent = 'Lv' + f.e.lv; fitName($('.n', c)); $('.hp i', c).style.width = Math.max(0, f.e.hp / f.e.maxHp * 100) + '%';
       $('.tys', c).innerHTML = elemChip(f.def.element) + chips(f.E) + `<div class="wkrow">${weakLine(f.def.element)}</div>`;
-      if (im.dataset.src !== f.def.image) { im.dataset.src = f.def.image; im.onload = () => { im._pad = bottomPad(im); layout(); }; im.src = img(f.def.image); }
+      if (im.dataset.src !== f.def.image) { im.dataset.src = f.def.image; im.onload = () => { measureBox(im); layout(); }; im.src = img(f.def.image); }
     }
     for (let k = 0; k < 2; k++) {
       const sl = slotsA[k], c = cardsA[k], im = aImgs[k]; c.hidden = !sl; im.hidden = !sl; if (!sl) continue;
@@ -365,7 +373,7 @@ export async function runBattle(enemyId0, opts = {}) {
       $('.n', c).textContent = monName(a); $('.lv', c).textContent = 'Lv' + a.lv; fitName($('.n', c)); $('.hp i', c).style.width = Math.max(0, aHp / st.maxHp * 100) + '%';
       $('.tys', c).innerHTML = elemChip(ad.element) + (buff ? `<span class="bf">UP ${buff.turns}</span>` : '') + chips(sdOf(a));
       $('.hpn', c).textContent = `HP ${Math.max(0, aHp)} / ${st.maxHp}`; $('.xp i', c).style.width = Math.min(100, (a.exp || 0) / needExp(a.lv, a.id) * 100) + '%';
-      if (im.dataset.src !== ad.image) { im.dataset.src = ad.image; im.onload = () => { im._pad = bottomPad(im); layout(); }; im.src = img(ad.image); }
+      if (im.dataset.src !== ad.image) { im.dataset.src = ad.image; im.onload = () => { measureBox(im); layout(); }; im.src = img(ad.image); }
     }
     syncAil();
   };
@@ -910,11 +918,12 @@ export async function runBattle(enemyId0, opts = {}) {
     tpos.appendChild(tailI); field.appendChild(tpos); pos.appendChild(spin); setF(0); field.appendChild(pos);
     const fx = (set, cx, cy, size, ms, out) => new Promise(done => { const el = set[0].cloneNode(); el.style.cssText = `position:absolute;left:${cx - size / 2}px;top:${cy - size / 2}px;width:${size}px;height:${size}px;object-fit:contain;mix-blend-mode:${bm};pointer-events:none;z-index:13;`; field.appendChild(el); let i = 0; const step = () => { if (i >= set.length) { el.remove(); done(); return; } el.src = set[i].src; i++; setTimeout(step, ms / battleSpeed()); }; step(); });
     // 1) とぶ(ゆるい アーチ + ぐるぐる)
-    const dx = ex - sx, dy = ey - sy, arc = Math.min(120, Math.hypot(dx, dy) * 0.35), kf = [];
-    for (let i = 0; i <= 14; i++) { const t = i / 14; kf.push({ transform: `translate(${sx + dx * t}px, ${sy + dy * t - Math.sin(Math.PI * t) * arc}px)` }); }
-    wa(tpos, kf, { duration: 800, easing: 'linear' });
-    wa(spin, [{ transform: 'rotate(0deg) scale(.55)' }, { transform: 'rotate(720deg) scale(1)' }], { duration: 800, easing: 'ease-out' });
-    sfx('pick'); await wa(pos, kf, { duration: 800, easing: 'linear' });
+    // ブラウザの アニメーション機能に たよらず、1フレームごとに いちを けいさんして とばす(スマホで ボールが うごかない ことが あったため)
+    const dx = ex - sx, dy = ey - sy, arc = Math.min(120, Math.hypot(dx, dy) * 0.35), flyMs = 800 / battleSpeed();
+    const posAt = (t) => `translate(${sx + dx * t}px, ${sy + dy * t - Math.sin(Math.PI * t) * arc}px)`, spinAt = (t) => `rotate(${720 * (1 - (1 - t) * (1 - t))}deg) scale(${0.55 + 0.45 * t})`;
+    pos.style.transform = tpos.style.transform = posAt(0); spin.style.transform = spinAt(0);
+    sfx('pick');
+    await new Promise(done => { const t0 = performance.now(), stepFly = (now) => { const t = Math.max(0, Math.min(1, ((now || performance.now()) - t0) / flyMs)); pos.style.transform = tpos.style.transform = posAt(t); spin.style.transform = spinAt(t); if (t < 1) requestAnimationFrame(stepFly); else done(); }; requestAnimationFrame(stepFly); setTimeout(() => { pos.style.transform = tpos.style.transform = posAt(1); spin.style.transform = spinAt(1); done(); }, flyMs + 1500); });   // うしろの setTimeout は タブが うらに まわって rAF が とまった ときの ほしょう
     wa(tpos, [{ opacity: 1 }, { opacity: 0 }], { duration: 250 }); setTimeout(() => tpos.remove(), 400);
     // 2) パカッと ひらいて すいこむ
     sfx('ballhit'); const mouth = [ex, ey - bh * 0.18];

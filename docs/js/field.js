@@ -573,7 +573,8 @@ async function spotTrainer(t) {
 }
 async function challengeTrainer(t) {
   if (busy) return; busy = true; sfx('quest'); fade(true); await new Promise(r => setTimeout(r, 700));
-  const res = await runBattle(t.mon, { boss: t.over, team: t.team, double: t.team.length >= 2 && assistOn(), trainerBall: t.ball, trainer: t.name, bg: F.bg, wx: WX, hour: hourNow(), onBossWin: async (msg, sleep) => { state.trainers[t.key] = 1; msg(`${t.name} との しょうぶに かった!`); sfx('quest'); await sleep(1600); } });
+  const duo = t.team.length >= 2 && assistOn() && Math.random() < 0.5, team = duo ? t.team : t.team.slice(0, 1);   // 1たい1 と 2たい2 は まいかい ランダム(50%ずつ)
+  const res = await runBattle(t.mon, { boss: team[0].over, team, double: duo, trainerBall: t.ball, trainer: t.name, bg: F.bg, wx: WX, hour: hourNow(), onBossWin: async (msg, sleep) => { state.trainers[t.key] = 1; msg(`${t.name} との しょうぶに かった!`); sfx('quest'); await sleep(1600); } });
   save(); fade(false); grace = 6; encDist = 0; ui.setCoins(); tCool = 5;
   if (res === 'lose') { goVillage(true); return; }
   busy = false;
