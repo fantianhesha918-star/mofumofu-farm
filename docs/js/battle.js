@@ -13,6 +13,7 @@ import { playBgm, jingle } from './bgm.js';
 let GD = null;
 // さいしゅうボス「うちゅうの かみ」の とくべつな わざ(たいよう / ブラックホール / ふたつを あわせた さいきょうの わざ)
 const BM = (id, name, element) => ({ id, name, element, power: 26, uses: 99, desc: '', _fx: null });
+const bossFormOf = (d) => { const m = /assets\/bosses\/(\w+)\.webp/.exec((d && d.image) || ''); return m && GD.MONSTERS['boss_' + m[1]] ? 'boss_' + m[1] : null; };   // ぬし・してんのうを つかまえたら、ボスせんの すがた・せんようわざの なかまに なる(monsters_extra.js の BOSS_FORMS)
 const BOSS_MOVES = { sun: BM('boss_sun', 'ソーラーコロナ', 'fire'), hole: BM('boss_hole', 'ブラックホール', 'dark'), eclipse: BM('boss_eclipse', 'エクリプスノヴァ', 'kami') };
 // ぶつり/まほうの なまえから うごきが きまらない わざは ここで ひとつずつ きめる(なまえと えんしゅつを そろえる)
 const MOTION_BY_NAME = { 'しのちょうふく': 'sweep', 'がんせきのちから': 'rain', 'おやこどんナゲット': 'orb', 'やきにくファイヤー': 'orb', 'ひのたま': 'orb', 'タネばくだん': 'orb', 'どろだんご': 'orb', 'エレキボール': 'orb', 'ヒーリングライト': 'orb', 'プラズマヒール': 'orb', 'マジックオーブ': 'orb', 'ドレインタッチ': 'orb', 'すなかけ': 'barrage', 'あわ': 'barrage', 'どろかけ': 'barrage', 'スパーク': 'barrage', 'サンダージャブ': 'barrage', 'サンダーアロー': 'barrage', 'マジックアロー': 'barrage', 'マジックブレット': 'barrage', 'エリアルレイヴ': 'barrage', 'ビーストラッシュ': 'barrage', 'ひっかきラッシュ': 'barrage', 'ベーグルアタック': 'ram', 'サイクラッシュ': 'ram', 'ようがんクラッシュ': 'ram', 'グランドクラッシュ': 'ram', 'イナズマクラッシュ': 'ram', 'だいちのてっけん': 'ram', 'ダークネスストライク': 'ram', 'つきとばし': 'ram', 'とびかかり': 'ram', 'らんぺージ': 'ram', 'ホーリーランス': 'ram', 'かえん': 'beam', 'ねっせん': 'beam', 'みずでっぽう': 'beam', 'ウォータージェット': 'beam', 'でんきショック': 'beam', 'ライトボルト': 'beam', 'チェインライト': 'beam', 'セイクリッドレイ': 'beam', 'ラストライト': 'beam', 'カースアイ': 'beam', 'エレメンタルボルト': 'beam', 'マジックカノン': 'beam', 'ロアー': 'beam', 'デスハウル': 'beam', 'ソウルドレイン': 'beam', 'ピュアフラッシュ': 'beam', 'みずのはね': 'sweep', 'だいれいとう': 'sweep', 'どくのこな': 'sweep', 'すなぼこり': 'sweep', 'はやて': 'sweep', 'ナイトミスト': 'sweep', 'スリープ': 'sweep', 'みずのまい': 'vortex', 'つるのまきつき': 'vortex', 'かぜおこし': 'vortex', 'かぜのおどり': 'vortex', 'スパイラルウィンド': 'vortex', 'ハリケーンブレイク': 'vortex', 'すなじごく': 'vortex', 'ダークバインド': 'vortex', 'テレポート': 'vortex', 'メイルストロム': 'vortex', 'ホーリーストーム': 'vortex', 'ほのおのかべ': 'pillar', 'せいちょう': 'pillar', 'ユグドラシル': 'pillar', 'ストーンエッジ': 'pillar', 'アースウォール': 'pillar', 'すいちょくのちから': 'pillar', 'ライトニングブレイク': 'pillar', 'ギガボルト': 'pillar', 'らいていばんきん': 'pillar', 'カミナリイカヅチ': 'pillar', 'ライトオブヘブン': 'pillar', 'ヘブンズゲート': 'pillar', 'デーモンズゲイト': 'pillar', 'ディメンションゲート': 'pillar', 'しずくのカーテン': 'rain', 'しぜんのめぐみ': 'rain', 'フラワーヒール': 'rain', 'メガトンロック': 'rain', 'シャドウフォール': 'rain', 'スプラッシュ': 'rain', 'ひのもんじ': 'cross', 'つるのムチ': 'cross', 'セイントクロス': 'cross', 'アルティメットセイバー': 'cross', 'しっぽアタック': 'cross', 'べろべろアタック': 'claw', 'フューリーストライク': 'claw', 'かみくだき': 'bite', 'ほのおのちから': 'quake', 'れんごく': 'quake', 'オーシャンブレイク': 'quake', 'しんすいのインパクト': 'quake', 'しぜんのいかり': 'quake', 'グランドネイチャー': 'quake', 'ネイチャーズレイジ': 'quake', 'エアブレイク': 'quake', 'ウィンドバースト': 'quake', 'ガイアインパクト': 'quake', 'アルティメットサンダー': 'quake', 'ラディアンス': 'quake', 'ディバインシールド': 'quake', 'シャイニングサークル': 'quake', 'ルミナスブレイク': 'quake', 'スターライトエクスプロード': 'quake', 'ダークサークル': 'quake', 'ソウルサクリファイス': 'quake', 'ソウルイクリプス': 'quake', 'ワールドオブダーク': 'quake', 'アルティメットダークネス': 'quake', 'マジックシールド': 'quake', 'マナバースト': 'quake', 'マジックサークル': 'quake', 'カオスバースト': 'quake', 'マナブレイク': 'quake', 'アルティメットマジック': 'quake', 'キングオブビースト': 'quake', 'プライマルブレイク': 'quake', 'アルティメットビースト': 'quake', 'ホーリーガード': 'quake' };
@@ -106,11 +107,12 @@ const preIds = () => { if (PRE_IDS) return PRE_IDS; PRE_IDS = new Set(); for (co
 export const sizeMul = (id, boss) => {
   const d = GD.MONSTERS[id]; if (!d) return 1;
   let k;
-  if (/^(legend_|kami_|shinju_|shitennou_|mame_chin_kami)/.test(id) || id === 'dragon') k = 1.06;
+  if (/^boss_/.test(id)) k = 1.5;   // つかまえた ぬし・してんのうは ボスせんと おなじ くらい おおきく
+  else if (/^(legend_|kami_|shinju_|shitennou_|mame_chin_kami)/.test(id) || id === 'dragon') k = 1.2;
   else if (id === 'mame_chin') k = 0.84;
   else if (/^mame_chin_/.test(id)) k = 1.0;
   else { const next = !!(d.evolvesTo || d.evolveStone), pre = preIds().has(id); k = next && !pre ? 0.84 : next && pre ? 0.92 : pre ? 1.0 : 0.92; }
-  return boss ? Math.max(k, 1.0) * 1.1 : k;
+  return boss ? Math.max(k, 1.0) * 1.65 : k;   // ぬし・してんのうは ひときわ おおきく(つよそうに みせる)
 };
 export const MAX_LV = 999;   // レベルの じょうげん
 export const needExp = (lv, id) => Math.max(6, Math.round(GD.expToNext(lv) * 0.6 * (id ? growthMul(id) : 1)));   // スピーディに レベルアップ
@@ -316,9 +318,9 @@ export async function runBattle(enemyId0, opts = {}) {
     const bg = $('.bt-bg', root); bg.style.backgroundSize = `${800 * s}px ${1200 * s}px`; bg.style.backgroundPosition = `${ox}px ${oy}px`;
     const BG_AN = { 'battle_castle.webp': { e: [567, 433], a: [233, 817] }, 'battle_temple.webp': { e: [550, 417], a: [293, 867] }, 'battle_sun.webp': { e: [567, 433], a: [283, 817] }, 'battle_grove.webp': { e: [500, 383], a: [300, 850] }, 'battle_dragon.webp': { e: [500, 400], a: [300, 867] }, 'battle_end.webp': { e: [550, 433], a: [267, 833] }, 'battle_cosmos.webp': { e: [567, 433], a: [300, 817] }, 'battle_ghost.webp': { e: [533, 423], a: [293, 800] }, 'battle_forest.webp': { e: [567, 433], a: [293, 833] }, 'battle_sky.webp': { e: [650, 383], a: [267, 800] } };
     const AN = BG_AN[opts.bg] || (opts.bg === 'battle_water.webp' ? { e: [598, 388], a: [282, 932] } : opts.bg === 'battle_volcano.webp' ? { e: [590, 588], a: [282, 892] } : opts.bg === 'battle_cave.webp' ? { e: [600, 398], a: [292, 858] } : { e: [562, 392], a: [265, 890] }), [ex, ey] = P(...AN.e), [ax, ay] = P(...AN.a), ew = Math.min(400 * s * 0.62, w * 0.5), aw = Math.min(480 * s * 0.62, w * 0.55);
-    const place = (el, cx, cy, W) => { const dispH = el.naturalWidth ? W * el.naturalHeight / el.naturalWidth : 0, extra = (el._pad || 0) * dispH; el.style.width = W + 'px'; el.style.left = Math.max(2, Math.min(w - W - 2, cx - W / 2)) + 'px'; el.style.bottom = (h - cy - 4 * s - extra) + 'px'; el.style.top = 'auto'; el.style.right = 'auto'; el.style.maxHeight = (cy - 8) + 'px'; };
+    const place = (el, cx, cy, W) => { if (el.naturalWidth) W = Math.min(W, (cy - 12) * el.naturalWidth / el.naturalHeight); const dispH = el.naturalWidth ? W * el.naturalHeight / el.naturalWidth : 0, extra = (el._pad || 0) * dispH; el.style.width = W + 'px'; el.style.left = Math.max(2, Math.min(w - W - 2, cx - W / 2)) + 'px'; el.style.bottom = (h - cy - 4 * s - extra) + 'px'; el.style.top = 'auto'; el.style.right = 'auto'; el.style.maxHeight = (cy - 8) + 'px'; };
     const eK = (k) => { const f = slotsE[k] || cur; return sizeMul(f.id, bossNow(f)); }, aK = (k) => { const sl = slotsA[k]; return sl && state.party[sl.ai] ? sizeMul(state.party[sl.ai].id) : 1; };
-    if (!dbl) { place(eImgs[0], ex, ey, Math.min(ew * eK(0), w * 0.72)); place(aImgs[0], ax, ay, aw * aK(0)); return; }   // しんかの だんかいで おおきさを かえる(ぬしは 2しんかより ひとまわり おおきく)
+    if (!dbl) { place(eImgs[0], ex, ey, Math.min(ew * eK(0), w * 0.8)); place(aImgs[0], ax, ay, aw * aK(0)); return; }   // しんかの だんかいで おおきさを かえる(ぬしは 2しんかより ひとまわり おおきく)
     const DA = DBL_AN[bgFile], sp = opts.bg === 'battle_volcano.webp' ? [92, 118] : [112, 138], EP = DA ? DA.e : [[AN.e[0] - sp[0], AN.e[1] + 28], [AN.e[0] + sp[0], AN.e[1] + 28]], AP = DA ? DA.a : [[AN.a[0] - sp[1], AN.a[1] - 48], [AN.a[0] + sp[1], AN.a[1] - 48]], ewd = Math.min(400 * s * 0.5, w * 0.36), awd = Math.min(480 * s * 0.52, w * 0.38);   // 1つの 足場に 2ひき のる(足場の はばに おさまる おおきさ)
     EP.forEach((pt, k) => place(eImgs[k], ...P(...pt), ewd * eK(k))); AP.forEach((pt, k) => place(aImgs[k], ...P(...pt), awd * aK(k)));
   };
@@ -559,8 +561,8 @@ export async function runBattle(enemyId0, opts = {}) {
     for (const f of onHit) await fxFrame(f, toEl, 110, true);
   };
   const hit = async (img_, big) => { img_.classList.add('hit'); await sleep(big ? 420 : 320); img_.classList.remove('hit'); };
-  const calc = (atk, power, dfn, ae, de, critP = GD.CRIT_CHANCE, ld = 0) => {   // ld: こうげきがわの レベル - ぼうぎょがわの レベル(1レベルで 2.5%、0.5〜1.6ばい)
-    const raw = Math.max(1, atk * power / 20 - dfn * 0.4) * Math.max(0.5, Math.min(1.6, 1 + ld * 0.025)), rand = 0.9 + Math.random() * 0.2, crit = Math.random() < critP, mu = GD.getElementMatchup(ae, de);
+  const calc = (atk, power, dfn, ae, de, critP = GD.CRIT_CHANCE, ld = 0) => {   // ld: こうげきがわの レベル - ぼうぎょがわの レベル(1レベルで 3%、0.2〜2ばい。ひくい レベルでは ぬしに まず かてない)
+    const raw = Math.max(1, atk * power / 20 - dfn * 0.4) * Math.max(0.2, Math.min(2, 1 + ld * 0.03)), rand = 0.9 + Math.random() * 0.2, crit = Math.random() < critP, mu = GD.getElementMatchup(ae, de);
     return { dmg: Math.max(1, Math.round(raw * rand * (crit ? GD.CRIT_MULT : 1) * mu.mult)), crit, tier: mu.tier };
   };
   const hitSnd = (r) => r.crit ? 'hit_crit' : r.tier === 'strong' ? 'hit_strong' : r.tier === 'weak' ? 'hit_weak' : 'hit';   // ダメージの おもさで おとを かえる
@@ -766,7 +768,7 @@ export async function runBattle(enemyId0, opts = {}) {
     if (reserveE.length) {
       const nx = reserveE.shift(); slotsE[j] = nx; useE(j); draw();
       if (bossNow(nx)) {   // れんせんの さいご: ぬしが とうじょう(あんてんは しない)
-        eImgs[j].style.visibility = 'hidden'; msg(`つぎは ぬしが あいてだ! ${def.name} が たちはだかった!`); sfx('no'); await sleep(900); playBgm(bgmFor(true));
+        eImgs[j].style.visibility = 'hidden'; msg(`つぎは ${opts.role || 'ぬし'}が あいてだ! ${def.name} が たちはだかった!`); sfx('no'); await sleep(900); playBgm(bgmFor(true));
         fieldEl.classList.add('quake'); await sleep(500); eImgs[j].style.visibility = ''; eImgs[j].classList.add('enter-boss'); sfx('quest'); await sleep(900); eImgs[j].classList.remove('enter-boss'); fieldEl.classList.remove('quake');
         if (!state.tips.boss) { state.tips.boss = 1; msg('ヒント: ぬしが「ちからを ためて」きたら、つぎの こうげきは とても つよいよ!'); await sleep(2200); }
       } else { msg(`${opts.trainer} は ${def.name} を くりだした!`); await sleep(500); await sendOut(eImgs[j], ballPrefix(nx.ball), true); }
@@ -986,7 +988,7 @@ export async function runBattle(enemyId0, opts = {}) {
     const isBoss = !!opts.boss && !opts.trainer, fld = $('.bt-field', root), EC = { fire: '#ff6a30', water: '#4aa8ff', grass: '#58c458', wind: '#7adcc8', earth: '#c89a54', thunder: '#ffd830', heaven: '#fff0a0', dark: '#a070e0', magic: '#e070e8', beast: '#e8a860', kami: '#ffe890' }, col = EC[def.element] || '#ffd860';
     const ov = document.createElement('div'); ov.className = 'bt-intro ' + (isBoss ? 'boss' : 'norm'); ov.style.setProperty('--ec', col);
     ov.innerHTML = isBoss
-      ? `<div class="bar t"></div><div class="bar b"></div><div class="vig"></div><div class="rays"></div><div class="ban"><small>ぬし</small><b>${def.name}</b></div><div class="flash"></div>`
+      ? `<div class="bar t"></div><div class="bar b"></div><div class="vig"></div><div class="rays"></div><div class="ban"><small>${opts.role || 'ぬし'}</small><b>${def.name}</b></div><div class="flash"></div>`
       : `<div class="sl s1"></div><div class="sl s2"></div><div class="sl s3"></div>${opts.trainer ? `<div class="ban t2"><small>VS</small><b>${opts.trainer}</b></div>` : ''}<div class="iris"></div>`;
     root.appendChild(ov); let skip = false; ov.onclick = () => { skip = true; };
     const wait = async (ms) => { const t0 = performance.now(); while (!skip && performance.now() - t0 < ms / battleSpeed()) await new Promise(r => setTimeout(r, 30)); };
@@ -1052,7 +1054,7 @@ export async function runBattle(enemyId0, opts = {}) {
       }
       if (top === 'run') {
         cmd.innerHTML = '';
-        if (opts.boss) { msg(opts.trainer ? 'トレーナーとの しょうぶからは にげられない!' : 'ぬしからは にげられない!'); await sleep(900); continue; }
+        if (opts.boss) { msg(opts.trainer ? 'トレーナーとの しょうぶからは にげられない!' : `${opts.role || 'ぬし'}からは にげられない!`); await sleep(900); continue; }
         return { k, kind: 'run' };
       }
     }
@@ -1074,9 +1076,9 @@ export async function runBattle(enemyId0, opts = {}) {
         let shk = 0; while (shk < 3 && Math.random() < q) shk++;
         const ok = shk >= 3;
         await captureAnim(bl.anim, ok, shk);
-        if (ok) { msg(`${def.name} を なかまに した!`); await sleep(1900); state.mdex[enemyId] = 2; if (state.party.length < 6) { const nmon = { id: enemyId, lv: e.lv, exp: 0, hp: null, ball: v }; state.party.push(nmon); await askNick(nmon); } else {   // てもちが 6ぴきなら ぼくじょうへ おくる(むらで いれかえできる)
+        if (ok) { msg(`${def.name} を なかまに した!`); await sleep(1900); const capId = bossFormOf(def) || enemyId; state.mdex[enemyId] = 2; state.mdex[capId] = 2; if (state.party.length < 6) { const nmon = { id: capId, lv: e.lv, exp: 0, hp: null, ball: v }; state.party.push(nmon); await askNick(nmon); } else {   // てもちが 6ぴきなら ぼくじょうへ おくる(むらで いれかえできる)
           state.pasture = state.pasture || [];
-          if (state.pasture.length < 12) { const nmon = { id: enemyId, lv: e.lv, exp: 0, hp: null, ball: v }; state.pasture.push(nmon); msg(`てもちが いっぱいなので ${def.name} は なかまの ぼくじょうに おくられた!`); await sleep(1500); msg('むらの あずかりパソコンで てもちと いれかえられるよ'); await sleep(1500); }
+          if (state.pasture.length < 12) { const nmon = { id: capId, lv: e.lv, exp: 0, hp: null, ball: v }; state.pasture.push(nmon); msg(`てもちが いっぱいなので ${def.name} は なかまの ぼくじょうに おくられた!`); await sleep(1500); msg('むらの あずかりパソコンで てもちと いれかえられるよ'); await sleep(1500); }
           else { msg('ぼくじょうも いっぱいなので 野に かえした…'); await sleep(1100); }
         } result = 'caught'; return; }
         msg([`だめだ! すぐに ${def.name} が とびだしてきた!`, `ああっ、${def.name} が とびだしてしまった!`, `おしい! あと すこしで つかまえられたのに!`][Math.min(2, shk)]); await sleep(1000);

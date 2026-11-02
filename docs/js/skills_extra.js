@@ -84,6 +84,14 @@ export function installSignature(GD) {
     GD.SKILLS[id] = { id, name, power, uses: power >= 80 ? 5 : 10, learnLevel: lv, desc, element, sig: true };
     for (const f of forms) (GD.SIG_BY_FORM[f] = GD.SIG_BY_FORM[f] || []).push({ id, lv });
   }
+  // つかまえた ぬし・してんのう(boss_<key>)の せんようわざ。カムイは さいしゅうボスの 3つ(えんしゅつは battle.js の SIG の boss_sun / boss_hole / boss_eclipse)
+  const BOSS_SKILLS = { boss_lake: ['yeti_blizzard'], boss_volcano: ['yougan_crush'], boss_ghost: ['yurei_ou_curse'], boss_grove: ['shitennou_oni_split'], boss_castle: ['shitennou_yeti_zero'], boss_temple: ['shitennou_yougan_blast'], boss_dragon: ['dragon_thunder'], boss_end: ['boss_sun', 'boss_hole', 'boss_eclipse'] };
+  Object.assign(GD.SKILLS, {
+    boss_sun: { id: 'boss_sun', name: 'ソーラーコロナ', power: 92, uses: 5, learnLevel: 1, desc: 'おおきな たいようを おとして やきはらう', element: 'fire', sig: true },
+    boss_hole: { id: 'boss_hole', name: 'ブラックホール', power: 92, uses: 5, learnLevel: 1, desc: 'すべてを すいこむ くろい あなを ひらく', element: 'dark', sig: true },
+    boss_eclipse: { id: 'boss_eclipse', name: 'エクリプスノヴァ', power: 118, uses: 3, learnLevel: 1, desc: 'たいようと ブラックホールを かさねて ばくはつさせる', element: 'kami', sig: true },
+  });
+  for (const [f, ids] of Object.entries(BOSS_SKILLS)) for (const id of ids) if (GD.SKILLS[id]) (GD.SIG_BY_FORM[f] = GD.SIG_BY_FORM[f] || []).push({ id, lv: 1 });
 }
 
 // ---- とくちょう わざ: つめ・きば・はね・つの・こぶしの ある モンスターは、ほかの タイプの 「つめ/はね」わざも おぼえる ----
@@ -95,7 +103,7 @@ const TRAIT_KEYS = {
   horn: 'kirin unicorn sai_boya oni akuma mogura_3 kaiju hitsuji shika taiboku dragon chibi_ryu sora_ryu kimaira hone_kihei'.split(' '),
   fist: 'golem gankou_goro daichi_taishou goro_kyojuu donguri_robo_2 orc oni yeti mogura_2 kaiju'.split(' '),
 };
-const TRAIT_EXCLUDE = /^(legend_|kami_|mame_chin_kami)/;
+const TRAIT_EXCLUDE = /^(legend_|kami_|mame_chin_kami|boss_)/;
 const AFF = { fire: ['earth', 'thunder', 'dark'], water: ['wind', 'thunder', 'earth'], grass: ['earth', 'wind', 'water'], wind: ['thunder', 'heaven', 'dark'], earth: ['fire', 'grass', 'dark'], thunder: ['fire', 'wind', 'water'], heaven: ['wind', 'magic', 'fire'], dark: ['magic', 'wind', 'fire'], magic: ['heaven', 'dark', 'wind'], beast: ['fire', 'earth', 'dark', 'wind', 'thunder'] };
 const EL10 = ['fire', 'water', 'grass', 'wind', 'earth', 'thunder', 'heaven', 'dark', 'magic', 'beast'];
 const TRAIT_NEW = {   // [とくちょう]: [うごき, おぼえる めやすレベル, ぞくせいごとの なまえ, せつめい]

@@ -64,6 +64,23 @@ const DR = {
   boss: { k: 'x..x..x.x.xx..x.', s: '....x.......x...', h: 'xxxxxxxxxxxxxxxx', o: '..............x.', v: 1, fill: 1, crash: 8, boom: 1 },
 };
 
+// さんこう音源(クロコ確認フォルダの バトル①〜④)から おこした バトル曲 rb1〜rb4 の メロディ(16しょうせつ)。ぜんぶ オリジナル
+const RB_M = {
+  rb1: "1':2 7:2 1':2 3':2 5':4 3':2 1':2|7:2 5:2 7:2 2':2 4':4 2':2 7:2|6:2 1':2 3':2 6':2 5':4 3':4|7:2 2':2 4':2 7':2 6':4 4':2 2':2|1':2 7:2 1':2 5':2 3':4 1':4|4:2 6:2 1':2 4':2 6':2 4':2 1':4|5:2 7#:2 2':2 4':2 7#':4 5':2 2':2|5':8 7#:4 2':4|1'':4 5':2 3':2 1'':4 5':4|7':4 4':2 2':2 7':4 4':4|6':4 1'':2 3'':2 6':4 3'':4|7':2 2'':2 4'':4 2'':4 7':4|3'':4 1'':2 3'':2 5'':4 3'':4|4'':4 6':2 4'':2 1'':4 6':4|5':2 7#':2 2'':2 7#':2 5'':4 2'':2 7#':2|5':8 r:4 5':2 7#':2",
+  rb2: "5':3 5':1 3':2 1':2 3':4 5':4|4':3 4':1 1':2 6:2 1':4 4':4|3':3 3':1 5':2 1'':2 5':4 3':4|2':3 2':1 5:2 7:2 2':4 5':4|1'':2 5':2 3':2 1':2 5':4 3':4|6':2 4':2 1':2 6:2 4':4 1':4|4':3 4':1 6':2 4':2 2':4 6:4|5':4 7#':4 2'':4 5':4|1'':2 7':2 5':2 7':2 1'':4 3'':4|6':2 5':2 4':2 5':2 6':4 1'':4|3'':2 1'':2 5':2 3'':2 5'':4 3'':4|2'':2 7':2 5':2 7':2 2'':4 5':4|4'':3 4'':1 2'':2 4'':2 6'':4 4'':4|6':2 1'':2 4'':2 1'':2 6'':4 4'':4|5':2 7#':2 2'':2 5'':2 4'':4 2'':2 7#':2|5':6 r:2 5':2 7#':2 2'':4",
+  rb3: "5:2 1':2 3':2 5':2 3':2 1':2 5:2 1':2|6:2 2':2 4':2 6':2 4':2 2':2 6:2 2':2|5:2 1':2 3':2 5':2 7':4 5':4|6':2 4':2 2':2 4':2 6':4 2':4|3':2 5':2 3':2 1':2 6:2 1':2 3':2 6:2|2':2 4':2 6':2 4':2 2':4 6:4|7:2 2':2 5':2 7':2 5':4 2':4|1'':8 5':4 7':4|1'':4 3'':2 1'':2 5':4 1'':4|2'':4 4'':2 2'':2 6':4 2'':4|3'':4 5'':2 3'':2 1'':4 3'':4|6':2 1'':2 3'':2 6'':2 3'':4 1'':4|2'':2 4'':2 6'':2 4'':2 2'':4 6':4|5':2 7':2 2'':2 5'':2 7':4 5':4|1'':2 3'':2 5'':2 3'':2 1'':2 5':2 3':2 1':2|5':8 r:4 5':2 7':2",
+  rb4: "r:4 5:4 1':4 3':4|2':8 7:4 5:4|6:4 1':4 3':4 6':4|5':4 7:4 2':4 7:4|1':4 3':4 5':8|4':4 6:4 1':4 6:4|5:4 7#:4 2':4 5:4|5:8 7#:4 2':4|1':2 2':2 3':2 5':2 3':2 5':2 1'':4|6:2 1':2 6':2 1'':2 6':4 5':4|4':2 6':2 1'':2 6':2 4'':4 1'':4|5':2 7#':2 2'':2 7#':2 5'':4 2'':4|1'':4 5':2 3':2 1'':4 5':4|2'':2 7:2 5:2 7:2 2'':4 4'':4|6':2 1'':2 3'':2 1'':2 6':4 3'':4|5':8 r:4 5':2 7#':2",
+};
+Object.assign(RB_M, {   // トレーナー・でんせつ・ボス・さいしゅう用(おなじ さんこう音源の とくちょうで オリジナルに つくった)
+  rt1: "1':3 1':1 3':2 5':2 1'':4 5':4|7:3 7:1 2':2 4':2 7':4 4':4|6:3 6:1 1':2 3':2 6':4 3':4|7#:2 2':2 5':2 7#':2 5':4 2':4|1':2 3':2 5':2 1'':2 7':4 5':4|6:2 1':2 3':2 6':2 5':4 3':4|4:2 6:2 1':2 4':2 6':4 4':4|5:4 7#:4 2':4 5:4|3'':4 1'':2 6':2 3'':4 1'':4|4'':4 6':2 4'':2 1'':4 6':4|5'':4 3'':2 1'':2 5'':4 3'':4|7#':2 2'':2 5'':2 2'':2 7#':4 5':4|1'':2 5':2 1'':2 3'':2 5'':4 3'':4|7':2 2'':2 5'':2 7':2 2'':4 4'':4|6':2 1'':2 3'':2 6'':2 5'':2 3'':2 1'':2 6':2|5':8 r:4 5':2 7#':2",
+  rt2: "1':2 3':2 5':2 3':2 1':2 5:2 1':4|1':2 3':2 5':2 3':2 1':2 5:2 3':4|7:2 2':2 4':2 2':2 7:2 4:2 2':4|6:2 1':2 3':2 1':2 6:2 3:2 1':4|1':2 3':2 5':2 1'':2 5':2 3':2 1'':4|4':2 6':2 1'':2 6':2 4':2 1':2 6':4|5':2 7#':2 2'':2 7#':2 5':2 2':2 7#':4|5':8 7#:4 2':4|3'':2 1'':2 5'':2 3'':2 1'':2 5':2 3'':4|2'':2 7':2 4'':2 2'':2 7':2 4':2 2'':4|1'':2 6':2 3'':2 1'':2 6':2 3':2 1'':4|6':2 1'':2 3'':2 6'':2 3'':4 1'':4|4'':2 6'':2 4'':2 1'':2 6':2 4':2 1'':4|6':2 4'':2 6'':2 4'':2 1'':4 6':4|5':2 7#':2 2'':2 5'':2 2'':4 7#':4|5':8 r:4 5':2 7#':2",
+  rl1: "1':6 3':2 5':4 3':4|6:6 1':2 3':4 1':4|3':6 5':2 7':4 5':4|7:6 2':2 4':4 2':4|5':6 3':2 1':4 3':4|6':6 3':2 1':4 3':4|4':6 6':2 1'':4 6':4|5':4 7#':4 2'':4 5':4|1'':4 3'':2 5'':2 3'':4 1'':4|6':4 1'':2 3'':2 6'':4 3'':4|3'':4 5'':2 7'':2 5'':4 3'':4|7':4 2'':2 4'':2 2'':4 7':4|4'':4 6'':2 4'':2 1'':4 6':4|6':4 1'':2 6':2 3'':4 1'':4|5':2 7#':2 2'':2 7#':2 5'':4 2'':4|5':8 7#':4 2'':4",
+  rbo1: "1':1 1':1 3':2 5':2 1'':2 5':2 3':2 1':2 5:2|1':1 1':1 3':2 5':2 1'':2 5':2 3':2 5':4|6:1 6:1 1':2 3':2 6':2 3':2 1':2 6:4|5':2 7#':2 2'':2 7#':2 5':2 2':2 7#':4|1'':2 5':2 3':2 1'':2 5':2 3':2 1'':4|4':2 6':2 1'':2 6':2 4':2 1':2 6':4|7':1 7':1 2'':2 4'':2 7':2 4'':2 2'':2 7':4|5':4 7#':2 2'':2 5'':4 2'':4|6':4 1'':2 3'':2 6'':4 3'':4|4'':4 6'':2 4'':2 1'':4 6':4|1'':4 3'':2 5'':2 3'':4 1'':4|5'':4 2'':2 7#':2 5'':4 2'':4|6'':2 1'':2 3'':2 6'':2 3'':2 1'':2 6':4|7':2 2'':2 4'':2 7':2 4'':2 2'':2 7':4|5':2 7#':2 2'':2 5'':2 7#':2 2'':2 5'':4|5'':6 r:2 5':2 7#':2 2'':4",
+  rbo2: "1'':3 1'':1 5':2 3':2 1'':4 5':4|1'':3 1'':1 5':2 3':2 5':4 3':4|6':3 6':1 3':2 1':2 6':4 3':4|7:3 7:1 2':2 4':2 7':4 5':4|1'':2 3'':2 5'':2 3'':2 1'':4 5':4|4'':3 4'':1 1'':2 6':2 4'':4 1'':4|5':2 7#':2 2'':2 7#':2 5'':4 2'':4|5':8 7#':4 2'':4|4'':4 6'':2 4'':2 1'':4 6':4|6'':4 1'':2 3'':2 6'':4 3'':4|7':4 2'':2 4'':2 7':4 4'':4|1'':4 3'':2 5'':2 1'':4 5':4|4'':2 6'':2 1'':2 6'':2 4'':4 1'':4|6'':2 3'':2 1'':2 6':2 3'':4 6'':4|7#':2 2'':2 5'':2 2'':2 7#':4 5'':4|5'':8 r:4 5':2 7#':2",
+  rfin: "1'':4 5':2 1'':2 3'':4 1'':4|6':4 1'':2 6':2 3'':4 1'':4|3'':4 5'':2 3'':2 1'':4 5':4|7':4 2'':2 7':2 4'':4 2'':4|1'':2 3'':2 5'':2 3'':2 1'':2 5':2 3'':4|6':2 1'':2 3'':2 1'':2 6':2 3':2 1'':4|4'':2 6'':2 4'':2 1'':2 6':2 4'':2 6'':4|5':4 7#':4 2'':4 7#':4|6'':4 3'':2 6'':2 3'':4 1'':4|4'':4 6'':2 4'':2 1'':4 6'':4|1'':4 3'':2 1'':2 5'':4 3'':4|5'':4 7#'':2 5'':2 2'':4 7#':4|4'':2 6'':2 1'':2 6'':2 4'':2 1'':2 6'':4|6'':2 1'':2 3'':2 6'':2 5'':2 3'':2 1'':4|5'':2 7#'':2 2'':2 7#'':2 5'':4 2'':4|5':8 r:4 5':2 7#':2",
+});
+const RB_LAYERS = (k, v = 0.16, i1 = 'lead', extra = []) => [{ i: i1, v, r: 0.2, m: RB_M[k] }, { i: 'trumpet', v: v * 0.8, r: 0.25, pass: 2, m: RB_M[k] }, ...extra.map(e => ({ ...e, m: RB_M[k] }))];
+const RB_ARP = () => [{ i: 'sstac', v: 0.045, p: '0120120120120120', up: 24 }, { i: 'sstac', v: 0.03, p: '2102102102102102', up: 36, pass: 2 }];
 const TRACKS = {
   // ---------- むら ----------
   village: { bpm: 88, key: 60, mode: 'major', g: 1.0, chords: ['1', '6', '4', '5', '1', '6', '4', '5'],
@@ -165,6 +182,32 @@ const TRACKS = {
     lead: [{ i: 'brass', v: 0.2, r: 0.3, m: "1':2 1':2 1':2 3':2 5':4 3':2 1':2|1':3 1':1 3':2 5':2 1'':4 5':4|6':4 1'':2 6':2 3'':4 1'':4|7':4 2'':2 7':2 4'':4 2'':4|1'':4 5':2 3':2 1'':4 3'':4|4':4 6':2 4':2 1'':4 6':4|5':4 7#':2 2'':2 7#':4 5':4|1'':8 5':4 1'':4|6':2 1'':2 3'':4 1'':4 6':4|7':2 2'':2 4'':4 2'':4 7':4|1'':4 3'':2 5'':2 3'':4 1'':4|5':4 7#':4 2'':4 7#':4|4':4 6':4 1'':4 6':4|6':4 1'':4 3'':4 1'':4|5':2 7#':2 2'':2 7#':2 5'':4 2'':4|5':8 7#':4 2'':4" },
       { i: 'choir', v: 0.11, r: 0.6, m: "1':2 1':2 1':2 3':2 5':4 3':2 1':2|1':3 1':1 3':2 5':2 1'':4 5':4|6':4 1'':2 6':2 3'':4 1'':4|7':4 2'':2 7':2 4'':4 2'':4|1'':4 5':2 3':2 1'':4 3'':4|4':4 6':2 4':2 1'':4 6':4|5':4 7#':2 2'':2 7#':4 5':4|1'':8 5':4 1'':4|6':2 1'':2 3'':4 1'':4 6':4|7':2 2'':2 4'':4 2'':4 7':4|1'':4 3'':2 5'':2 3'':4 1'':4|5':4 7#':4 2'':4 7#':4|4':4 6':4 1'':4 6':4|6':4 1'':4 3'':4 1'':4|5':2 7#':2 2'':2 7#':2 5'':4 2'':4|5':8 7#':4 2'':4" }],
     pad: { i: 'strings', v: 0.07 }, bass: { i: 'synbass', v: 0.24, p: '1.11.1.11.1.1.11' }, arp: { i: 'bell', v: 0.08, p: '0123210301232103', up: 12, r: 0.6 }, drums: { ...DR.boss, crash: 4 } },
+  // ---------- さんこう音源から おこした バトル曲 ----------
+  // 音源の とくちょう: 184〜192BPM / 約55しょうせつ(70びょう) / ひくい おとは おなじ おとを ずっと ならす(ペダル) / 16ぶんの きざみが こい / たかい しゅせんりつ
+  rb1: { bpm: 186, key: 62, mode: 'minor', g: 1.0, chords: ['1', '1', '6', '7', '1', '4', '5M', '5M', '6', '7', '1', '1', '4', '6', '5M', '5M'],
+    lead: RB_LAYERS('rb1'), pad: { i: 'strings', v: 0.05, r: 0.3 }, bass: { i: 'ebass', v: 0.2, p: '1818181818181858', ped: 1 }, arp: RB_ARP(), drums: DR.fightB },
+  rb2: { bpm: 192, key: 57, mode: 'minor', g: 1.0, chords: ['1', '6', '3', '7', '1', '6', '4', '5M', '1', '6', '3', '7', '4', '6', '5M', '5M'],
+    lead: RB_LAYERS('rb2'), pad: { i: 'strings', v: 0.05, r: 0.3 }, bass: { i: 'ebass', v: 0.2, p: '1.11.1.11.1.1.11', ped: 1 }, arp: RB_ARP(), drums: DR.fight },
+  rb3: { bpm: 186, key: 60, mode: 'lydian', g: 1.0, chords: ['1', '2', '1', '2', '6', '2', '5', '5', '1', '2', '3', '6', '2', '5', '1', '1'],
+    lead: RB_LAYERS('rb3'), pad: { i: 'strings', v: 0.05, r: 0.3 }, bass: { i: 'ebass', v: 0.2, p: '1111111111111111', ped: 1 }, arp: RB_ARP(), drums: DR.gallop },
+  rb4: { bpm: 189, key: 60, mode: 'minor', g: 1.0, chords: ['1', '1', '6', '7', '1', '4', '5M', '5M', '1', '6', '4', '5M', '1', '7', '6', '5M'],
+    lead: RB_LAYERS('rb4', 0.15), pad: { i: 'strings', v: 0.055, r: 0.4 }, bass: { i: 'ebass', v: 0.18, p: '1.11.1.11.1.1.11', ped: 1 }, arp: RB_ARP(), drums: { ...DR.fight, v: 0.85 } },
+  // トレーナー戦
+  rt1: { bpm: 188, key: 64, mode: 'minor', g: 1.0, chords: ['1', '1', '4', '5M', '1', '6', '4', '5M', '6', '4', '1', '5M', '1', '7', '6', '5M'],
+    lead: RB_LAYERS('rt1', 0.17, 'brass'), pad: { i: 'strings', v: 0.055, r: 0.3 }, bass: { i: 'ebass', v: 0.21, p: '1818181818181858', ped: 1 }, arp: RB_ARP(), drums: DR.fight },
+  rt2: { bpm: 186, key: 54, mode: 'minor', g: 1.0, chords: ['1', '1', '7', '6', '1', '4', '5M', '5M', '3', '7', '6', '1', '4', '6', '5M', '5M'],
+    lead: RB_LAYERS('rt2', 0.17), pad: { i: 'strings', v: 0.055, r: 0.3 }, bass: { i: 'ebass', v: 0.21, p: '1.11.1.11.1.1.11', ped: 1 }, arp: RB_ARP(), drums: DR.march },
+  // でんせつ戦: ゆっくり おおきな しゅせんりつ+こうがく
+  rl1: { bpm: 184, key: 66, mode: 'minor', g: 1.0, chords: ['1', '6', '3', '7', '1', '6', '4', '5M', '1', '6', '3', '7', '4', '6', '5M', '5M'],
+    lead: RB_LAYERS('rl1', 0.17, 'brass', [{ i: 'choir', v: 0.11, r: 0.6, pass: 2 }]), pad: { i: 'strings', v: 0.06, r: 0.5 }, bass: { i: 'ebass', v: 0.21, p: '1818181818181858', ped: 1 }, arp: RB_ARP(), drums: DR.epic },
+  // ボス戦
+  rbo1: { bpm: 194, key: 59, mode: 'minor', g: 1.0, chords: ['1', '1', '6', '5M', '1', '4', '7', '5M', '6', '4', '1', '5M', '6', '7', '5M', '5M'],
+    lead: RB_LAYERS('rbo1', 0.18, 'brass'), pad: { i: 'strings', v: 0.06, r: 0.3 }, bass: { i: 'ebass', v: 0.23, p: '1818181818181858', ped: 1 }, arp: RB_ARP(), drums: DR.fightB },
+  rbo2: { bpm: 198, key: 57, mode: 'minor', g: 1.0, chords: ['1', '1', '6', '7', '1', '4', '5M', '5M', '4', '6', '7', '1', '4', '6', '5M', '5M'],
+    lead: RB_LAYERS('rbo2', 0.18, 'brass'), pad: { i: 'strings', v: 0.06, r: 0.3 }, bass: { i: 'ebass', v: 0.23, p: '1.11.1.11.1.1.11', ped: 1 }, arp: RB_ARP(), drums: DR.boss },
+  // さいしゅうボス: こうがく+ブラス
+  rfin: { bpm: 196, key: 57, mode: 'minor', g: 1.0, chords: ['1', '6', '3', '7', '1', '6', '4', '5M', '6', '4', '1', '5M', '4', '6', '5M', '5M'],
+    lead: RB_LAYERS('rfin', 0.18, 'brass', [{ i: 'choir', v: 0.12, r: 0.6 }]), pad: { i: 'strings', v: 0.065, r: 0.4 }, bass: { i: 'ebass', v: 0.24, p: '1818181818181858', ped: 1 }, arp: RB_ARP(), drums: { ...DR.boss, crash: 4 } },
 };
 // ファミコン風の べつパターン: 戦闘曲3つを コピー(矩形波2+波形メモリベース+ノイズドラム)
 for (const k of ['battle', 'battle2', 'battle3']) TRACKS['chip_' + k] = JSON.parse(JSON.stringify(TRACKS[k]));
@@ -181,6 +224,9 @@ const PLAN = {
   gba_trainer: { intro: 2, lift: 2 }, gba_legend: { intro: 2, lift: 2, brk: 15 }, gba_boss: { intro: 2, lift: 2, brk: 15 }, gba_boss2: { intro: 2, lift: 2, brk: 15 },
   pf_battle: { intro: 2, lift: 2 }, pf_battle2: { intro: 2, lift: 2 }, pf_battle3: { intro: 2, lift: 2 }, pf_trainer: { intro: 2, lift: 2 }, pf_boss: { intro: 2, lift: 2, riser: 1, brk: 15 }, pf_boss2: { intro: 2, lift: 2, riser: 1, brk: 15 },
   chip_battle: { lift: 2 }, chip_battle2: { lift: 2 }, chip_battle3: { lift: 2 },
+  rt1: { sty: 'epic', intro: 2, lift: 2, riser: 1, n: 40 }, rt2: { sty: 'epic', intro: 2, lift: 2, riser: 1, n: 40 }, rl1: { sty: 'epic', sac: 1, intro: 2, lift: 2, riser: 1, brk: 15, n: 40 },
+  rbo1: { sty: 'epic', intro: 2, lift: 2, riser: 1, brk: 15, n: 40 }, rbo2: { sty: 'epic', intro: 2, lift: 2, riser: 1, brk: 15, n: 40 }, rfin: { sty: 'epic', sac: 1, intro: 2, lift: 2, riser: 1, brk: 15, n: 48 },
+  rb1: { sty: 'epic', intro: 2, lift: 2, riser: 1, n: 40 }, rb2: { sty: 'epic', intro: 2, lift: 2, riser: 1, n: 40 }, rb3: { sty: 'epic', intro: 2, lift: 2, riser: 1, n: 40 }, rb4: { sty: 'epic', intro: 2, lift: 2, riser: 1, n: 40 },
   battle: { sty: 'epic', intro: 2, lift: 2, riser: 1 }, battle2: { sty: 'epic', intro: 2, lift: 2, riser: 1 }, battle3: { sty: 'epic', intro: 2, lift: 2, riser: 1 }, battle_trainer: { sty: 'epic', intro: 2, lift: 2, riser: 1 },
   battle_legend: { sty: 'epic', sac: 1, intro: 2, lift: 2, riser: 1, brk: 15 }, boss: { sty: 'epic', intro: 2, lift: 2, riser: 1, brk: 15 }, boss2: { sty: 'epic', intro: 2, lift: 2, riser: 1, brk: 15 }, boss_final: { sty: 'epic', sac: 1, intro: 2, lift: 2, riser: 1, brk: 15 },
 };
@@ -262,7 +308,7 @@ let fieldTheme = 'f_forest', lastBattle = '';
 // ---------- じゅんび: 小節ごとに わける ----------
 for (const [name, tr] of Object.entries(TRACKS)) {
   const pl = PLAN[name] || {}; tr.sty = pl.sty; tr.intro = pl.intro || 0; tr.lift = pl.lift || 0; tr.brk = pl.brk == null ? -1 : pl.brk; tr.riser = !!pl.riser; tr.sac = !!pl.sac;
-  tr.n = 24; tr.ct = tr.chords.map(c => chordOf(tr, c));   // 24しょうせつ: 16(ふつう) + 8(さいご: ひとつ うえの キーで もりあがる)
+  tr.n = pl.n || 24; tr.ct = tr.chords.map(c => chordOf(tr, c));   // 24しょうせつ: 16(ふつう) + 8(さいご: ひとつ うえの キーで もりあがる)
   for (const k of ['lead', 'pad', 'bass', 'arp', 'drums', 'stab']) {
     let L = tr[k]; if (!L) { tr['L_' + k] = []; continue; } if (!Array.isArray(L)) L = [L]; tr['L_' + k] = L;
     for (const l of L) { if (l.m) l.bars_ = parseMel(l.m, tr, name); else if (l.notes) l.bars_ = splitLegacy(l.notes, tr.chords.length); }
@@ -380,13 +426,13 @@ function scheduleIntro(tr, s, t, sd) { chipMode = !!tr.chip;   // イントロ: 
 function scheduleStep(tr, s, t, sd) {
   chipMode = !!tr.chip;
   if (s < 0) { scheduleIntro(tr, s + tr.intro * 16, t, sd); return; }
-  const bar = Math.floor(s / 16) % tr.n, st = s % 16, ext = bar >= 16, sb = ext ? 8 + (bar - 16) : bar, P = passOf(bar), trp = ext ? tr.lift : 0, ct = tr.ct[sb % tr.ct.length], gg = tr.g, brk = bar === tr.brk;
-  if (tr.riser && (bar === 7 || bar === 23 || brk) && st === 0) riser(t, sd * 16, 0.11 * gg);
+  const bar = Math.floor(s / 16) % tr.n, st = s % 16, ext = bar >= 16 && (bar - 16) % 16 < 8, sb = ext ? 8 + (bar - 16) % 16 : bar % 16, P = passOf(bar), trp = ext ? tr.lift : 0, ct = tr.ct[sb % tr.ct.length], gg = tr.g, brk = bar === tr.brk;
+  if (tr.riser && (bar === 7 || bar === tr.n - 1 || brk) && st === 0) riser(t, sd * 16, 0.11 * gg);
   if (brk) { if (st >= 8) perc('s', t, (0.05 + (st - 8) * 0.045) * gg); if (st % 4 === 0) perc('t', t, 0.2 * gg, 1.1 - st * 0.02); }
   if (tr.brk >= 0 && bar === tr.brk + 1 && st === 0) { perc('crash', t, 0.3 * gg); perc('boom', t, 0.55 * gg); }
   if (!brk) {
     for (const l of tr.L_lead) { if (!on(l, P)) continue; const nb = l.bars_.length, notes = l.bars_[sb % nb] || []; for (const [ms, m, len] of notes) if (ms === st) voice(l.i, mtof(m + 12 * (l.oct || 0) + trp), t, sd * len * (l.leg || 0.93), l.v * gg, l); }
-    for (const l of tr.L_bass) { if (!on(l, P)) continue; const c = ch(l.p, st); if (c === '.') continue; let len = 1; while (len < 16 && ch(l.p, st + len) === '.') len++; const bm = ct[0] - 12 + trp + (c === '5' ? 7 : c === '8' ? 12 : c === '3' ? ct[1] - ct[0] : 0); voice(l.i, mtof(bm), t, sd * len * 0.9, l.v * gg * 1.05, l); if (!tr.chip && bm - 12 >= 24) voice('subbass', mtof(bm - 12), t, sd * len * 0.9, l.v * gg * 0.6, {}); }
+    for (const l of tr.L_bass) { if (!on(l, P)) continue; const c = ch(l.p, st); if (c === '.') continue; let len = 1; while (len < 16 && ch(l.p, st + len) === '.') len++; const bm = (l.ped ? tr.ct[0][0] : ct[0]) - 12 + trp + (c === '5' ? 7 : c === '8' ? 12 : c === '3' ? ct[1] - ct[0] : 0); voice(l.i, mtof(bm), t, sd * len * 0.9, l.v * gg * 1.05, l); if (!tr.chip && bm - 12 >= 24) voice('subbass', mtof(bm - 12), t, sd * len * 0.9, l.v * gg * 0.6, {}); }
     for (const l of tr.L_arp) { if (!on(l, P)) continue; const c = ch(l.p, st); if (c === '.') continue; const ix = +c, nm = ct[ix % ct.length] + 12 * Math.floor(ix / ct.length) + (l.up ?? 24) + trp; voice(l.i, mtof(nm), t, sd * (l.len || 1.6), l.v * gg * ((l.up ?? 24) >= 36 ? 0.65 : 1), l); }
     for (const l of tr.L_stab) { if (!on(l, P)) continue; if (ch(l.p, st) !== 'x') continue; for (const m of ct) voice(l.i, mtof(m + (l.up ?? 12) + trp), t, sd * (l.len || 1.5), l.v * gg * 0.7, l); }
     for (const d of tr.L_drums) {
@@ -415,13 +461,13 @@ function startNow(name) {
   if (!cfg.bgm || !name || !TRACKS[name]) { cur = null; return; }
   cur = name; step = -(TRACKS[name].intro || 0) * 16; nextT = 0; tbus = trackBus(); timer = setInterval(tick, 80); tick();
 }
-const GBA_ALT = { battle_trainer: ['gba_trainer', 'pf_trainer'], battle_legend: ['gba_legend'], boss: ['gba_boss', 'pf_boss'], boss2: ['gba_boss2', 'pf_boss2'] };
+const GBA_ALT = { battle_trainer: ['rt1', 'rt2'], battle_legend: ['rl1'], boss: ['rbo1', 'rbo2'], boss2: ['rbo2', 'rbo1'], boss_final: ['rfin'] };   // さんこう音源から おこした あたらしい きょくに さしかえ(もとの きょくは えらばない)
 function resolve(name) { const r = resolve0(name); return TRACKS[r] ? r : (TRACKS[name] ? name : 'battle'); }   // ない きょくは えらばない(むおんに ならない ように)
 function resolve0(name) {
   if (name === 'field') return fieldTheme;
-  if (name === 'battle') { const pool = ['battle', 'battle2', 'battle3', 'chip_battle', 'chip_battle2', 'chip_battle3', 'pf_battle', 'pf_battle2', 'pf_battle3'].filter(x => x !== lastBattle); lastBattle = pool[Math.floor(Math.random() * pool.length)]; return lastBattle; }
+  if (name === 'battle') { const pool = ['rb1', 'rb2', 'rb3', 'rb4'].filter(x => x !== lastBattle); lastBattle = pool[Math.floor(Math.random() * pool.length)]; return lastBattle; }
   const alt = GBA_ALT[name];
-  if (alt) { const o = [name, ...alt]; return o[Math.floor(Math.random() * o.length)]; }
+  if (alt) return alt[Math.floor(Math.random() * alt.length)];
   return TRACKS[name] ? name : 'battle';
 }
 export function playBgm(name) {

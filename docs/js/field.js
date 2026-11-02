@@ -8,6 +8,7 @@ import { sfx, unlockAudio } from './audio.js';
 import { lawnKit } from './world.js';
 import { BADGES, DAY_SECONDS, DROP_BY_ELEMENT, ITEMS, HEAL, EVO_STONES } from './data.js';
 import { playBgm, setFieldBgm } from './bgm.js';
+import { NEW_APPEAR } from './monsters_extra.js';
 import { runBattle, markCaught, giveStarter, giveMon, healParty, questData, assistOn } from './battle.js';
 
 const $ = (s) => document.querySelector(s);
@@ -28,7 +29,7 @@ const FIELDS = {
     zones: [[-16, -6, 8], [14, -22, 9], [-8, -34, 8], [22, 4, 7], [-6, -44, 8]],
     trees: [['pine_far', 110, 170, [4.6, 7], 14, 78], ['birch', 24, 40, [3.0, 4.4], 14, 70]],
     wild: [['dokukinoko', 4], ['saboten', 4], ['chin_kusa', 4], ['ringo_ko', 4], ['wakagi_shika', 2], ['slime', 1], ['aodori', 1], ['mogura', 1], ['komori', 1], ['hinotama', 1], ['mitsubachi', 1], ['katatsumuri', 1], ['mame_chin', 1], ['watage', 1]],
-    boss: { key: 'forest', x: 0, z: -58, id: 'shokujinsou_2', sprite: 'shokujinsou_2', patch: 'boss_patch', patchW: 15, name: 'もりの ぬし', over: { name: 'もりの ぬし', image: 'assets/bosses/forest.webp', level: 11, hp: 105, atk: 22, def: 15, spd: 9, exp: 110, money: 160 }, model: 'boss_forest', h: 5.0, lines: ['……ここは わたしの もりだ。', 'くさむらで きたえた なかまと いっしょなら、わたしを みとめよう。', 'さあ、かかってこい! HPと かいふくの たべものは じゅんびできたか?'], coins: 300, win: 'もりの ぬしが みとめてくれた! なかまボール×5 と 300コインを もらった!', after: 'もりに へいわが もどったよ' },
+    boss: { key: 'forest', x: 0, z: -58, id: 'shokujinsou_2', sprite: 'shokujinsou_2', patch: 'boss_patch', patchW: 15, name: 'ガブリソウ', over: { name: 'ガブリソウ', image: 'assets/bosses/forest.webp', level: 11, hp: 105, atk: 22, def: 15, spd: 9, exp: 110, money: 160 }, model: 'boss_forest', h: 5.0, lines: ['……ここは わたしの もりだ。', 'くさむらで きたえた なかまと いっしょなら、わたしを みとめよう。', 'さあ、かかってこい! HPと かいふくの たべものは じゅんびできたか?'], coins: 300, win: 'ぬし ガブリソウが みとめてくれた! なかまボール×5 と 300コインを もらった!', after: 'もりに へいわが もどったよ' },
   },
   volcano: {
     name: 'ようがんやま', groundGain: 0.85, relief: 1.7, hills: 3.5, patch: [['#1a100c', 0.8, false, 50, 4, 10], ['#ff6a1a', 0.45, true, 36, 2, 6]], props: [['deco_lava_rock', 30, 55, [0.5, 1.1], 6, 60]],
@@ -38,7 +39,7 @@ const FIELDS = {
     zones: [[10, -6, 8], [22, -32, 9], [-8, -42, 8], [30, 10, 7], [-34, 0, 7], [2, 26, 7]],
     trees: [['deco_lava_rock', 40, 64, [1.7, 3.4], 12, 74], ['deco_lava_rock', 20, 30, [3.6, 5.4], 26, 76]],
     wild: [['hinotama_2', 3], ['mogura_2', 3], ['hone_kenshi_2', 2], ['komori_2', 2], ['koyurei_2', 2], ['hinotama_3', 1], ['iwa_golem', 1], ['raimushi_2', 1], ['raimushi_3', 1], ['hono_tanuki', 1], ['ringo_ko', 2], ['dango_mushi', 1], ['kitsune_ko', 1], ['denki_neko', 1], ['fuusen_ko', 1], ['hono_tanuki', 2], ['hono_tanuki_2', 2], ['hono_tanuki_3', 1], ['dango_mushi_2', 1], ['mike_hi', 1], ['mike_hi_2', 1], ['houki_ko', 1], ['denchi_risu', 1], ['furin_ko', 1], ['tako_ko', 1], ['donguri_robo', 1], ['suna_kai', 1], ['donguri_robo', 1], ['donguri_robo_2', 1], ['iwagoro', 1], ['gankou_goro', 1], ['wakagi_shika', 1], ['mori_shika', 1], ['toki_no_yousei', 1]], scale: { lv: 5, hp: 1.5, atk: 1.4, def: 1.4, spd: 1.2, exp: 1.5, money: 1.5 },
-    boss: { key: 'volcano', x: 0, z: -58, id: 'yougan_golem', name: 'ようがんの ぬし', deco: { model: 'deco_lava_rock', n: 9, r: 7.8, w: 4.2 }, over: { name: 'ようがんの ぬし', image: 'assets/bosses/volcano.webp', level: 26, hp: 302, atk: 52, def: 32, spd: 15, exp: 340, money: 420 }, model: 'boss_volcano', h: 6.6, lines: ['グゴゴゴ……だれだ、わしの ねむりを さまたげるのは。', 'ここは ようがんが ふきだす やま。よわい ものは すぐに やけてしまうぞ。', 'おまえたちの ちからを みせてみろ!', ], coins: 800, win: 'ようがんの ぬしが みとめてくれた! なかまボール×5 と 800コインを もらった!', after: 'ようがんやまに へいわが もどったよ' },
+    boss: { key: 'volcano', x: 0, z: -58, id: 'yougan_golem', name: 'ガンテツ', deco: { model: 'deco_lava_rock', n: 9, r: 7.8, w: 4.2 }, over: { name: 'ガンテツ', image: 'assets/bosses/volcano.webp', level: 26, hp: 302, atk: 52, def: 32, spd: 15, exp: 340, money: 420 }, model: 'boss_volcano', h: 6.6, lines: ['グゴゴゴ……だれだ、わしの ねむりを さまたげるのは。', 'ここは ようがんが ふきだす やま。よわい ものは すぐに やけてしまうぞ。', 'おまえたちの ちからを みせてみろ!', ], coins: 800, win: 'ぬし ガンテツが みとめてくれた! なかまボール×5 と 800コインを もらった!', after: 'ようがんやまに へいわが もどったよ' },
   },
   ghost: {
     name: 'ゆうれいの はかば', groundGain: 2.6, relief: 1.5, hills: 2.5, patch: [['#1e1c32', 0.8, false, 50, 4, 10], ['#6affc8', 0.28, true, 30, 2, 6]], props: [['deco_ghost_lantern', 14, 24, [0.7, 1.1], 8, 55]],
@@ -48,7 +49,7 @@ const FIELDS = {
     zones: [[10, -6, 8], [22, -32, 9], [-8, -42, 8], [30, 10, 7], [-34, 0, 7], [2, 26, 7]],
     trees: [['deco_ghost_lantern', 22, 34, [2.0, 3.0], 12, 70], ['deco_tomb', 26, 40, [1.1, 1.7], 14, 76, null, { fit: true }], ['deco_cross', 18, 28, [1.4, 2.2], 14, 76, null, { fit: true }], ['deco_wisp', 24, 36, [0.8, 1.4], 12, 74, null, { fit: true, basic: true, nofog: true, fly: [0.6, 3.2] }]],
     wild: [['koyurei_2', 4], ['hone_kenshi_2', 4], ['komori_2', 3], ['koyurei_3', 1], ['hone_kenshi_3', 1], ['kage_bouzu', 1], ['yoru_kage', 1], ['maboroshi_yomi', 1]], scale: { lv: 6, hp: 1.6, atk: 1.5, def: 1.5, spd: 1.3, exp: 1.6, money: 1.6 },
-    boss: { key: 'ghost', x: 0, z: -58, id: 'yurei_ou', name: 'ゆうれいの ぬし', deco: { model: 'deco_ghost_lantern', n: 9, r: 7.8, w: 3.4 }, over: { name: 'ゆうれいの ぬし', image: 'assets/bosses/ghost.webp', level: 33, hp: 381, atk: 63, def: 39, spd: 19, exp: 480, money: 560 }, model: 'boss_ghost', h: 6.0, lines: ['ふふふ……よく ここまで きたね、いきている ものよ。', 'ここは ねむれぬ たましいが あつまる はかば。', 'わたしを ちっそくさせられるか、ためして あげよう……'], coins: 1200, win: 'ゆうれいの ぬしが みとめてくれた! なかまボール×5 と 1200コインを もらった!', after: 'はかばに しずけさが もどったよ' },
+    boss: { key: 'ghost', x: 0, z: -58, id: 'yurei_ou', name: 'ヨイヤミ', deco: { model: 'deco_ghost_lantern', n: 9, r: 7.8, w: 3.4 }, over: { name: 'ヨイヤミ', image: 'assets/bosses/ghost.webp', level: 33, hp: 381, atk: 63, def: 39, spd: 19, exp: 480, money: 560 }, model: 'boss_ghost', h: 6.0, lines: ['ふふふ……よく ここまで きたね、いきている ものよ。', 'ここは ねむれぬ たましいが あつまる はかば。', 'わたしを ちっそくさせられるか、ためして あげよう……'], coins: 1200, win: 'ぬし ヨイヤミが みとめてくれた! なかまボール×5 と 1200コインを もらった!', after: 'はかばに しずけさが もどったよ' },
   },
   sky: {
     name: 'てんくうの はら', groundGain: 0.8, relief: 1.4, hills: 3.5, patch: [['#ffffff', 0.55, false, 40, 5, 12], ['#ffe8a0', 0.35, true, 30, 3, 8]], props: [['deco_starshard', 20, 40, [0.5, 1.0], 6, 55]],
@@ -60,7 +61,7 @@ const FIELDS = {
       ['cloud_fluffy', 22, 34, [6, 13], 10, 78, '#ffffff', { fit: true, basic: true, nofog: true, fly: [2, 12] }], ['cloud_cumulo', 5, 8, [10, 18], 40, 82, '#ffffff', { fit: true, basic: true, nofog: true, fly: [3, 14] }], ['cloud_long', 6, 10, [11, 20], 30, 82, '#ffffff', { fit: true, basic: true, nofog: true, fly: [5, 16] }], ['cloud_chin', 4, 6, [7, 12], 24, 78, '#ffffff', { fit: true, basic: true, nofog: true, fly: [3, 10] }],
       ['cloud_fluffy', 40, 56, [5, 10], 20, 78, '#ffffff', { fit: true, basic: true, nofog: true, fly: [0, 0.6] }]],
     wild: [['mame_chin_heaven', 2], ['shinju_pegasus', 2], ['shinju_unicorn', 1], ['mitsubachi', 2], ['mame_chin_magic', 2], ['mame_chin_thunder', 1], ['raichou_ko', 1], ['watage', 1], ['tsubame_ko', 1], ['kaze_chou', 1], ['kumo_hitsuji', 1], ['kitsune_ko_2', 1], ['denki_neko', 1], ['fuusen_ko', 2], ['hikari_kame', 1], ['denchi_risu', 1], ['hoshi_usagi', 1], ['niji_hato', 1], ['furin_ko', 1], ['furin_ko_2', 1], ['tako_ko', 1], ['chibi_ryu', 1], ['sora_ryu', 1], ['nari_kami', 1]], scale: { lv: 6, hp: 1.7, atk: 1.6, def: 1.6, spd: 1.4, exp: 1.7, money: 1.7 },
-    boss: { key: 'sky', x: 0, z: -58, id: 'shinju_pegasus', name: 'てんくうの ぬし', deco: { model: 'deco_starshard', n: 9, r: 7.8, w: 3.4 }, over: { name: 'てんくうの ぬし', image: 'assets/bosses/sky.webp', level: 40, hp: 482, atk: 76, def: 48, spd: 23, exp: 700, money: 800 }, model: 'boss_celestial', h: 6.2, lines: ['……ほしの ひかりに みちびかれて きたのですね。', 'ここは そらに いちばん ちかい はら。', 'ちからと きずなを、わたしに みせてください。'], coins: 2000, win: 'てんくうの ぬしが みとめてくれた! なかまボール×5 と 2000コインを もらった!', after: 'てんくうに ひかりが もどったよ' },
+    boss: { key: 'sky', x: 0, z: -58, id: 'shinju_pegasus', name: 'セラフィ', deco: { model: 'deco_starshard', n: 9, r: 7.8, w: 3.4 }, over: { name: 'セラフィ', image: 'assets/bosses/sky.webp', level: 40, hp: 482, atk: 76, def: 48, spd: 23, exp: 700, money: 800 }, model: 'boss_celestial', h: 6.2, lines: ['……ほしの ひかりに みちびかれて きたのですね。', 'ここは そらに いちばん ちかい はら。', 'ちからと きずなを、わたしに みせてください。'], coins: 2000, win: 'ぬし セラフィが みとめてくれた! なかまボール×5 と 2000コインを もらった!', after: 'てんくうに ひかりが もどったよ' },
   },
   sun: {
     name: 'たいようの はら', relief: 1.5, hills: 3, patch: [['#1a100c', 0.8, false, 50, 4, 10], ['#ff6a1a', 0.45, true, 36, 2, 6]], props: [['deco_lava_rock', 30, 55, [0.5, 1.1], 6, 60]],
@@ -70,7 +71,7 @@ const FIELDS = {
     zones: [[10, -6, 8], [22, -32, 9], [-8, -42, 8], [30, 10, 7], [-34, 0, 7], [2, 26, 7]],
     trees: [['deco_lava_rock', 24, 36, [1.6, 3.0], 12, 74]],
     wild: [['hinotama_3', 3], ['saboten_3', 2], ['kodai_kyubi', 1], ['kodai_oni', 2], ['kodai_kitsunemen', 2], ['shinju_reishishi', 1], ['aodori_3', 2], ['kumo_hitsuji', 1], ['kumo_hitsuji_2', 1], ['tenshi_chin', 1], ['kitsune_ko', 1], ['kitsune_ko_2', 1], ['hikari_kame', 1], ['hoshi_usagi', 1], ['hoshi_usagi_2', 1], ['niji_hato', 1], ['chibi_ryu', 1], ['hikari_kishi', 1], ['sei_kishi', 1], ['yume_no_ko', 1]], scale: { lv: 4, hp: 1.4, atk: 1.4, def: 1.4, spd: 1.2, exp: 2, money: 2 },
-    boss: { key: 'sun', x: 0, z: -58, id: 'legend_houou', name: 'たいようの ぬし', deco: { model: 'deco_lava_rock', n: 9, r: 7.8, w: 3.6 }, over: { name: 'たいようの ぬし', image: 'assets/bosses/sun.webp', level: 47, hp: 605, atk: 91, def: 56, spd: 27, exp: 800, money: 900 }, model: 'boss_phoenix_b', h: 6.6, lines: ['……あたたかい ひかりに ひかれて きたのですね。', 'わたしは たいようの ひを まもる もの。', 'ほのおの ちからを うけとめられるか、みせてください!'], coins: 3000, win: 'たいようの ぬしが みとめてくれた! なかまボール×5 と 3000コインを もらった!', after: 'たいようの はらに あたたかさが もどったよ' },
+    boss: { key: 'sun', x: 0, z: -58, id: 'legend_houou', name: 'アカツキ', deco: { model: 'deco_lava_rock', n: 9, r: 7.8, w: 3.6 }, over: { name: 'アカツキ', image: 'assets/bosses/sun.webp', level: 47, hp: 605, atk: 91, def: 56, spd: 27, exp: 800, money: 900 }, model: 'boss_phoenix_b', h: 6.6, lines: ['……あたたかい ひかりに ひかれて きたのですね。', 'わたしは たいようの ひを まもる もの。', 'ほのおの ちからを うけとめられるか、みせてください!'], coins: 3000, win: 'ぬし アカツキが みとめてくれた! なかまボール×5 と 3000コインを もらった!', after: 'たいようの はらに あたたかさが もどったよ' },
   },
   cosmos: {
     name: 'うちゅうの うみ', groundGain: 1.25, relief: 1.2, hills: 2, patch: [['#0a1238', 0.8, false, 46, 4, 11], ['#6a9aff', 0.4, true, 36, 2, 7]], props: [['deco_water_orb', 20, 40, [0.4, 0.9], 6, 55]],
@@ -81,7 +82,7 @@ const FIELDS = {
     trees: [['deco_water_orb', 20, 30, [1.6, 2.6], 12, 74], ['deco_star5', 34, 56, [1.6, 3.4], 14, 78, '#ffffff', { fit: true, basic: true, nofog: true, fly: [1, 9] }], ['deco_star5', 14, 22, [1.4, 2.6], 14, 78, '#ffb0e8', { fit: true, basic: true, nofog: true, fly: [1, 9] }], ['deco_star5', 14, 22, [1.4, 2.6], 14, 78, '#a0f0ff', { fit: true, basic: true, nofog: true, fly: [1, 9] }],
       ['deco_planet_ring', 8, 12, [9, 16], 36, 82, '#ffffff', { fit: true, basic: true, nofog: true, fly: [6, 22] }], ['deco_planet_ring', 5, 8, [7, 12], 40, 82, '#a8c8ff', { fit: true, basic: true, nofog: true, fly: [6, 22] }], ['deco_planet_moon', 8, 12, [4, 9], 30, 80, '#ffffff', { fit: true, basic: true, nofog: true, fly: [4, 14] }], ['deco_crescent', 6, 10, [3, 6], 24, 78, '#ffffff', { fit: true, basic: true, nofog: true, fly: [3, 12] }]],
     wild: [['kodai_yukionna', 2], ['kodai_biwanushi', 2], ['kodai_kappabouzu', 2], ['shinju_kamezan', 2], ['legend_hyoketsuhime', 1], ['mame_chin_water', 2], ['lamp_no_sei', 1], ['kurage_ko_2', 1], ['hoshi_usagi_2', 1], ['kantera_bito', 1], ['raimei_hydra', 1], ['daichi_madoromi', 1], ['umihebi_ko', 1], ['namino_kairyu', 1], ['shinkai_ryujin', 1], ['tenkuu_shugoshin', 1]], scale: { lv: 4, hp: 1.4, atk: 1.4, def: 1.4, spd: 1.2, exp: 2, money: 2 },
-    boss: { key: 'cosmos', x: 0, z: -58, id: 'legend_hoshikujira', name: 'うちゅうの ぬし', deco: { model: 'deco_water_orb', n: 9, r: 7.8, w: 3.6 }, over: { name: 'うちゅうの ぬし', image: 'assets/bosses/cosmos.webp', level: 54, hp: 728, atk: 106, def: 65, spd: 31, exp: 1000, money: 1100 }, model: 'boss_whale', h: 6.0, lines: ['…………(ふかく ひびく うたごえ)', 'ここは ほしぼしが ながれる うみ。', 'わたしの うたを きいて、まだ たっていられるかな?'], coins: 4000, win: 'うちゅうの ぬしが みとめてくれた! なかまボール×5 と 4000コインを もらった!', after: 'うちゅうの うみに うたごえが ひびくよ' },
+    boss: { key: 'cosmos', x: 0, z: -58, id: 'legend_hoshikujira', name: 'ギンガ', deco: { model: 'deco_water_orb', n: 9, r: 7.8, w: 3.6 }, over: { name: 'ギンガ', image: 'assets/bosses/cosmos.webp', level: 54, hp: 728, atk: 106, def: 65, spd: 31, exp: 1000, money: 1100 }, model: 'boss_whale', h: 6.0, lines: ['…………(ふかく ひびく うたごえ)', 'ここは ほしぼしが ながれる うみ。', 'わたしの うたを きいて、まだ たっていられるかな?'], coins: 4000, win: 'ぬし ギンガが みとめてくれた! なかまボール×5 と 4000コインを もらった!', after: 'うちゅうの うみに うたごえが ひびくよ' },
   },
   grove: {
     name: 'しんじゅの いせき', groundGain: 0.85, relief: 1.3, hills: 2, patch: [['#2e6a3a', 0.6, false, 46, 4, 10], ['#d8f8a8', 0.35, true, 30, 3, 7]], props: [['deco_pillar_vine', 16, 30, [0.5, 1.0], 6, 55]],
@@ -91,7 +92,7 @@ const FIELDS = {
     zones: [[10, -6, 8], [22, -32, 9], [-8, -42, 8], [30, 10, 7], [-34, 0, 7], [2, 26, 7]],
     trees: [['deco_pillar_vine', 22, 32, [1.8, 3.2], 12, 74], ['deco_ruin_arch', 8, 12, [3.6, 5.0], 16, 74, null, { fit: true }], ['deco_pillar_broken', 14, 22, [2.0, 3.0], 14, 74, null, { fit: true }], ['deco_pearl_shell', 14, 22, [1.2, 2.0], 12, 70, null, { fit: true }]],
     wild: [['dokukinoko_3', 3], ['saboten_3', 3], ['shokujinsou_2', 3], ['legend_kyoshin', 1], ['mame_chin_grass', 2], ['ringo_ko', 1], ['ringo_ko_2', 3], ['chin_kusa', 1], ['chin_kusa_2', 2], ['wakagi_shika', 2], ['mori_shika', 2], ['shinju_taiboku', 1], ['toki_no_yousei', 1], ['shinju_hakurou', 1], ['kodai_tengu', 1], ['watage_2', 1], ['kaze_chou', 1], ['raimushi_2', 1], ['dango_mushi_2', 1], ['donguri_robo_2', 1], ['mame_chin', 1], ['nebosuke_kyo', 1]], scale: { lv: 4, hp: 1.4, atk: 1.4, def: 1.4, spd: 1.2, exp: 2, money: 2 },
-    boss: { key: 'grove', x: 0, z: -58, id: 'kami_ryokuya', name: 'しんじゅの ぬし', deco: { model: 'deco_pillar_vine', n: 9, r: 7.8, w: 3.6 }, over: { name: 'しんじゅの ぬし', image: 'assets/bosses/grove.webp', level: 60, hp: 874, atk: 121, def: 73, spd: 34, exp: 1300, money: 1500 }, model: 'boss_goddess', h: 6.4, lines: ['……ようこそ、ちいさき ものよ。', 'この いせきは もりの いのちを みまもる ばしょ。', 'きずなの つよさを、みせてもらいましょう。'], coins: 5000, win: 'しんじゅの ぬしが みとめてくれた! なかまボール×5 と 5000コインを もらった!', after: 'いせきに みどりの ひかりが もどったよ' },
+    boss: { key: 'grove', x: 0, z: -58, id: 'kami_ryokuya', name: 'ユグ', deco: { model: 'deco_pillar_vine', n: 9, r: 7.8, w: 3.6 }, over: { name: 'ユグ', image: 'assets/bosses/grove.webp', level: 60, hp: 874, atk: 121, def: 73, spd: 34, exp: 1300, money: 1500 }, model: 'boss_goddess', h: 6.4, lines: ['……ようこそ、ちいさき ものよ。', 'この いせきは もりの いのちを みまもる ばしょ。', 'きずなの つよさを、みせてもらいましょう。'], coins: 5000, win: 'ぬし ユグが みとめてくれた! なかまボール×5 と 5000コインを もらった!', after: 'いせきに みどりの ひかりが もどったよ' },
   },
   castle: {
     name: 'やみの しろ', groundGain: 2.4, relief: 1.5, hills: 3, patch: [['#120a1e', 0.8, false, 50, 4, 10], ['#a070ff', 0.4, true, 30, 2, 6]], props: [['deco_dark_sword', 16, 30, [0.5, 1.0], 6, 55]],
@@ -101,7 +102,7 @@ const FIELDS = {
     zones: [[10, -6, 8], [22, -32, 9], [-8, -42, 8], [30, 10, 7], [-34, 0, 7], [2, 26, 7]],
     trees: [['deco_dark_sword', 20, 30, [1.8, 3.0], 12, 72], ['deco_spire', 12, 18, [5, 8], 22, 78, null, { fit: true }], ['deco_banner', 16, 26, [3.5, 4.8], 14, 76, null, { fit: true }]],
     wild: [['ankoku_madoushi_2', 3], ['hone_kenshi_3', 3], ['komori_3', 2], ['koyurei_3', 2], ['shinju_cerberus', 1], ['kodai_gashadokuro', 1], ['legend_meifukishi', 1], ['majutsusho', 1], ['majutsusho_2', 1], ['majo_chin', 1], ['kagami_ko', 1], ['mame_chin', 1], ['houki_ko_2', 1], ['suzu_sei', 1], ['omocha_mahou', 1], ['gankou_goro', 1], ['daichi_taishou', 1], ['kage_bouzu', 1], ['nebosuke_kyo', 1], ['goro_kyojuu', 1]], scale: { lv: 4, hp: 1.4, atk: 1.4, def: 1.4, spd: 1.2, exp: 2, money: 2 },
-    boss: { key: 'castle', x: 0, z: -58, id: 'kami_datenken', name: 'やみの ぬし', deco: { model: 'deco_dark_sword', n: 9, r: 7.8, w: 3.6 }, over: { name: 'やみの ぬし', image: 'assets/bosses/castle.webp', level: 66, hp: 1030, atk: 136, def: 82, spd: 37, exp: 1600, money: 1900 }, model: 'boss_darkknight', h: 6.4, lines: ['……ここまで たどりついたか。', 'わが けんは やみに ちかった ほこり。', 'おまえの いしを、この けんで たしかめよう!'], coins: 6500, win: 'やみの ぬしが みとめてくれた! なかまボール×5 と 6500コインを もらった!', after: 'しろに しずかな ねむりが もどったよ' },
+    boss: { key: 'castle', x: 0, z: -58, id: 'kami_datenken', name: 'クロガネ', deco: { model: 'deco_dark_sword', n: 9, r: 7.8, w: 3.6 }, over: { name: 'クロガネ', image: 'assets/bosses/castle.webp', level: 66, hp: 1030, atk: 136, def: 82, spd: 37, exp: 1600, money: 1900 }, model: 'boss_darkknight', h: 6.4, lines: ['……ここまで たどりついたか。', 'わが けんは やみに ちかった ほこり。', 'おまえの いしを、この けんで たしかめよう!'], coins: 6500, win: 'してんのう クロガネが みとめてくれた! なかまボール×5 と 6500コインを もらった!', after: 'しろに しずかな ねむりが もどったよ' },
   },
   temple: {
     name: 'ほしの しんでん', groundGain: 1.8, relief: 1.3, hills: 2.5, patch: [['#2a3068', 0.7, false, 46, 4, 10], ['#ffe9a0', 0.4, true, 36, 2, 6]], props: [['deco_armillary', 8, 16, [0.5, 0.9], 8, 55], ['deco_starshard', 16, 30, [0.5, 1.0], 6, 55]],
@@ -111,7 +112,7 @@ const FIELDS = {
     zones: [[10, -6, 8], [22, -32, 9], [-8, -42, 8], [30, 10, 7], [-34, 0, 7], [2, 26, 7]],
     trees: [['deco_armillary', 18, 26, [1.6, 2.8], 12, 72], ['deco_starshard', 20, 30, [1.8, 3.0], 20, 76]],
     wild: [['shinju_unicorn', 2], ['shinju_pegasus', 2], ['legend_hoshiryu', 1], ['legend_shinpan', 1], ['mame_chin_heaven', 2], ['mame_chin_magic', 2], ['majin_madoushi', 1], ['majo_chin', 1], ['majutsusho', 1], ['majutsusho_2', 1], ['lamp_no_sei', 2], ['kumo_hitsuji_2', 1], ['tenshi_chin', 1], ['kitsune_ko_3', 1], ['kagami_ko', 1], ['mame_chin', 1], ['houki_ko', 1], ['houki_ko_2', 1], ['suzu_sei', 1], ['omocha_mahou', 1], ['kantera_bito', 1], ['kage_bouzu', 1], ['yoru_kage', 1], ['goro_kyojuu', 1], ['daichi_madoromi', 1], ['hikari_kishi', 1], ['sei_kishi', 1], ['tenkuu_shugoshin', 1], ['maboroshi_yomi', 1]], scale: { lv: 4, hp: 1.4, atk: 1.4, def: 1.4, spd: 1.2, exp: 2, money: 2 },
-    boss: { key: 'temple', x: 0, z: -58, id: 'kami_seikuu', name: 'ほしの ぬし', deco: { model: 'deco_armillary', n: 9, r: 7.8, w: 3.6 }, over: { name: 'ほしの ぬし', image: 'assets/bosses/temple.webp', level: 72, hp: 1187, atk: 151, def: 91, spd: 41, exp: 2000, money: 2400 }, model: 'boss_stargod', h: 6.6, lines: ['……ほしの めぐりが、あなたを ここへ みちびきました。', 'わたしは そらの うんめいを よむ もの。', 'あなたの みらいを、ここで みせてください。'], coins: 8000, win: 'ほしの ぬしが みとめてくれた! なかまボール×5 と 8000コインを もらった!', after: 'しんでんに ほしの ひかりが もどったよ' },
+    boss: { key: 'temple', x: 0, z: -58, id: 'kami_seikuu', name: 'アストラ', deco: { model: 'deco_armillary', n: 9, r: 7.8, w: 3.6 }, over: { name: 'アストラ', image: 'assets/bosses/temple.webp', level: 72, hp: 1187, atk: 151, def: 91, spd: 41, exp: 2000, money: 2400 }, model: 'boss_stargod', h: 6.6, lines: ['……ほしの めぐりが、あなたを ここへ みちびきました。', 'わたしは そらの うんめいを よむ もの。', 'あなたの みらいを、ここで みせてください。'], coins: 8000, win: 'してんのう アストラが みとめてくれた! なかまボール×5 と 8000コインを もらった!', after: 'しんでんに ほしの ひかりが もどったよ' },
   },
   dragon: {
     name: 'せいりゅうの そら', relief: 2.0, hills: 4, patch: [['#3a7a6a', 0.55, false, 46, 4, 11], ['#e0fff8', 0.4, true, 30, 3, 8]], props: [['deco_water_orb', 16, 30, [0.4, 0.8], 6, 55]],
@@ -121,7 +122,7 @@ const FIELDS = {
     zones: [[10, -6, 8], [22, -32, 9], [-8, -42, 8], [30, 10, 7], [-34, 0, 7], [2, 26, 7]],
     trees: [['deco_water_orb', 14, 20, [1.4, 2.2], 14, 74], ['deco_torii', 6, 10, [4.5, 6.5], 20, 76, null, { fit: true }], ['deco_toro', 20, 32, [1.8, 2.8], 14, 74, null, { fit: true }], ['cloud_fluffy', 14, 22, [10, 20], 16, 78, '#ffffff', { fit: true, basic: true, nofog: true, fly: [4, 16] }], ['cloud_long', 5, 8, [18, 32], 30, 82, '#ffffff', { fit: true, basic: true, nofog: true, fly: [7, 20] }]],
     wild: [['dragon', 2], ['shinju_griffon', 2], ['kodai_tengu', 2], ['shinju_murasakiryu', 1], ['legend_houou', 1], ['mame_chin_wind', 2], ['mame_chin_thunder', 2], ['raimushi_3', 1], ['biriunagi_3', 1], ['kaze_chou', 1], ['denki_neko_2', 1], ['mame_chin', 1], ['denchi_risu_2', 1], ['furin_ko_2', 1], ['sora_ryu', 1], ['seikuu_ryuou', 1], ['mitsugo_hydra', 1], ['raimei_hydra', 1], ['shinkai_ryujin', 1]], scale: { lv: 4, hp: 1.4, atk: 1.4, def: 1.4, spd: 1.2, exp: 2, money: 2 },
-    boss: { key: 'dragon', x: 0, z: -58, id: 'dragon', name: 'せいりゅうの ぬし', over: { name: 'せいりゅうの ぬし', image: 'assets/bosses/dragon.webp', level: 78, hp: 1366, atk: 168, def: 102, spd: 45, exp: 2500, money: 3000 }, model: 'boss_dragon', h: 7.0, lines: ['……わらべよ、ここは そらの いただき。', 'わが こえは かみなり、わが いぶきは あらし。', 'そのゆうきが ほんものか、みせてみよ!'], coins: 10000, win: 'せいりゅうの ぬしが みとめてくれた! なかまボール×5 と 10000コインを もらった!', after: 'そらに せいりゅうの すがたが ゆうゆうと もどったよ' },
+    boss: { key: 'dragon', x: 0, z: -58, id: 'dragon', name: 'ソウリュウ', over: { name: 'ソウリュウ', image: 'assets/bosses/dragon.webp', level: 78, hp: 1366, atk: 168, def: 102, spd: 45, exp: 2500, money: 3000 }, model: 'boss_dragon', h: 7.0, lines: ['……わらべよ、ここは そらの いただき。', 'わが こえは かみなり、わが いぶきは あらし。', 'そのゆうきが ほんものか、みせてみよ!'], coins: 10000, win: 'してんのう ソウリュウが みとめてくれた! なかまボール×5 と 10000コインを もらった!', after: 'そらに せいりゅうの すがたが ゆうゆうと もどったよ' },
   },
   end: {
     name: 'うちゅうの はて', groundGain: 1.35, relief: 1.6, hills: 3, patch: [['#160c3a', 0.8, false, 56, 4, 11], ['#ff9aff', 0.42, true, 40, 2, 7], ['#8ad0ff', 0.35, true, 30, 2, 6]], props: [['deco_starshard', 24, 44, [0.5, 1.1], 6, 55], ['deco_water_orb', 12, 24, [0.4, 0.8], 8, 55, '#e0b0ff']],
@@ -132,7 +133,7 @@ const FIELDS = {
     zones: [[10, -6, 8], [22, -32, 9], [-8, -42, 8], [30, 10, 7], [-34, 0, 7], [2, 26, 7]],
     trees: [['deco_starshard', 38, 56, [1.8, 3.4], 12, 74], ['deco_armillary', 14, 20, [1.8, 3.2], 20, 76], ['deco_water_orb', 14, 20, [1.4, 2.4], 14, 70, '#e0b0ff'], ['deco_star5', 30, 50, [1.5, 3.0], 14, 78, '#ffffff', { fit: true, basic: true, nofog: true, fly: [1, 9] }], ['deco_planet_ring', 6, 10, [8, 15], 34, 80, '#e0b0ff', { fit: true, basic: true, nofog: true, fly: [6, 22] }]],
     wild: [['mame_chin_magic', 2], ['mame_chin_dark', 2], ['mame_chin_heaven', 2], ['mame_chin_kami', 1], ['legend_rasetsuou', 1], ['legend_shinpan', 1]], scale: { lv: 4, hp: 1.4, atk: 1.4, def: 1.4, spd: 1.2, exp: 2, money: 2 },
-    boss: { key: 'end', x: 0, z: -58, id: 'mame_chin_kami', name: 'うちゅうの かみ', deco: { model: 'deco_starshard', n: 9, r: 7.8, w: 3.6 }, patch: 'patch_cosmic', patchW: 18, over: { name: 'うちゅうの かみ', image: 'assets/bosses/end.webp', level: 90, hp: 1800, atk: 200, def: 120, spd: 55, exp: 5000, money: 6000 }, model: 'final_ultimate', h: 7.4, lines: ['……ついに ここまで きたのですね、ちいさな ぼうけんしゃ。', 'わたしは すべての ほしを うんだ もの。', 'あなたと なかまの きずなを、さいごに ためします!'], coins: 20000, win: 'うちゅうの かみが みとめてくれた! なかまボール×5 と 20000コインを もらった!', after: 'うちゅうに あたらしい ほしが うまれたよ' },
+    boss: { key: 'end', x: 0, z: -58, id: 'mame_chin_kami', name: 'カムイ', deco: { model: 'deco_starshard', n: 9, r: 7.8, w: 3.6 }, patch: 'patch_cosmic', patchW: 18, over: { name: 'カムイ', image: 'assets/bosses/end.webp', level: 90, hp: 1800, atk: 200, def: 120, spd: 55, exp: 5000, money: 6000 }, model: 'final_ultimate', h: 7.4, lines: ['……ついに ここまで きたのですね、ちいさな ぼうけんしゃ。', 'わたしは すべての ほしを うんだ もの。', 'あなたと なかまの きずなを、さいごに ためします!'], coins: 20000, win: 'してんのう カムイが みとめてくれた! なかまボール×5 と 20000コインを もらった!', after: 'うちゅうに あたらしい ほしが うまれたよ' },
   },
   lake: {
     name: 'みずうみの ほとり', groundRep: 34, patch: [['#3e7a4a', 0.45, false, 36, 4, 9]], props: [['deco_ice_crystal', 14, 26, [0.45, 0.9], 8, 55]],
@@ -141,7 +142,7 @@ const FIELDS = {
     zones: [[12, -8, 8], [22, -32, 9], [-6, -42, 8], [28, 10, 7], [-32, 14, 8], [4, 24, 7]],
     trees: [['deco_reed', 70, 110, [1.2, 2.2], 14, 74, null, { fit: true }], ['deco_rock_smooth', 24, 40, [0.5, 1.2], 14, 76, null, { fit: true }], ['deco_ice_crystal', 14, 22, [1.4, 2.6], 18, 76, null, { fit: true }]],
     wild: [['slime_2', 3], ['aodori_2', 3], ['kujira_ko', 3], ['slime', 2], ['aodori', 2], ['fukurou_ko', 2], ['mitsubachi', 1], ['slime_3', 1], ['biriunagi', 2], ['biriunagi_2', 1], ['hikari_kame', 1], ['furebu_mizu', 1], ['furebu_mizu_2', 1], ['kurage_ko', 2], ['kurage_ko_2', 1], ['mitsugo_hebi', 1], ['mitsugo_hydra', 1], ['umihebi_ko', 2], ['namino_kairyu', 1], ['kora_rakko', 2], ['yume_no_ko', 1]], scale: { lv: 6, hp: 1.5, atk: 1.4, def: 1.4, spd: 1.2, exp: 1.5, money: 1.5 },
-    boss: { key: 'lake', x: 16, z: -58, deco: { model: 'deco_ice_crystal', n: 9, r: 7.5, w: 3.4 }, id: 'yeti', name: 'みずうみの ぬし', over: { name: 'みずうみの ぬし', image: 'assets/bosses/lake.webp', level: 19, hp: 200, atk: 34, def: 20, spd: 14, exp: 240, money: 280 }, model: 'boss_lake', h: 5.8, lines: ['……さむい かぜが ふいてきたな。', 'このみずうみは わたしの すみか。ふみあらす ものは かえさん。', 'こおりのように つめたい わたしを、おまえの なかまは とかせるか?'], coins: 500, win: 'みずうみの ぬしが みとめてくれた! なかまボール×5 と 500コインを もらった!', after: 'みずうみに へいわが もどったよ' },
+    boss: { key: 'lake', x: 16, z: -58, deco: { model: 'deco_ice_crystal', n: 9, r: 7.5, w: 3.4 }, id: 'yeti', name: 'ブリザ', over: { name: 'ブリザ', image: 'assets/bosses/lake.webp', level: 19, hp: 200, atk: 34, def: 20, spd: 14, exp: 240, money: 280 }, model: 'boss_lake', h: 5.8, lines: ['……さむい かぜが ふいてきたな。', 'このみずうみは わたしの すみか。ふみあらす ものは かえさん。', 'こおりのように つめたい わたしを、おまえの なかまは とかせるか?'], coins: 500, win: 'ぬし ブリザが みとめてくれた! なかまボール×5 と 500コインを もらった!', after: 'みずうみに へいわが もどったよ' },
   },
 };
 FIELDS.sun.flyers = { flare: 28, spurt: 3 };   // たいよう: フレアの 火の玉が とびかう + 溶岩のふんしゅつ
@@ -149,11 +150,12 @@ FIELDS.temple.flyers = { meteor: 7, flare: 18, colors: ['#d8e8ff', '#7aa8ff', '#
 FIELDS.ghost.flyers = { flare: 24, colors: ['#c8f4ff', '#58b8e8', '#04101c'], speed: 0.4, A: [2, 6], B: [0.8, 2.5], h0: [0.6, 2.2], size: [0.35, 0.8] };   // ゆうれいの はかば: ふわふわ ひとだま
 FIELDS.volcano.flyers = { flare: 0, spurt: 6 };   // ようがんやま: 溶岩の池から 溶岩の かたまりが ふきあがる
 const FID = ['lake', 'volcano', 'ghost', 'sky', 'sun', 'cosmos', 'grove', 'castle', 'temple', 'dragon', 'end'].includes(params.get('f')) ? params.get('f') : 'forest', F = FIELDS[FID], LC = F.lake || null, WATER_Y = -0.9;
+for (const [id, fs] of Object.entries(NEW_APPEAR)) if (fs[FID] && !(F.wild || []).some(([w]) => w === id)) (F.wild || (F.wild = [])).push([id, fs[FID]]);   // あたらしい モンスターを この フィールドの やせいに くわえる
 // ---- してんのうの フィールド: せまくて くらい・くさむらなし。バッジ8つで ひらく ----
 const GYM8 = ['forest', 'lake', 'volcano', 'ghost', 'sky', 'sun', 'cosmos', 'grove'], gymClear = () => GYM8.every(k => state.boss[k]);
 const ELITE = ['castle', 'temple', 'dragon', 'end'].includes(FID), SPZ = ELITE ? 20 : 46;
 if (ELITE) {
-  F.zones = []; F.lava = []; F.pool = null; F.fogN = 8; F.fogF = 62; F.boss.x = 0; F.boss.z = -16;
+  F.zones = []; F.lava = []; F.pool = null; F.fogN = 16; F.fogF = 100; if (F.light && F.light.hemi) F.light = { ...F.light, hemi: [F.light.hemi[0], F.light.hemi[1], F.light.hemi[2] * 1.35] };   // くらくて なにも みえない という こえで、きりを とおくし あかるく F.boss.x = 0; F.boss.z = -16;
   F.trees = F.trees.map(([nm, nT, nP, sc, , , tn, op]) => [nm, nT * 2, nP * 2, sc, 31, 48, tn, op]);
   F.props = (F.props || []).map(([nm, nT, nP, sc, r0, r1, tn, op]) => [nm, Math.ceil(nT / 2), Math.ceil(nP / 2), sc, r0, Math.min(r1, 25), tn, op]);
 }
@@ -356,6 +358,7 @@ function updatePet(dt, T) {
 }
 // ---- もりの ぬし(ボス): 見えている。たおすと 二度目は でない ----
 const BOSS = F.boss;
+const ROLE = ELITE ? 'してんのう' : 'ぬし', ELITE_NO = ['castle', 'temple', 'dragon', 'end'].indexOf(FID) + 1;   // ELITE_NO: してんのうの 何人目か
 let bossSprite = null;
 const bossBeaten = () => !!state.boss[BOSS.key];
 const rematchReady = () => bossBeaten() && (state.bossRe || {})[BOSS.key] !== (state.day || 1);   // たおした ぬしは 1日1回 さいせんできる
@@ -406,7 +409,7 @@ async function tryBossModel() {   // assets/boss_xxx_lite.glb が あれば 3D�
   } catch (e) { console.warn('boss model failed', e); }
 }
 // はなしかける: セリフを 1つずつ → 「たたかう / まだ やめておく」
-function dlgShow(lines, choices, who = BOSS.name) {
+function dlgShow(lines, choices, who = `${ROLE} ${BOSS.name}`) {
   return new Promise(res => {
     let box = $('#dlg'); if (!box) { box = document.createElement('div'); box.id = 'dlg'; document.body.appendChild(box); } box.hidden = false;
     let i = 0;
@@ -419,14 +422,14 @@ function dlgShow(lines, choices, who = BOSS.name) {
 }
 async function talkBoss() {
   if (busy) return; busy = true; sfx('pet');
-  const k = await dlgShow(bossBeaten() ? ['……また きたのか。', 'いちど みとめた あいてだ。もう いちど ちからを みせてもらおう!', '(さいせん: 1日1回。かつと ごほうびが もらえるよ。ぬしは つよくなっているよ)'] : (BOSS.lines || ['……']), ['たたかう', 'まだ やめておく']);
+  const k = await dlgShow(bossBeaten() ? ['……また きたのか。', 'いちど みとめた あいてだ。もう いちど ちからを みせてもらおう!', '(さいせん: 1日1回。かつと ごほうびが もらえるよ。ぬし/してんのうはは つよくなっているよ)'] : (ELITE ? [`わたしは してんのう ${ELITE_NO}人目(ぜんいん 4人)、${BOSS.name}。`, ...(BOSS.lines || [])] : (BOSS.lines || ['……'])), ['たたかう', 'まだ やめておく']);
   busy = false; if (k === 0) challengeBoss();
 }
 // ---- レベルの そろえ: やせい・トレーナー・してんのうの てしたの レベルを、ぬしの レベルの すこし した(ぬし-12〜ぬし-4)に おさめる ----
 // ステータスは なかまの せいちょう式 × 0.87(これまでの つよさと おなじ くらい)で、レベルに あわせて きめる。ぬしは そのまま。
-let lvMap = null;
+let lvMap = null, bossOv = null;   // bossOv: つよさを ひきあげた ぬしの のうりょく(てした・やせいの うわげんに つかう)
 async function foeLevels() {
-  if (lvMap) return lvMap; const GD = await questData(); lvMap = {};
+  if (lvMap) return lvMap; const GD = await questData(); lvMap = {}; bossOv = await bossScaled(F.boss.over);
   const bl = (F.boss && F.boss.over && F.boss.over.level) || 99, hi = bl - 4, lo = Math.max(2, Math.max(bl - 12, Math.round(bl * 0.6)));
   const ids = [...new Set((F.wild || []).map(([id]) => id))].filter(id => GD.MONSTERS[id]).sort((a, b) => GD.MONSTERS[a].level - GD.MONSTERS[b].level);
   ids.forEach((id, i) => { lvMap[id] = Math.round(lo + (hi - lo) * (ids.length > 1 ? i / (ids.length - 1) : 0.5)); });
@@ -436,16 +439,17 @@ const STAT_K = 0.87;
 function foeOver(GD, id, lm, bonus = 0, m = {}) {   // bonus: レベルの たしざん / m: hp・atk・def・exp・money の ばいりつ
   const b = GD.MONSTERS[id], k = F.scale || { lv: 0, hp: 1, atk: 1, def: 1, spd: 1, exp: 1, money: 1 }, bl = (F.boss && F.boss.over && F.boss.over.level) || 99;
   if (!F.scale || lm[id] == null) { const lv = b.level + k.lv + bonus; return { level: lv, hp: Math.round(b.hp * k.hp * (m.hp || 1)), atk: Math.round(b.atk * k.atk * (m.atk || 1)), def: Math.round(b.def * k.def * (m.def || 1)), spd: Math.round(b.spd * k.spd), exp: Math.round(b.exp * k.exp * (m.exp || 1)), money: Math.round(b.money * k.money * (m.money || 1)) }; }
-  const lv = Math.min(lm[id] + bonus, bl - 2), st = GD.getCompanionStats(b, lv), bo = F.boss.over;   // ぬしの ステータスを こえない(HPは はんぶんちょっと、こうげきは ぬしまで、ぼうぎょは 1.3ばいまで)
+  const lv = Math.min(lm[id] + bonus, bl - 2), st = GD.getCompanionStats(b, lv), bo = bossOv || F.boss.over;   // ぬしの ステータスを こえない(HPは はんぶんちょっと、こうげきは ぬしまで、ぼうぎょは 1.3ばいまで)
   return { level: lv, hp: Math.round(Math.min(st.maxHp * STAT_K, bo.hp * 0.6) * (m.hp || 1)), atk: Math.round(Math.min(st.atk * STAT_K, bo.atk) * (m.atk || 1)), def: Math.round(Math.min(st.def * STAT_K, bo.def * 1.3) * (m.def || 1)), spd: Math.round(st.spd * 0.95), exp: Math.round(b.exp * k.exp * (m.exp || 1)), money: Math.round(b.money * k.money * (m.money || 1)) };
 }
 // ぬしの つよさを、おなじレベルの なかまに おいつかせる(レベルが たかい ぬしほど なかまの せいちょうに まけて いたため)。ひくい ぶんだけ ひきあげる
 async function bossScaled(o) {
   const GD = await questData(), lv = o.level;
-  let pool = Object.values(GD.MONSTERS).filter(x => x.level <= lv && x.level >= lv - 18);
-  if (pool.length < 5) pool = Object.values(GD.MONSTERS).filter(x => x.level <= lv).sort((a, b) => b.level - a.level).slice(0, 15);
-  const med = (f) => pool.map(x => f(GD.getCompanionStats(x, Math.max(x.level, lv - 4)))).sort((a, b) => a - b)[Math.floor(pool.length / 2)];
-  return { ...o, hp: Math.max(o.hp, Math.round(med(s => s.maxHp) * 1.3)), atk: Math.max(o.atk, Math.round(med(s => s.atk) * 0.75)), def: Math.max(o.def, Math.round(med(s => s.def) * 0.75)) };
+  // おなじレベルに そだてた なかまの つよさ(ぜんモンスターの 上位)に あわせる。ひくい ぶんだけ ひきあげる(しんこうが すすむほど HPを おおく)
+  const st = Object.values(GD.MONSTERS).filter(x => x.level <= lv).map(x => GD.getCompanionStats(x, lv));
+  const pc = (f, p) => { const a = st.map(f).sort((x, y) => x - y); return a[Math.floor((a.length - 1) * p)]; };
+  const hpK = 1.3 + Math.min(0.9, lv / 80 * 0.9);
+  return { ...o, hp: Math.max(o.hp, Math.round(pc(s => s.maxHp, 0.9) * hpK)), atk: Math.max(o.atk, Math.round(pc(s => s.atk, 0.75) * 0.9)), def: Math.max(o.def, Math.round(pc(s => s.def, 0.75) * 0.9)) };
 }
 // ---- ジムリーダーふう: ぬしの まえに してんのう(てした)が なんたいか れんせんで たたかう ----
 async function gymTeam() {
@@ -473,16 +477,16 @@ async function challengeBoss() {
   if (cap) { ui.toast('してんのうの たたかい', 'かいふくの たべものは 3かいまで!', 'てしたも ぬしも れんせん。とちゅうで かいふくは できないよ', 3600); await new Promise(r => setTimeout(r, 1200)); }
   const over = re ? { ...o, level: o.level + 3, hp: Math.round(o.hp * 1.2), atk: Math.round(o.atk * 1.1), def: Math.round(o.def * 1.1), exp: Math.round(o.exp * 0.8), money: Math.round(o.money * 0.5) } : o;
   const team = re ? null : (await gymTeam()).map(u => ({ id: u.id, over: u.over })).concat([{ id: BOSS.id, over, isBoss: true }]);   // はじめては てしたを たおしてから ぬし(1つの たたかいで つづける)
-  const res = await runBattle(re ? BOSS.id : team[0].id, { boss: over, ...(team ? { team, trainer: `${BOSS.name}の てした`, trainerBall: FI < 3 ? 'nakama_ball' : FI < 7 ? 'super_ball' : 'hyper_ball' } : {}), bg: F.bg, wx: WX, hour: hourNow(), cap, onBossWin: async (msg, sleep) => {
+  const res = await runBattle(re ? BOSS.id : team[0].id, { boss: over, role: ROLE, ...(team ? { team, role: ROLE, trainer: `${ROLE} ${BOSS.name}の てした`, trainerBall: FI < 3 ? 'nakama_ball' : FI < 7 ? 'super_ball' : 'hyper_ball' } : {}), bg: F.bg, wx: WX, hour: hourNow(), cap, onBossWin: async (msg, sleep) => {
     if (re) { state.bossRe = state.bossRe || {}; state.bossRe[BOSS.key] = state.day || 1; const bn = FI < 3 ? 'nakama_ball' : FI < 7 ? 'super_ball' : 'hyper_ball'; addItem(bn, 2); const bonus = Math.round(BOSS.coins * 0.25); state.coins += bonus; msg(`${BOSS.name} に また かった! ${bonus}コインと ${ITEMS[bn].name}×2 を もらった!`); sfx('quest'); await sleep(2200); }
-    else { state.boss[BOSS.key] = 1; addItem('nakama_ball', 5); if (FID === 'forest' && !state.gotMame) { state.gotMame = 1; const gm = giveMon('mame_chin', 5); if (gm) msg(gm === 'party' ? 'もりの ぬしから まめちんちらを あずかった! なかまに なったよ!' : 'もりの ぬしから まめちんちらを あずかった! ぼくじょうで まっているよ!'); } if (FID === 'end') addItem('evo_kami', 1); state.coins += BOSS.coins; msg(BOSS.win + (FID === 'end' ? ' かみの しんかいしを てにいれた!' : '')); sfx('quest'); await sleep(2200); } } });
+    else { state.boss[BOSS.key] = 1; addItem('nakama_ball', 5); if (FID === 'forest' && !state.gotMame) { state.gotMame = 1; const gm = giveMon('mame_chin', 5); if (gm) msg(gm === 'party' ? 'ガブリソウから まめちんちらを あずかった! なかまに なったよ!' : 'ガブリソウから まめちんちらを あずかった! ぼくじょうで まっているよ!'); } if (FID === 'end') addItem('evo_kami', 1); state.coins += BOSS.coins; msg(BOSS.win + (FID === 'end' ? ' かみの しんかいしを てにいれた!' : '')); sfx('quest'); await sleep(2200); } } });
   save(); fade(false); grace = 6; encDist = 0; ui.setCoins();
   if (res === 'lose') { goVillage(true); return; }
   if (re && state.bossRe[BOSS.key] === (state.day || 1) && bossSprite) { scene.remove(bossSprite); scene.remove(bossSprite.userData.ring); bossSprite = null; if (bossModel) { scene.remove(bossModel); bossModel = null; } ui.toast(BOSS.name, 'さいせんに しょうり!', 'あした また たたかえるよ', 4200); }
   else if (!re && state.boss[BOSS.key] && bossSprite) { makeShrines(); if (!gate2) buildGate2(); scene.remove(bossSprite); scene.remove(bossSprite.userData.ring); bossSprite = null; if (bossModel) { scene.remove(bossModel); bossModel = null; } if (bossPatch) { scene.remove(bossPatch); bossPatch = null; } if (bossDeco) { scene.remove(bossDeco); bossDeco = null; } { const bd = BADGES.find(b => b.id === BOSS.key); if (bd) setTimeout(() => { sfx('quest'); ui.toast('BADGE GET!', bd.name, bd.bonus, 6000); }, 2600); }
     if (GYM8.includes(BOSS.key) && gymClear()) setTimeout(() => { sfx('quest'); ui.toast('バッジが 8つ そろった!', 'でんせつの ほこらが あらわれた', 'ほこらの でんせつモンスターを なかまにして、やみの しろ(してんのう)に ちょうせんしよう!', 8000); }, 9500);
     if (FID === 'end') { await hallOfFame(); return; }
-    ui.toast(BOSS.name, 'ぬしを たおした!', BOSS.after + ({ forest: '(むらの ゲートから みずうみへ いけるよ)', lake: '(むらの ゲートから ようがんやまへ いけるよ)' }[BOSS.key] || ''), 5200); }
+    ui.toast(`${ROLE} ${BOSS.name}`, ROLE + 'を たおした!', BOSS.after + ({ forest: '(むらの ゲートから みずうみへ いけるよ)', lake: '(むらの ゲートから ようがんやまへ いけるよ)' }[BOSS.key] || ''), 5200); }
   busy = false;
 }
 
@@ -586,7 +590,7 @@ const gate = new THREE.Group(); const GZ = ELITE ? 25 : 56;
 }
 
 // ---- つぎの フィールドへの ゲート(ぬしを たおすと ひらく) ----
-const ORDER = ['forest', 'lake', 'volcano', 'ghost', 'sky', 'sun', 'cosmos', 'grove', 'castle', 'temple', 'dragon', 'end'], NEXT = ORDER[ORDER.indexOf(FID) + 1], NX = F.boss.x * 63 / Math.hypot(F.boss.x, F.boss.z), NZ = F.boss.z * 63 / Math.hypot(F.boss.x, F.boss.z);   // ぬしの うしろ(あるける はんいの いちばん おく)に ひらく
+const ORDER = ['forest', 'lake', 'volcano', 'ghost', 'sky', 'sun', 'cosmos', 'grove', 'castle', 'temple', 'dragon', 'end'], NEXT = ORDER[ORDER.indexOf(FID) + 1], GR = ELITE ? 25 : 63, NX = F.boss.x * GR / Math.hypot(F.boss.x, F.boss.z), NZ = F.boss.z * GR / Math.hypot(F.boss.x, F.boss.z);   // ぬしの うしろ(あるける はんいの いちばん おく)に ひらく
 let gate2 = null;
 function buildGate2() {
   if (!(NEXT && FIELDS[NEXT] && state.boss[BOSS.key])) return;
@@ -662,7 +666,7 @@ function goVillage(lost) {
 let target = null;
 function updateTarget() {
   const d = Math.hypot(P.pos.x, P.pos.z - GZ);
-  target = d < 5 && !busy ? (ELITE && FID !== 'castle' && !bossBeaten() ? { label: 'ひきかえせない', sub: 'してんのうとの たたかいの とちゅうだ。ぬしを たおすまで もどれないよ', short: 'ひきかえせない', can: false, act: () => {} } : { label: 'むらへ かえる', sub: 'ぼくじょうの むらに もどるよ', short: 'かえる', can: true, act: () => goVillage(false) }) : null;
+  target = d < 5 && !busy ? (ELITE && FID !== 'castle' && !bossBeaten() ? { label: 'ひきかえせない', sub: 'してんのうとの たたかいの とちゅうだ。この してんのうを たおすまで もどれないよ', short: 'ひきかえせない', can: false, act: () => {} } : { label: 'むらへ かえる', sub: 'ぼくじょうの むらに もどるよ', short: 'かえる', can: true, act: () => goVillage(false) }) : null;
   if (!target && gate2 && !busy && Math.hypot(P.pos.x - NX, P.pos.z - NZ) < 5) target = { label: FIELDS[NEXT].name + 'へ すすむ', sub: 'ぬしを たおしたので ひらいたよ。むらの ゲートからも えらべるよ', short: 'すすむ', can: true, act: goNext };
   if (!target && bossSprite && !busy && Math.hypot(P.pos.x - BOSS.x, P.pos.z - BOSS.z) < 6.5) target = { label: bossBeaten() ? BOSS.name + 'に さいせんする' : BOSS.name + 'に はなしかける', sub: 'つよい あいてだよ。HPと かいふくの たべものを じゅんびしてね(たたかいが はじまると にげられないよ)', short: 'はなしかける', can: true, act: talkBoss };
   if (!target && !busy) { const sh = shrines.find(s => !(state.legends && state.legends[s.id]) && Math.hypot(P.pos.x - s.x, P.pos.z - s.z) < 4.2); if (sh) target = { label: 'でんせつの ほこら', sub: 'ふしぎな けはいが する…。つよい あいてだよ', short: 'ちかづく', can: true, act: () => challengeLegend(sh) }; }
@@ -913,6 +917,7 @@ async function boot() {
   { const w = params.has('resume') && state.where && state.where.f === FID ? state.where : null, sx = w ? w.x : 0, sz = w ? w.z : SPZ; if (w && !isWater(sx, sz)) P.pos.set(sx, hAt(sx, sz), sz); else P.pos.set(0, hAt(0, SPZ), SPZ); posReady = true; } cam.yaw = 0; cam.pitch = 0.36; updateCamera(0, true);
   setFieldBgm(FID); $('#loading2').classList.add('done'); updateWxLabel();
   { const h = hourNow(), hints = [WX_HINT[WX], nightK(h) > 0.9 ? 'よるは やみや まほうの モンスターが でやすいよ' : (h >= 7 && h < 17 ? 'ひるまは てんや くさの モンスターが でやすいよ' : '')].filter(Boolean); if (WX !== 'clear' || hints.length) setTimeout(() => ui.toast(`てんき: ${WX_NAME[WX]} / ${timeName(h)}`, hints.join(' / ') || 'おだやかな ひだよ', '', 4200), 1500); } busy = false; fade(false); document.title = 'ready';
+  if (ELITE && !bossBeaten()) setTimeout(() => ui.toast(`してんのう ${ELITE_NO}人目(ぜんいん 4人)`, `${BOSS.name}が まっている`, ELITE_NO === 4 ? 'さいごの してんのうを たおすと でんどういり!' : 'たおすと つぎの してんのうの ところへ いけるよ', 5200), 1200);
   if (first) ui.toast('なかまが できた!', 'まめちんちらが ついてきたよ', 'くさむらを あるくと モンスターが でてくるよ', 5200);
   else ui.toast(F.name, 'くさむらを あるくと モンスターが でてくるよ', FID === 'lake' ? 'ここの モンスターは すこし つよいよ' : '', 3600);
   window.__f = { chests, BOSS, gymTeam, challengeBoss, shrines, challengeLegend, trainers, talkTrainer, talkBoss, cam, hAt, isWater, P, state, startEncounter, runBattle, scene, camera, renderer, goVillage, ZONES, count, addItem, circles };

@@ -1264,11 +1264,13 @@ const ghostMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBa
 let ghostInfo = null;
 let toolSel = 'plot';
 // ---- ツールボックス(画面の左がわ): て / かま / くわ / もどす / おく。えらんだ どうぐの ことだけが できる ----
-let hotSel = 'hand';
+let hotSel = 'hand', kitSel = null;
+const KIT_IDS = ['kit_barn', 'kit_coop', 'kit_well'];   // たてる どうぐ: ツールボックスで「たてる」を えらんだ ときだけ ばしょの わくが でる
 const HOTS = [
   { id: 'hand', name: 'て', own: () => true, svg: '<path d="M9 17V8a1.8 1.8 0 0 1 3.6 0v6M12.6 13V6.8a1.8 1.8 0 0 1 3.6 0V13M16.2 13V8.5a1.8 1.8 0 0 1 3.6 0V18c0 4-3 7-7 7s-6-2.5-7-6l-1.5-4a1.8 1.8 0 0 1 3-1.7L9 16"/>' },
   { id: 'sickle', name: 'かま', own: () => count('sickle') > 0, svg: '<path d="M7 25c-2-9 4-17 17-17-5 2-8 6-8 11M8 26l6-6"/>' },
   { id: 'hoe', name: 'くわ', own: () => count('hoe') > 0, svg: '<path d="M7 26L21 8M17 8h9l-3 6h-6"/>' },
+  { id: 'kit', name: 'たてる', own: () => KIT_IDS.some(k => count(k) > 0), svg: '<path d="M6 15l10-8 10 8M9 14v11h14V14M14 25v-6h4v6"/>' },
   { id: 'bag', name: 'もちもの', own: () => true, svg: '<circle cx="7" cy="16" r="2.2"/><circle cx="16" cy="16" r="2.2"/><circle cx="25" cy="16" r="2.2"/>' },
 ];
 const hotbar = document.createElement('div'); hotbar.id = 'hotbar'; hotbar.hidden = true;
@@ -1279,7 +1281,8 @@ document.body.appendChild(hotbar);
 function hotPick(id) {
   const h = HOTS.find(x => x.id === id); if (!h || !h.own()) return sfx('no');
   if (id === 'bag') { sfx('ui'); ui.openPanel('bag'); return; }
-  hotSel = id; sfx('ui'); const nm = { hand: 'て(はたけの せわ・あつめる)', sickle: 'かま(草を かる)', hoe: 'くわ(たがやす)', rake: 'もどす(はたけ・かった ばしょを もとに)' }[id]; ui.toast('どうぐ', nm, '', 1400);
+  if (id === 'kit') { const own = KIT_IDS.filter(k => count(k) > 0); kitSel = hotSel === 'kit' && own.length > 1 ? own[(own.indexOf(kitSel) + 1) % own.length] : own.includes(kitSel) ? kitSel : own[0]; ui.toast('どうぐ', `たてる: ${KITS[kitSel].label}`, own.length > 1 ? 'もういちど おすと ほかの たてものに かわるよ' : '', 1800); }
+  hotSel = id; sfx('ui'); const nm = { hand: 'て(はたけの せわ・あつめる)', sickle: 'かま(草を かる)', hoe: 'くわ(たがやす)', rake: 'もどす(はたけ・かった ばしょを もとに)' }[id]; if (nm) ui.toast('どうぐ', nm, '', 1400);
 }
 hotbar.querySelectorAll('button[data-h]').forEach(b => b.onclick = () => hotPick(b.dataset.h));
 const hotTog = hotbar.querySelector('.tog');
@@ -1294,7 +1297,7 @@ function updateHot(show) {
   hotbar.querySelectorAll('button[data-h]').forEach(b => { const h = HOTS.find(x => x.id === b.dataset.h); b.classList.toggle('empty', !h.own()); b.classList.toggle('sel', h.id === cur); });
 }
 const toolList = () => [];
-const currentTool = () => { for (const k of ['kit_barn', 'kit_coop', 'kit_well']) if (count(k) > 0) return k; return curHot() === 'sickle' ? 'plot' : null; };
+const currentTool = () => { const c = curHot(); if (c === 'kit') { const own = KIT_IDS.filter(k => count(k) > 0); return own.includes(kitSel) ? kitSel : own[0] || null; } return c === 'sickle' ? 'plot' : null; };
 const toolBtn = document.createElement('button'); toolBtn.className = 'act'; toolBtn.hidden = true; toolBtn.innerHTML = '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20c6-1 8-5 8-12M14 8c4 2 8 2 12 0M8 26h18"/></svg><span></span>';
 toolBtn.onclick = () => { const a = toolList(); if (a.length < 2) return; toolSel = a[(a.indexOf(currentTool()) + 1) % a.length]; sfx('ui'); };
 $('#btns').insertBefore(toolBtn, $('#btns').firstChild);
@@ -1409,11 +1412,18 @@ const objCheck = (kd, x, z) => kd === 'paver' ? pavCheck(x, z) : placeCheck(x, z
 // ゆびで つまんで スライドする「さくモード」(かざりモードと おなじ ぞくぞく視点)
 const fenceFloorY = () => heightAt(yardCenter.x, yardCenter.z);
 function fenceMark() {
+  if (fenceSelB) { const b = (fenceSelB.kind === 'well' ? state.wells : fenceSelB.kind === 'barn' ? state.barns : state.coops)[fenceSelB.i]; if (b) { yardMark.visible = true; yardMark.scale.setScalar(fenceSelB.kind === 'well' ? 2.5 : 4); yardMark.position.set(b.x, heightAt(b.x, b.z) + 0.1, b.z); return; } fenceSelB = null; }
   if (fenceSel < 0 || !state.fences[fenceSel]) { yardMark.visible = false; return; }
   const f = state.fences[fenceSel]; yardMark.visible = true; yardMark.scale.setScalar(1.5); yardMark.position.set(f.x, heightAt(f.x, f.z) + 0.1, f.z);
 }
 const PLACE_ITEM = { fence: 'fence', roll: 'hay_roll', paver: 'paver', feeder: 'feeder' };
-let fenceKind = 'fence', fenceRot = 0, fenceInfo = null;
+let fenceKind = 'fence', fenceRot = 0, fenceInfo = null, fenceSelB = null;   // fenceSelB: えらんだ いど・ぼくじょう・とりごや {kind, i}
+const BLD_NAME = { well: 'いど', barn: 'ぼくじょう', coop: 'とりごや' };
+function buildingAt(p) {
+  const L = [['well', state.wells, 2.5, 2.5], ['coop', state.coops, 3.5, 4.75], ['barn', state.barns, 11, 5.3]];
+  for (const [kind, arr, hx, hz] of L) for (let i = 0; i < arr.length; i++) { const b = arr[i]; if (b && !b.moving && Math.abs(p.x - b.x) < hx && Math.abs(p.z - b.z) < hz) return { kind, i }; }
+  return null;
+}
 const FDIM = { fence: [2, 1, 0.5], roll: [1.9, 1.2, 1.2], paver: [1.94, 0.12, 1.94], feeder: [2, 0.5, 0.85] };
 function fenceEnter(kind) {
   if (kind) fenceKind = kind; else if (count(OBJ[fenceKind].item) < 1) { const k = Object.keys(OBJ).find(x => count(OBJ[x].item) > 0); if (k) fenceKind = k; }
@@ -1422,21 +1432,21 @@ function fenceEnter(kind) {
 bus.on('placeStart', (k) => fenceEnter(k));
 function updateModeGhost() {   // さくモード: がめんの まんなかに おく ばしょの わくが ついてくる
   const o = OBJ[fenceKind], title = $('#fenceTitle'), kb = $('#fenceKindBtn');
-  const t1 = fenceSel >= 0 ? `えらんだ ${OBJ[kindOf(state.fences[fenceSel] || {})].name}: ゆびで ずらせるよ。「むきを かえる」「しまう」が つかえるよ` : `${o.name}　のこり ${count(o.item)}こ　じめんを ドラッグして ばしょを きめて「おく」(おいた ものは タップで えらんで うごかす)`;
+  const t1 = fenceSelB ? `えらんだ ${BLD_NAME[fenceSelB.kind]}: 「しまう」で かたづけて キットに もどせるよ(すきな ばしょに たて直せる)` : fenceSel >= 0 ? `えらんだ ${OBJ[kindOf(state.fences[fenceSel] || {})].name}: ゆびで ずらせるよ。「むきを かえる」「しまう」が つかえるよ` : `${o.name}　のこり ${count(o.item)}こ　じめんを ドラッグして ばしょを きめて「おく」(おいた ものは タップで えらんで うごかす)`;
   if (title.textContent !== t1) title.textContent = t1; const t2 = 'どうぐ: ' + o.name; if (kb.textContent !== t2) kb.textContent = t2;
-  if (fenceSel >= 0) { fenceGhost.visible = false; fenceInfo = null; return; }
+  if (fenceSel >= 0 || fenceSelB) { fenceGhost.visible = false; fenceInfo = null; return; }
   const st = o.step || 0.5, x = Math.round(yardCenter.x / st) * st, z = Math.round(yardCenter.z / st) * st, a = fenceKind === 'paver' ? 0 : fenceRot;
   const why = count(o.item) < 1 ? 'もっていないよ。バッグか よろずやで' : state.fences.filter(f => kindOf(f) === fenceKind).length >= o.cap ? 'これいじょう おけないよ' : objCheck(fenceKind, x, z) || (fenceAt(x, z, a, null, fenceKind) ? 'ここには もう あるよ' : null);
   fenceInfo = { x, z, a, why };
   const d = FDIM[fenceKind]; fenceGhost.visible = true; fenceGhost.scale.set(d[0], d[1], d[2]); fenceGhost.rotation.y = -a; fenceGhost.position.set(x, heightAt(x, z) + d[1] / 2 + 0.05, z); fenceGhost.material.color.set(why ? '#e86a5a' : '#6ad07a');
 }
-function fenceExit() { yardFence = false; fenceSel = -1; fenceDrag = null; fenceGhost.visible = false; fenceInfo = null; $('#fencebar').hidden = true; yardExit(); }
+function fenceExit() { yardFence = false; fenceSel = -1; fenceSelB = null; fenceDrag = null; fenceGhost.visible = false; fenceInfo = null; $('#fencebar').hidden = true; yardExit(); }
 fenceBtn.onclick = () => fenceEnter();
 canvas.addEventListener('pointerdown', e => {
   if (!yardFence || ui.panelOpen()) return;
   const p = yardRayFloor(e, fenceFloorY()); let best = -1, bd = 1.8;
   if (p) state.fences.forEach((f, i) => { const d = Math.hypot(f.x - p.x, f.z - p.z) + (kindOf(f) === 'paver' ? 0.8 : 0); if (d < bd) { bd = d; best = i; } });
-  fenceSel = best;
+  fenceSel = best; fenceSelB = best < 0 && p ? buildingAt(p) : null; if (fenceSelB) sfx('ui');
   if (best >= 0) { const f = state.fences[best]; fenceDrag = { ox: p.x - f.x, oz: p.z - f.z }; sfx('ui'); } else yardPan = { x: e.clientX, y: e.clientY };
   fenceMark();
 });
@@ -1456,7 +1466,7 @@ document.querySelectorAll('#fencebar button').forEach(b => b.onclick = () => {
   const k = b.dataset.f, o = OBJ[fenceKind];
   if (k === 'done') return fenceExit();
   if (k === 'put') {
-    if (fenceSel >= 0) { fenceSel = -1; fenceMark(); return sfx('ui'); }   // えらんでいる ときは えらびを やめる
+    if (fenceSel >= 0 || fenceSelB) { fenceSel = -1; fenceSelB = null; fenceMark(); return sfx('ui'); }   // えらんでいる ときは えらびを やめる
     updateModeGhost();
     if (!fenceInfo || fenceInfo.why) { ui.toast(o.name, fenceInfo ? fenceInfo.why : 'ここには おけないよ', '', 1800); return sfx('no'); }
     addItem(o.item, -1); state.fences.push(fenceKind === 'fence' ? { x: fenceInfo.x, z: fenceInfo.z, a: fenceInfo.a } : { x: fenceInfo.x, z: fenceInfo.z, a: fenceInfo.a, k: fenceKind }); fenceSync(); return sfx('plant');
@@ -1481,6 +1491,7 @@ document.querySelectorAll('#fencebar button').forEach(b => b.onclick = () => {
     return sfx('ui');
   }
   if (k === 'del') {
+    if (fenceSelB) { const { kind, i } = fenceSelB; fenceSelB = null; startMove(kind, i); fenceMark(); return; }
     const f = state.fences[fenceSel]; if (fenceSel < 0 || !f) { ui.toast('もどす', 'おいた ものを タップして えらんでね', '', 1800); return sfx('no'); }
     state.fences.splice(fenceSel, 1); addItem(OBJ[kindOf(f)].item, 1); if (f.hay) addItem('hay', f.hay); fenceSel = -1; fenceSync(); fenceMark(); sfx('ui');
   }

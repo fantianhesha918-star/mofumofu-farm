@@ -100,6 +100,15 @@ export const EXTRA_MONS = [
   M('mori_shika', 'もりしか', 'grass', 20, 100, 28, 17, 18, 60, 40, [38, 'shinju_taiboku']),
   M('shinju_taiboku', 'ごしんぼく', 'grass', 38, 160, 44, 30, 24, 130, 80),
   M('nari_kami', 'なりかみこぞう', 'thunder', 12, 62, 18, 12, 12, 33, 24),
+  // 2026-11-02 ユーザーが Gemini で つくった 水彩の あたらしい 8ひき(絵: 素材/モンスター/新モンスター原本(Gemini))
+  M('ko_oni', 'こおに', 'earth', 12, 66, 21, 14, 11, 34, 25),
+  M('chibi_dracula', 'ちびドラキュラ', 'dark', 10, 58, 17, 11, 13, 32, 22, [26, 'dracula']),
+  M('dracula', 'ドラキュラ', 'dark', 26, 125, 38, 24, 20, 80, 52),
+  M('yukinko', 'ゆきんこ', 'water', 9, 54, 15, 11, 12, 31, 21),
+  M('fuku_chin', 'ふくちんちら', 'heaven', 16, 92, 22, 17, 12, 50, 60),
+  M('tatsunoko', 'たつのこ', 'wind', 14, 72, 23, 15, 15, 42, 28),
+  M('kyubi_ko', 'きゅうびっこ', 'magic', 18, 90, 26, 16, 19, 55, 40),
+  M('yatsugashira', 'やつがしら', 'dark', 24, 120, 33, 22, 15, 75, 50),
   // でんせつ(ほこらで であう。ステータスは 「ほせい ごの かず」を わたして M の ほせいを もどす)
   LEG('yume_no_ko', 'ゆめうつつ', 'heaven', 30, 200, 36, 26, 36),
   LEG('toki_no_yousei', 'ときわ', 'grass', 45, 300, 48, 36, 34),
@@ -118,6 +127,19 @@ export const EXTRA_MONS = [
   LEG('niji_ootori', 'にじおおとり', 'heaven', 75, 760, 98, 68, 50),
   LEG('maryoku_ou', 'まりょくおう', 'magic', 80, 840, 112, 74, 54),
 ];
+// ぬし・してんのうを つかまえたとき、ボスせんの すがた(assets/bosses/<key>.webp)・ほんらいの つよさ・せんようわざの まま なかまに なる(battle.js の ほかく)
+// [key, なまえ, ぞくせい, レベル, HP, こうげき, ぼうぎょ, すばやさ]。ステータスは field.js の ぬし(over)と おなじ
+const BOSS_FORM_ROWS = [
+  ['forest', 'ガブリソウ', 'grass', 11, 105, 22, 15, 9], ['lake', 'ブリザ', 'water', 19, 200, 34, 20, 14], ['volcano', 'ガンテツ', 'fire', 26, 302, 52, 32, 15], ['ghost', 'ヨイヤミ', 'dark', 33, 381, 63, 39, 19],
+  ['sky', 'セラフィ', 'heaven', 40, 482, 76, 48, 23], ['sun', 'アカツキ', 'fire', 47, 605, 91, 56, 27], ['cosmos', 'ギンガ', 'water', 54, 728, 106, 65, 31], ['grove', 'ユグ', 'grass', 60, 874, 121, 73, 34],
+  ['castle', 'クロガネ', 'dark', 66, 1030, 136, 82, 37], ['temple', 'アストラ', 'heaven', 72, 1187, 151, 91, 41], ['dragon', 'ソウリュウ', 'thunder', 78, 1366, 168, 102, 45], ['end', 'カムイ', 'kami', 90, 1800, 200, 120, 55],
+];
+export const BOSS_FORMS = BOSS_FORM_ROWS.map(([k, name, element, level, hp, atk, def, spd]) => ({ id: 'boss_' + k, name, element, level, hp, atk, def, spd, exp: level * 10, money: level * 12, skillIds: ['tackle'], image: `assets/bosses/${k}.webp` }));
+// 2026-11-02 の あたらしい 8ひきの でる ばしょ(field.js が F.wild に くわえる)
+export const NEW_APPEAR = {
+  ko_oni: { volcano: 1, grove: 1 }, chibi_dracula: { ghost: 1, castle: 1 }, dracula: { ghost: 1, castle: 1, temple: 1 }, yukinko: { lake: 1, sky: 1 }, fuku_chin: { sun: 1, sky: 1, temple: 1 },
+  tatsunoko: { sky: 1, sun: 1, dragon: 1 }, kyubi_ko: { sun: 1, grove: 1, ghost: 1 }, yatsugashira: { ghost: 1, dragon: 1 },
+};
 // あらわれる フィールド(ずかんの「でる ばしょ」と フィールドの でやすさ)
 export const EXTRA_APPEAR = {
   yume_no_ko: { lake: 1, sun: 1 }, toki_no_yousei: { grove: 1, forest: 1 }, raigeki_chou: { sky: 1 }, kaen_chou: { sun: 1 }, homura_shishi: { sun: 1 }, hyosetsu_chou: { cosmos: 1 }, mizu_kirin: { cosmos: 1 }, watatsumi: { cosmos: 1 },
@@ -136,10 +158,12 @@ export const EXTRA_APPEAR = {
   majo_chin: { castle: 1, temple: 1 }, majutsusho: { temple: 1, castle: 1 }, majutsusho_2: { temple: 1, castle: 1 }, lamp_no_sei: { temple: 2, cosmos: 1 },
   watage: { forest: 1, sky: 1 }, watage_2: { grove: 1 }, tsubame_ko: { sky: 1, lake: 1 }, kaze_chou: { sky: 1, grove: 1, dragon: 1 },
   kumo_hitsuji: { sky: 1, sun: 1 }, kumo_hitsuji_2: { temple: 1, sun: 1 }, tenshi_chin: { temple: 1, sun: 1 },
+  ...NEW_APPEAR,
+  ...Object.fromEntries(BOSS_FORMS.map(f => [f.id, { [f.id.slice(5) + '!']: 1 }])),   // 「!」= ぬしを たおして つかまえる(ずかんの でる ばしょに ぬしの なまえが でる)
 };
 export function installExtraMons(GD) {
   if (GD._extraInstalled) return; GD._extraInstalled = true;
-  for (const m of EXTRA_MONS) { GD.MONSTERS[m.id] = m; if (Array.isArray(GD.DEX_ORDER) && !GD.DEX_ORDER.includes(m.id)) GD.DEX_ORDER.push(m.id); }
+  for (const m of [...EXTRA_MONS, ...BOSS_FORMS]) { GD.MONSTERS[m.id] = m; if (Array.isArray(GD.DEX_ORDER) && !GD.DEX_ORDER.includes(m.id)) GD.DEX_ORDER.push(m.id); }
 }
 
 // はじめに えらべる 御三家(1だんめ)

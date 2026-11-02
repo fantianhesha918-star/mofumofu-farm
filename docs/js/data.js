@@ -139,18 +139,18 @@ export const TITLE_CATS = { cook: ['りょうり', 'りょうりの うりね'],
 // たべると たいりょくが かいふくする量(0〜100)
 // ボスを たおすと もらえる バッジ(key = state.boss のキー)。もっていると ずっと おんけい
 export const BADGES = [
-  { id: 'forest', name: 'もりの バッジ', boss: 'もりの ぬし', color: '#4a9a40', bonus: 'バトルの けいけんちが +15%', sym: 'M24 11c-6 4-7 10-3 15 5-1 9-6 3-15zM24 27V15' },
-  { id: 'lake', name: 'みずうみの バッジ', boss: 'みずうみの ぬし', color: '#3a78c0', bonus: 'ものを うる ねだんが +10%(しゅっかも)', sym: 'M24 10c-4 6-6 8-6 11a6 6 0 0 0 12 0c0-3-2-5-6-11z' },
-  { id: 'volcano', name: 'ようがんの バッジ', boss: 'ようがんの ぬし', color: '#c8502a', bonus: 'なかまの ステータスが ぜんぶ +5%', sym: 'M13 29l7-12 4 6 3-4 7 10z' },
-  { id: 'ghost', name: 'ゆうれいの バッジ', boss: 'ゆうれいの ぬし', color: '#6a4a9a', bonus: 'バトルで もらえる コインが +25%', sym: 'M15 31V20a9 9 0 0 1 18 0v11l-3-3-3 3-3-3-3 3-3-3z' },
-  { id: 'sky', name: 'てんくうの バッジ', boss: 'てんくうの ぬし', color: '#d8b040', bonus: 'バトルの けいけんちが さらに +15%', sym: 'M24 10l4 9 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1z' },
-  { id: 'sun', name: 'たいようの バッジ', boss: 'たいようの ぬし', color: '#e0a030', bonus: 'なかまの こうげきが +8%', sym: 'M24 12v4M24 32v4M12 24h4M32 24h4M15 15l3 3M30 30l3 3M33 15l-3 3M18 30l-3 3M24 19a5 5 0 1 0 0 10 5 5 0 0 0 0-10z' },
-  { id: 'cosmos', name: 'うちゅうの バッジ', boss: 'うちゅうの ぬし', color: '#3a58b0', bonus: 'なかまの HPが +8%', sym: 'M24 10c-4 6-6 8-6 11a6 6 0 0 0 12 0c0-3-2-5-6-11zM14 32q10 6 20 0' },
-  { id: 'grove', name: 'しんじゅの バッジ', boss: 'しんじゅの ぬし', color: '#4a9a60', bonus: 'おやつ・たべものの かいふくが ×1.5', sym: 'M24 36V16M24 22c-6 0-9-4-9-8 6 0 9 3 9 8zM24 26c6 0 9-4 9-8-6 0-9 3-9 8z' },
-  { id: 'castle', name: 'やみの バッジ', boss: 'やみの ぬし', color: '#5a3a80', bonus: 'なかまの ぼうぎょが +8%', sym: 'M12 34V18l4 3 4-5 4 5 4-5 4 5 4-3v16z' },
-  { id: 'temple', name: 'ほしの バッジ', boss: 'ほしの ぬし', color: '#8a7ad0', bonus: 'なかまの すばやさが +8%', sym: 'M24 10l3 8 8 1-6 6 2 8-7-4-7 4 2-8-6-6 8-1z' },
-  { id: 'dragon', name: 'せいりゅうの バッジ', boss: 'せいりゅうの ぬし', color: '#2a9a8a', bonus: 'バトルの けいけんちが さらに +15%', sym: 'M14 30c4-14 14-2 18-12M32 18l4 1-2 3M14 30l-3 3' },
-  { id: 'end', name: 'うちゅうの かみの バッジ', boss: 'うちゅうの かみ', color: '#d8b8f0', bonus: 'なかまの ステータスが ぜんぶ +10%', sym: 'M24 12a12 12 0 1 0 0 24 12 12 0 0 0 0-24zM24 18v12M18 24h12' },
+  { id: 'forest', name: 'もりの バッジ', boss: 'ガブリソウ', color: '#4a9a40', bonus: 'バトルの けいけんちが +15%', sym: 'M24 11c-6 4-7 10-3 15 5-1 9-6 3-15zM24 27V15' },
+  { id: 'lake', name: 'みずうみの バッジ', boss: 'ブリザ', color: '#3a78c0', bonus: 'ものを うる ねだんが +10%(しゅっかも)', sym: 'M24 10c-4 6-6 8-6 11a6 6 0 0 0 12 0c0-3-2-5-6-11z' },
+  { id: 'volcano', name: 'ようがんの バッジ', boss: 'ガンテツ', color: '#c8502a', bonus: 'なかまの ステータスが ぜんぶ +5%', sym: 'M13 29l7-12 4 6 3-4 7 10z' },
+  { id: 'ghost', name: 'ゆうれいの バッジ', boss: 'ヨイヤミ', color: '#6a4a9a', bonus: 'バトルで もらえる コインが +25%', sym: 'M15 31V20a9 9 0 0 1 18 0v11l-3-3-3 3-3-3-3 3-3-3z' },
+  { id: 'sky', name: 'てんくうの バッジ', boss: 'セラフィ', color: '#d8b040', bonus: 'バトルの けいけんちが さらに +15%', sym: 'M24 10l4 9 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1z' },
+  { id: 'sun', name: 'たいようの バッジ', boss: 'アカツキ', color: '#e0a030', bonus: 'なかまの こうげきが +8%', sym: 'M24 12v4M24 32v4M12 24h4M32 24h4M15 15l3 3M30 30l3 3M33 15l-3 3M18 30l-3 3M24 19a5 5 0 1 0 0 10 5 5 0 0 0 0-10z' },
+  { id: 'cosmos', name: 'うちゅうの バッジ', boss: 'ギンガ', color: '#3a58b0', bonus: 'なかまの HPが +8%', sym: 'M24 10c-4 6-6 8-6 11a6 6 0 0 0 12 0c0-3-2-5-6-11zM14 32q10 6 20 0' },
+  { id: 'grove', name: 'しんじゅの バッジ', boss: 'ユグ', color: '#4a9a60', bonus: 'おやつ・たべものの かいふくが ×1.5', sym: 'M24 36V16M24 22c-6 0-9-4-9-8 6 0 9 3 9 8zM24 26c6 0 9-4 9-8-6 0-9 3-9 8z' },
+  { id: 'castle', name: 'やみの バッジ', boss: 'クロガネ', color: '#5a3a80', bonus: 'なかまの ぼうぎょが +8%', sym: 'M12 34V18l4 3 4-5 4 5 4-5 4 5 4-3v16z' },
+  { id: 'temple', name: 'ほしの バッジ', boss: 'アストラ', color: '#8a7ad0', bonus: 'なかまの すばやさが +8%', sym: 'M24 10l3 8 8 1-6 6 2 8-7-4-7 4 2-8-6-6 8-1z' },
+  { id: 'dragon', name: 'せいりゅうの バッジ', boss: 'ソウリュウ', color: '#2a9a8a', bonus: 'バトルの けいけんちが さらに +15%', sym: 'M14 30c4-14 14-2 18-12M32 18l4 1-2 3M14 30l-3 3' },
+  { id: 'end', name: 'うちゅうの かみの バッジ', boss: 'カムイ', color: '#d8b8f0', bonus: 'なかまの ステータスが ぜんぶ +10%', sym: 'M24 12a12 12 0 1 0 0 24 12 12 0 0 0 0-24zM24 18v12M18 24h12' },
 ];
 export const HEAL = { grilled_fish: 50, fish_soup: 55, squid_grill: 65, tai_shio: 80, octo_marinade: 75, nori_roll: 60, seaweed_soup: 40, shell_butter: 55, boiled_egg: 25, jam: 20, grilled_corn: 40, veg_soup: 45, omelet: 60, corn_soup: 70, ratatouille: 70, pumpkin_stew: 90, golden_omelet: 100 };
 
@@ -453,7 +453,7 @@ export const BUCKET = { caps: [3, 5, 8, 12, 16], prices: [0, 150, 400, 900, 2000
 import { EXTRA_MONS, EXTRA_APPEAR } from './monsters_extra.js';
 for (const [id, fs] of Object.entries(EXTRA_APPEAR)) {
   APPEAR[id] = Object.keys(fs);
-  for (const f of Object.keys(fs)) { const g = MON_GROUPS.find(x => x.name === FIELD_NAMES[f]); if (g && !g.ids.includes(id)) g.ids.push(id); }
+  for (const f of Object.keys(fs)) { const g = MON_GROUPS.find(x => x.name === FIELD_NAMES[f.replace('!', '')]); if (g && !g.ids.includes(id)) g.ids.push(id); }
   if (!ALL_MONS.includes(id)) ALL_MONS.push(id);
   if (!FIELD_MONS.includes(id)) FIELD_MONS.push(id);
 }
