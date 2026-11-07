@@ -7,7 +7,7 @@ mods = sorted(os.path.basename(p) for p in glob.glob(os.path.join(D, 'js', '*.js
 imports = {'three': './vendor/three.module.js', 'three/addons/': './vendor/addons/'}
 for m in mods: imports['./js/' + m] = f'./js/{m}?v={V}'
 im = '<script type="importmap">' + json.dumps({'imports': imports}, ensure_ascii=False, separators=(',', ':')) + '</script>'
-for page, entry in (('index.html', 'game.js'), ('field.html', 'field.js')):
+for page, entry in (('index.html', 'game.js'), ('field.html', 'field.js'), ('gym.html', 'gym.js')):
     p = os.path.join(D, page); s = open(p, encoding='utf-8').read()
     s, n1 = re.subn(r'<script type="importmap">.*?</script>', lambda m: im, s, count=1, flags=re.S)
     s, n2 = re.subn(r'src="js/%s[^"]*"' % re.escape(entry), f'src="js/{entry}?v={V}"', s, count=1)
