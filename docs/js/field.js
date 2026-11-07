@@ -155,7 +155,7 @@ for (const [id, fs] of Object.entries(NEW_APPEAR)) if (fs[FID] && !(F.wild || []
 const GYM8 = ['forest', 'lake', 'volcano', 'ghost', 'sky', 'sun', 'cosmos', 'grove'], gymClear = () => GYM8.every(k => state.boss[k]);
 const ELITE = ['castle', 'temple', 'dragon', 'end'].includes(FID), SPZ = ELITE ? 20 : 46;
 if (ELITE) {
-  F.zones = []; F.lava = []; F.pool = null; F.fogN = 16; F.fogF = 100; if (F.light && F.light.hemi) F.light = { ...F.light, hemi: [F.light.hemi[0], F.light.hemi[1], F.light.hemi[2] * 1.35] };   // くらくて なにも みえない という こえで、きりを とおくし あかるく F.boss.x = 0; F.boss.z = -16;
+  F.zones = []; F.lava = []; F.pool = null; F.fogN = 16; F.fogF = 100; if (F.light && F.light.hemi) F.light = { ...F.light, hemi: [F.light.hemi[0], F.light.hemi[1], F.light.hemi[2] * 1.35] }; F.boss.x = 0; F.boss.z = -16;   // くらくて なにも みえない という こえで、きりを とおくし あかるく(ボスは てまえの z=-16)
   F.trees = F.trees.map(([nm, nT, nP, sc, , , tn, op]) => [nm, nT * 2, nP * 2, sc, 31, 48, tn, op]);
   F.props = (F.props || []).map(([nm, nT, nP, sc, r0, r1, tn, op]) => [nm, Math.ceil(nT / 2), Math.ceil(nP / 2), sc, r0, Math.min(r1, 25), tn, op]);
 }
