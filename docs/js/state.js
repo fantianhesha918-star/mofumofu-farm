@@ -2,7 +2,32 @@ import { QUESTS, DAY_SECONDS, DEX, ITEMS, TITLES, CROPS, RECIPES } from './data.
 import { festivalNow } from './season.js';
 const DEX_IDS = new Set(DEX.flatMap(g => g.ids));
 
-const KEY = 'chinchilla-ranch-v2';
+// ---- セーブの わく: シリーズごとに 3つ。いま あそんでいる わくは localStorage に おぼえておく(どの ページでも おなじ わくを つかう) ----
+export const SERIES = [
+  { id: 'main', name: 'もふもふ牧場 太陽', sub: 'チンチラと はじめる ぼくじょう くらし' },
+  { id: 's2', name: 'もふもふ牧場 月', sub: 'つきあかりの したで あたらしい ぼうけんが はじまる', needs: 'main' },   // でんどういりすると えらべる
+];
+export const SLOTS = 3;
+const BASE_KEY = 'chinchilla-ranch-v2', ACTIVE_KEY = 'chinchilla-ranch-active', UNLOCK_KEY = 'chinchilla-ranch-unlock';
+export const slotKey = (series, slot) => series === 'main' ? (slot === 1 ? BASE_KEY : BASE_KEY + '-s' + slot) : BASE_KEY + '-' + series + '-s' + slot;   // main の わく1は むかしの セーブと おなじ キー
+export function getActive() {
+  try { const m = (localStorage.getItem(ACTIVE_KEY) || '').match(/^([a-z0-9]+):([1-9])$/); if (m && SERIES.some(x => x.id === m[1]) && +m[2] <= SLOTS) return { series: m[1], slot: +m[2] }; } catch { /* しょきち */ }
+  return { series: 'main', slot: 1 };
+}
+let KEY = (() => { const a = getActive(); return slotKey(a.series, a.slot); })();
+export function setActive(series, slot) { try { localStorage.setItem(ACTIVE_KEY, series + ':' + slot); } catch { /* ほぞんできなくても つづける */ } KEY = slotKey(series, slot); SAVE_KEY = KEY; }
+const readRaw = (k) => { for (const kk of [k, k + '-prev', k + '-bak']) { try { const raw = localStorage.getItem(kk); if (!raw) continue; const d = JSON.parse(raw); if (d && typeof d === 'object') return d; } catch { /* つぎへ */ } } return null; };
+export function slotInfo(series, slot) {   // わくの ようすを みる(なければ null)
+  const d = readRaw(slotKey(series, slot)); if (!d) return null;
+  return { name: (d.names && d.names.player) || 'Chino', day: d.day || 1, coins: d.coins || 0, hof: !!d.hof, badges: Object.keys(d.boss || {}).length, savedAt: d.savedAt || 0, party: (d.party || []).slice(0, 3).map(m => m.id) };
+}
+export function deleteSlot(series, slot) { const k = slotKey(series, slot); try { for (const s of ['', '-prev', '-bak', '-bakday']) localStorage.removeItem(k + s); } catch { /* むし */ } }
+export function unlockedSeries() {   // えらべる シリーズ(でんどういりの セーブが ひとつでも あれば あたらしい シリーズが ひらく)
+  let flags = {}; try { flags = JSON.parse(localStorage.getItem(UNLOCK_KEY) || '{}') || {}; } catch { /* むし */ }
+  const hofAny = [1, 2, 3].some(n => { const i = slotInfo('main', n); return i && i.hof; });
+  return SERIES.filter(x => !x.needs || flags[x.id] || (x.needs === 'main' && hofAny)).map(x => x.id);
+}
+export function unlockSeries(id) { try { const f = JSON.parse(localStorage.getItem(UNLOCK_KEY) || '{}') || {}; f[id] = 1; localStorage.setItem(UNLOCK_KEY, JSON.stringify(f)); } catch { /* むし */ } }
 export const ECO_KEY = 'chinchilla-ranch-eco';
 export const ECO = (() => { try { return localStorage.getItem(ECO_KEY) === '1'; } catch { return false; } })();   // 省エネモード(30fps・かげなし・くさ すくなめ)
 
@@ -64,7 +89,7 @@ const TITLE_CAT = Object.fromEntries(TITLES.map(t => [t.id, t.cat])), CROP_ITEMS
 const sellCat = (id) => DISH_IDS.has(id) ? 'cook' : CROP_ITEMS.has(id) ? 'farm' : (id === 'milk' || id === 'egg' || id === 'golden_egg') ? 'ranch' : ITEMS[id] && ITEMS[id].kind === 'fish' ? 'fish' : null;
 const titleSell = (id) => { const c = sellCat(id); return c ? 1 + 0.02 * Object.keys(state.titles || {}).filter(k => TITLE_CAT[k] === c).length : 1; };   // しょうごう 1つで その ぶんやの うりねが +2%
 export const sellOf = (id) => Math.round(((ITEMS[id] && ITEMS[id].sell) || 0) * (hasBadge('lake') ? 1.1 : 1) * titleSell(id) * (festivalNow(state.day) ? 1.25 : 1));   // おまつりの 日は うりね+25%   // みずうみの バッジで うりね+10%
-export function reset() { Object.assign(state, fresh()); }
+export function reset() { Object.assign(state, fresh()); state.series = getActive().series; }
 
 const listeners = {};
 export const bus = {
@@ -92,7 +117,7 @@ export function load() {
   } catch { return false; }
 }
 
-export const SAVE_KEY = KEY;
+export let SAVE_KEY = KEY;
 let saveFailed = false, lastOk = true;
 export const lastSaveOk = () => lastOk;
 let saveBlocked = false;

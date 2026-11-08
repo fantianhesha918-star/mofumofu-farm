@@ -10,7 +10,7 @@ import { budgetReport, disposeObject, BUDGET } from './mapmgr.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { initSwimFish, updateSwimFish } from './swimfish.js';
 import { buildWorld, heightAt, WORLD_R, mulberry32, SEA_A, SEA_Y, seaMask, RIVER, riverDist } from './world.js';
-import { ECO, state, bus, save, load, reset, hasSave, addItem, count, addStat, activeQuests, checkQuests, sellOf } from './state.js';
+import { ECO, state, bus, save, load, reset, hasSave, SAVE_KEY, SERIES, SLOTS, getActive, setActive, slotInfo, deleteSlot, unlockedSeries, addItem, count, addStat, activeQuests, checkQuests, sellOf } from './state.js';
 import { ITEMS, CROPS, QUESTS, DAY_SECONDS, BUCKET } from './data.js';
 import { ui, itemIcon } from './ui.js';
 import { input, pollInput, setupInput } from './input.js';
@@ -1539,7 +1539,7 @@ bus.on('questDone', (q) => { sfx('quest'); ui.toast('QUEST CLEAR', q.title, 'ほ
 bus.on('questNew', (q) => { setTimeout(() => { ui.toast('NEW QUEST', q.title, '', 4200); ui.setGoal(); }, 2600); });
 bus.on('coins', () => { ui.setCoins(); if (!casinoBuilt && count('casino_deed') > 0) buildCasino(true); });
 bus.on('saveNow', () => { if (doSave()) ui.toast('セーブ', 'セーブしました!', '', 2200); else ui.toast('セーブ', 'セーブできませんでした', 'ブラウザの ほぞんスペースを かくにんしてね', 4000); });
-bus.on('toTitle', () => { doSave(); location.reload(); });
+bus.on('toTitle', () => { doSave(); location.href = location.pathname; });   // ?resume が ついたままだと タイトルを とばして つづきへ いってしまうので、パラメータを すてる
 bus.on('eat', (heal, id) => { P.stam = Math.min(100, P.stam + heal); if (P.stam >= 28) P.lock = false; P.regen = 0; sfx('feed'); ui.toast('ごちそうさま', `${ITEMS[id].name}を たべたよ`, `たいりょく +${heal}`, 2400); burst('heart', P.pos.clone().setY(P.pos.y + 1.1), 5, { size: 0.35, life: 1.2 }); });
 bus.on('decor', () => applyDecor());
 bus.on('dexNew', (id) => { if (!started) return; setTimeout(() => ui.toast('ずかん', `${ITEMS[id].name} が ずかんに のったよ`, 'メニューの ずかんで みられるよ', 3200), 1500); });
@@ -1573,8 +1573,8 @@ async function boot() {
   ROOMS.house = house;
   $('#loading').classList.add('done');
   { const v = (import.meta.url.match(/v=(\d+)/) || [])[1], d = document.createElement('div'); d.textContent = 'ばんごう ' + (v || '-'); d.style.cssText = 'position:fixed;left:8px;bottom:6px;font-size:11px;color:#ffffff90;z-index:5;pointer-events:none'; document.body.appendChild(d); }
-  $('#btnNew').disabled = false; if (hasSave()) $('#btnContinue').hidden = false;
-  if (params.has('resume') && hasSave()) setTimeout(() => startGame(false), 60);   // もりから もどってきたとき
+  bootReady = true; renderTitle();
+  if (params.has('resume') && hasSave()) setTimeout(() => startGame(false), 60);   // もりから もどってきたとき(いま あそんでいる わくで)
   ui.nameables = () => [
     { key: 'player', group: 'あなた', base: 'Chino' },
     ...state.animals.map((_, i) => ({ key: 'pet:' + i, group: 'ペットの ちんちら', base: ANIMAL_DEF[i % ANIMAL_DEF.length].name })),
@@ -1622,7 +1622,7 @@ function startGame(isNew) {
     setTimeout(() => ws.forEach(s => { scene.remove(s); s.material.dispose(); }), 600); }
 }
 let bakDay = -1;
-function dailyBackup() { try { if (bakDay === state.day) return; const cur = localStorage.getItem('chinchilla-ranch-v2'); const last = +localStorage.getItem('chinchilla-ranch-v2-bakday') || 0; if (cur && last !== state.day) { localStorage.setItem('chinchilla-ranch-v2-bak', cur); localStorage.setItem('chinchilla-ranch-v2-bakday', String(state.day)); } bakDay = state.day; } catch {} }
+function dailyBackup() { try { if (bakDay === state.day) return; const cur = localStorage.getItem(SAVE_KEY); const last = +localStorage.getItem(SAVE_KEY + '-bakday') || 0; if (cur && last !== state.day) { localStorage.setItem(SAVE_KEY + '-bak', cur); localStorage.setItem(SAVE_KEY + '-bakday', String(state.day)); } bakDay = state.day; } catch {} }
 function doSave() { if (!started) return false; dailyBackup(); state.pos = { x: P.pos.x, z: P.pos.z }; state.where = null; const ok = save(); if (ok) ui.showSaved(); return ok; }
 addEventListener('pagehide', doSave); document.addEventListener('visibilitychange', () => { if (document.hidden) doSave(); });
 bus.on('saveFail', () => ui.toast('セーブできないよ!', 'ブラウザの ほぞんスペースが つかえないみたい', '「せってい」の「かきだす」で バックアップしてね', 9000));
@@ -1657,8 +1657,31 @@ function askStarter() {
     m.querySelectorAll('.stcard').forEach(b => b.onclick = () => { const s = STARTERS.find(x => x.id === b.dataset.id); if (!confirm(`${s.name} に する?`)) return; sfx('quest'); m.remove(); res(s.id); });
   });
 }
-$('#btnNew').onclick = async () => { if (hasSave() && !confirm('いまのセーブデータは きえます。はじめから あそびますか?')) return; const n = await askPlayerName(), sid = await askStarter(); startGame(true); state.names = state.names || {}; state.names.player = n; state.party = [{ id: sid, lv: 5, exp: 0, hp: null }]; state.mdex[sid] = 2; applyPlayerName(); doSave(); };
-$('#btnContinue').onclick = () => { load(); if (state.where && state.where.f) { location.href = 'field.html?f=' + state.where.f + '&resume=1&_=' + Date.now(); return; } startGame(false); };   // もりで おわった ときは、もりの そのばしょから
+// ---- タイトル: シリーズを えらんで、セーブの わく(3つ)から あそぶ ----
+let bootReady = false, tSeries = getActive().series;
+const fmtDate = (t) => { if (!t) return ''; const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+function renderTitle() {
+  const un = unlockedSeries(); if (!un.includes(tSeries)) tSeries = 'main';
+  const ser = SERIES.find(x => x.id === tSeries), tabs = $('#seriesTabs'), box = $('#slots');
+  $('#tTitle').textContent = ser.name; $('#tSub2').textContent = ser.sub;
+  tabs.innerHTML = un.length > 1 ? un.map(id => `<button data-s="${id}" class="${id === tSeries ? 'on' : ''}">${SERIES.find(x => x.id === id).name}</button>`).join('') : '';
+  tabs.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { sfx('ui'); tSeries = b.dataset.s; renderTitle(); });
+  const cur = getActive(); let h = '';
+  for (let n = 1; n <= SLOTS; n++) {
+    const i = slotInfo(tSeries, n), last = cur.series === tSeries && cur.slot === n;
+    h += i ? `<div class="slot ${last ? 'last' : ''}"><button class="sgo" data-go="${n}"><b>わく ${n}</b><span>${i.name}${i.hof ? '　★でんどういり' : ''}</span><small>${i.day}日め ・ バッジ ${i.badges} ・ ${fmtDate(i.savedAt)}</small></button><button class="sdel" data-del="${n}">けす</button></div>`
+             : `<div class="slot empty"><button class="sgo" data-new="${n}"><b>わく ${n}</b><span>あたらしく はじめる</span></button></div>`;
+  }
+  box.innerHTML = h;
+  const lock = !bootReady; box.querySelectorAll('button').forEach(b => { b.disabled = lock; });
+  box.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { sfx('ui'); setActive(tSeries, +b.dataset.go); continueGame(); });
+  box.querySelectorAll('[data-new]').forEach(b => b.onclick = () => { sfx('ui'); setActive(tSeries, +b.dataset.new); newGame(); });
+  box.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { const n = +b.dataset.del; if (!confirm(`わく ${n} の セーブデータを けします。もとには もどせません。ほんとうに けしますか?`)) return; if (!confirm('ほんとうに ほんとうに いいですか?')) return; deleteSlot(tSeries, n); sfx('no'); renderTitle(); });
+}
+async function newGame() {
+  const n = await askPlayerName(), sid = await askStarter(); startGame(true); state.names = state.names || {}; state.names.player = n; state.party = [{ id: sid, lv: 5, exp: 0, hp: null }]; state.mdex[sid] = 2; applyPlayerName(); doSave();
+}
+function continueGame() { load(); if (state.where && state.where.f) { location.href = 'field.html?f=' + state.where.f + '&resume=1&_=' + Date.now(); return; } startGame(false); }   // もりで おわった ときは、もりの そのばしょから
 
 // ---------- メインループ ----------
 const clock = new THREE.Clock(); let T = 0, mmT = 0, lastFrame = 0;

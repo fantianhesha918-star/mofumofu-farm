@@ -268,6 +268,23 @@ def gym_deco_end():   # うかぶ けっしょう
         a = k / 9 * 6.28; B.cyl(random.uniform(0.15, 0.28), random.uniform(0.6, 1.2), math.cos(a) * 1.3, math.sin(a) * 1.3, 1.5 + random.uniform(0, 2.2), random.choice(['#d8a8ff', '#ff9aff', '#a8c0ff']), seg=5, r2=0.0, rot=(random.uniform(-0.4, 0.4), 0, random.uniform(0, 3)), noise_amt=0.04, glow=0.3)
     ring(1.4, 2.0, 0.05, '#ff9aff', seg=30, tilt=(0.9, 0), noise_amt=0.0, glow=0.4)
 
+@asset
+def gym_wall_shrine():   # ほこらの なかの いわかべ(まるい いわ+けっしょう)
+    random.seed(31)
+    cute_block(['#9d96b8', '#aaa3c6', '#8e87aa'], bev=0.22)
+    for k in range(5):
+        x, y = random.uniform(-0.7, 0.7), random.uniform(-0.7, 0.7); h = random.uniform(0.4, 0.8)
+        B.cyl(random.uniform(0.13, 0.2), h, x, y, 2.55 + h / 2, random.choice(['#ffc0e0', '#c0d4ff', '#ffe9a0', '#c0f0ff']), seg=6, r2=0.03, rot=(random.uniform(-0.2, 0.2), random.uniform(-0.2, 0.2), 0), noise_amt=0.03, glow=0.14, smooth=True)
+    for k in range(3):
+        B.sph(random.uniform(0.15, 0.25), random.uniform(-0.8, 0.8), random.uniform(-0.8, 0.8), 2.6, '#8fd67a', scale=(1, 1, 0.6), seg=8, ring=6, noise_amt=0.0)
+
+@asset
+def gym_deco_shrine():   # ほこらの かざり(おおきな けっしょう の かたまり)
+    random.seed(32)
+    B.rock(1.1, 0, 0, 0.5, '#a39eb8', scale=(1, 1, 0.6), rough=0.14, sub=2, seed=3, noise_amt=0.05)
+    for (x, y, h, c) in [(0, 0, 3.2, '#e8c8ff'), (-0.7, 0.3, 2.2, '#ffc0e0'), (0.8, -0.2, 2.6, '#c0d4ff'), (0.3, 0.7, 1.6, '#ffe9a0'), (-0.4, -0.7, 1.9, '#c0f0ff')]:
+        B.cyl(h * 0.16, h, x, y, 0.6 + h / 2, c, seg=6, r2=h * 0.02, rot=(random.uniform(-0.15, 0.15), random.uniform(-0.15, 0.15), 0), noise_amt=0.03, glow=0.14, smooth=True)
+
 for fn in ASSETS:
     if only and fn.__name__ not in only: continue
     B.start(out); fn(); B.build(fn.__name__)

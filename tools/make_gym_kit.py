@@ -242,30 +242,75 @@ def gym_goal():   # ゴール(きんの ほしの ぶたい)
         B.sph(0.17, s * 0.85, -0.7, 1.74, '#ffffff', seg=12, ring=8, noise_amt=0.0, glow=0.06)
 
 @asset
-def gym_entrance():   # フィールドに たつ ジムの いりぐち(まえが +Z。はば 9・たかさ 7)
+def gym_entrance():   # フィールドに たつ ジムの いりぐち(まえが +Z。はば およそ 13・たかさ 8)。かわいい おしろ ふうの もん。いろは ゲームで うすく かける
     random.seed(77)
-    B.rbox(10.4, 4.2, 0.35, 0, 0.3, 0.17, STONE_D, bev=0.08, noise_amt=0.1, freq=1.1)   # だい
-    B.rbox(9.0, 3.2, 0.3, 0, 0.1, 0.5, STONE, bev=0.07, noise_amt=0.1)
+    CREAM = '#f6ecd6'; CREAM_D = '#e4d6b8'; GOLD = '#ffd45a'; PINK = '#ffb8cc'; SKY = '#b8d8ff'; MINT = '#bfeccf'
+    # --- だい と かいだん(まえに むかって ひろがる) ---
+    B.rbox(14.0, 6.6, 0.4, 0, 0.6, 0.2, CREAM_D, bev=0.18, bseg=3, noise_amt=0.04, freq=1.1)
+    B.rbox(12.0, 5.2, 0.4, 0, 0.6, 0.6, CREAM, bev=0.16, bseg=3, noise_amt=0.04)
+    for k in range(3):   # かいだん
+        B.rbox(4.6 - k * 0.3, 0.9, 0.22, 0, -2.05 - k * 0.0 - (2 - k) * 0.0, 0.2 + k * 0.0, CREAM, bev=0.1, bseg=3, noise_amt=0.03)
     for k in range(3):
-        B.rbox(5.2 - k * 0.5, 0.9, 0.2, 0, 2.1 - k * 0.45, 0.75 + k * 0.2, STONE2 if k % 2 else STONE, bev=0.05, noise_amt=0.08)
-    for s in (-1, 1):   # はしら
-        B.rbox(1.7, 1.9, 5.6, s * 3.2, -0.4, 3.4, STONE, bev=0.1, noise_amt=0.1, freq=1.2)
-        B.rbox(2.1, 2.3, 0.5, s * 3.2, -0.4, 0.75, STONE_DD, bev=0.08, noise_amt=0.08)
-        B.rbox(2.1, 2.3, 0.45, s * 3.2, -0.4, 6.4, STONE_DD, bev=0.08, noise_amt=0.08)
-        for k in range(4):   # はしらの ほりこみ
-            B.rbox(1.2, 0.12, 0.35, s * 3.2, 0.58, 1.8 + k * 1.1, STONE_D, bev=0.03, noise_amt=0.05)
-        B.sph(0.4, s * 3.2, 0.1, 6.95, '#ffffff', scale=(1, 1, 1), noise_amt=0.0)
-    B.rbox(9.2, 2.3, 1.3, 0, -0.4, 6.0, STONE, bev=0.12, noise_amt=0.1, freq=1.1)   # うえの よこぼう
-    B.rbox(9.8, 2.7, 0.4, 0, -0.4, 6.8, STONE_DD, bev=0.1, noise_amt=0.07)
-    B.rbox(2.6, 2.4, 1.2, 0, -0.45, 7.55, STONE, bev=0.12, noise_amt=0.08)   # まんなかの かざり
-    B.sph(0.55, 0, 0.8, 7.55, '#ffffff', scale=(1, 0.6, 1.2), noise_amt=0.0)   # ほうせき
+        B.rbox(4.8 - k * 0.5, 0.95, 0.24, 0, -2.55 + k * 0.62, 0.52 + k * 0.24, CREAM if k % 2 == 0 else '#fff8e8', bev=0.1, bseg=3, noise_amt=0.03)
+    # --- ほんかん(まるい はこ) ---
+    B.rbox(9.2, 3.4, 4.4, 0, 0.9, 2.8, CREAM, bev=0.3, bseg=3, noise_amt=0.04, freq=1.0)
+    B.rbox(9.6, 3.7, 0.5, 0, 0.9, 1.05, CREAM_D, bev=0.18, bseg=3, noise_amt=0.04)   # うらべり
+    B.rbox(9.8, 3.9, 0.45, 0, 0.9, 5.15, '#ffd2a8', bev=0.2, bseg=3, noise_amt=0.04)   # やねの ふち
+    B.rbox(8.8, 3.3, 0.7, 0, 0.9, 5.65, '#ffc096', bev=0.25, bseg=3, noise_amt=0.05)
+    for k in range(9):   # やねの ふちの まるい かざり
+        B.sph(0.3, -4.1 + k * 1.025, -1.0, 5.05, '#ffe6c8', scale=(1, 1, 0.9), seg=10, ring=8, noise_amt=0.02)
+    # --- だいアーチ ---
+    ay = -0.9
     for s in (-1, 1):
-        B.rbox(0.18, 0.18, 2.3, s * 1.45, 0.78, 4.8, STONE_D, bev=0.03, noise_amt=0.05)   # ゲートの ふち
-    for s in (-1, 1):   # はたの ポール
-        B.cyl(0.1, 4.8, s * 4.9, 1.4, 2.5, STONE_DD, seg=10, noise_amt=0.05)
-        B.rbox(0.05, 1.5, 1.0, s * 4.9, 2.15, 4.4, '#ffffff', bev=0.0, noise_amt=0.0)
-    for k in range(10):   # くずれた いし・がれき
-        B.rock(random.uniform(0.15, 0.35), random.uniform(-4.5, 4.5), random.uniform(1.6, 2.4), 0.52, STONE_D, rough=0.3, sub=1, seed=k, noise_amt=0.1)
+        B.cyl(0.46, 4.0, s * 1.95, ay, 2.4, '#fffaf0', seg=24, noise_amt=0.02, smooth=True)
+        B.cyl(0.62, 0.3, s * 1.95, ay, 0.75, GOLD, seg=24, noise_amt=0.0, smooth=True); B.cyl(0.62, 0.3, s * 1.95, ay, 4.3, GOLD, seg=24, noise_amt=0.0, smooth=True)
+        B.sph(0.42, s * 1.95, ay, 4.85, PINK, seg=14, ring=10, noise_amt=0.0, glow=0.05)
+    pts = [(-1.95 * math.cos(t * math.pi), ay, 3.9 + 1.95 * math.sin(t * math.pi)) for t in [i / 24 for i in range(25)]]
+    B.tube(pts, 0.42, 0.42, '#fffaf0', seg=12, noise_amt=0.02)
+    pts2 = [(-1.95 * math.cos(t * math.pi), ay - 0.4, 3.9 + 1.95 * math.sin(t * math.pi)) for t in [i / 24 for i in range(25)]]
+    B.tube(pts2, 0.09, 0.09, GOLD, seg=8, noise_amt=0.0, glow=0.05)
+    B.sph(0.55, 0, ay - 0.1, 5.95, GOLD, scale=(1, 0.8, 1), seg=14, ring=10, noise_amt=0.0, glow=0.06)
+    for k in range(7):
+        a = (k + 0.5) / 7 * math.pi; B.sph(0.14, -math.cos(a) * 1.95, ay - 0.5, 3.9 + math.sin(a) * 1.95, '#fff6c8', seg=8, ring=6, noise_amt=0.0, glow=0.1)
+    B.rbox(4.0, 1.2, 0.2, 0, ay + 0.1, 0.22, CREAM_D, bev=0.08, bseg=3, noise_amt=0.03)   # しきい
+    B.rbox(3.4, 1.3, 4.6, 0, 0.55, 2.4, '#2a2340', bev=0.0, noise_amt=0.0)   # おくの くらい ばしょ(ひかる めんが うえから かさなる)
+    # --- バナー(ほしの もよう) ---
+    B.rbox(3.0, 0.14, 1.3, 0, ay - 0.65, 7.0, '#fff8e8', bev=0.06, bseg=3, noise_amt=0.0)
+    B.rbox(3.2, 0.12, 0.12, 0, ay - 0.7, 7.7, GOLD, bev=0.04, bseg=2, noise_amt=0.0); B.rbox(3.2, 0.12, 0.12, 0, ay - 0.7, 6.3, GOLD, bev=0.04, bseg=2, noise_amt=0.0)
+    B.cyl(0.34, 0.16, 0, ay - 0.75, 7.0, GOLD, seg=5, noise_amt=0.0, glow=0.06, smooth=True, rot=(1.5708, 0, 0))
+    for k in range(5):
+        a = k / 5 * 6.2832; B.cyl(0.18, 0.16, math.cos(a) * 0.34, ay - 0.75, 7.0 + math.sin(a) * 0.34, GOLD, seg=10, r2=0.03, noise_amt=0.0, smooth=True, rot=(1.5708, 0, 0))
+    # --- りょうがわの とう(まるい やね・はた) ---
+    for s, rc in ((-1, PINK), (1, SKY)):
+        x = s * 5.7
+        B.cyl(1.35, 6.2, x, 0.3, 3.5, CREAM, seg=28, noise_amt=0.03, smooth=True)
+        B.cyl(1.55, 0.35, x, 0.3, 0.75, CREAM_D, seg=28, noise_amt=0.03, smooth=True)
+        B.cyl(1.7, 0.4, x, 0.3, 6.5, '#fff8e8', seg=28, noise_amt=0.02, smooth=True)
+        B.cyl(2.05, 1.9, x, 0.3, 7.6, rc, seg=28, r2=0.1, noise_amt=0.04, smooth=True)   # とんがり やね
+        B.sph(0.3, x, 0.3, 8.65, GOLD, seg=12, ring=8, noise_amt=0.0, glow=0.08)
+        B.cyl(0.06, 1.2, x, 0.3, 9.2, '#8a6a3a', seg=6, noise_amt=0.0)
+        B.rbox(0.05, 0.9, 0.5, x + 0.0, 0.3 - 0.45, 9.4, rc, bev=0.0, noise_amt=0.0)   # はた
+        for z in (2.6, 4.4):   # まどから あかり
+            B.rbox(0.62, 0.3, 0.9, x, -0.98, z, '#fff3c0', bev=0.14, bseg=3, noise_amt=0.0, glow=0.2)
+            B.rbox(0.8, 0.12, 0.12, x, -1.0, z - 0.5, '#e4d6b8', bev=0.04, bseg=2, noise_amt=0.0)
+        for k in range(6):   # とうの おびの かざり
+            a = k / 6 * 6.2832 + 0.3; B.sph(0.16, x + math.cos(a) * 1.4, 0.3 + math.sin(a) * 1.4, 6.5, GOLD, seg=8, ring=6, noise_amt=0.0)
+    # --- かんばんの いし(ジムの なまえ いれ) ---
+    for s in (-1, 1):
+        x = s * 3.3
+        B.rbox(0.9, 0.9, 0.9, x, -3.0, 1.25, CREAM, bev=0.18, bseg=3, noise_amt=0.03)   # うえきばち
+        B.rbox(1.0, 1.0, 0.18, x, -3.0, 1.75, CREAM_D, bev=0.08, bseg=3, noise_amt=0.03)
+        for k in range(6):
+            a = k / 6 * 6.2832; B.sph(0.34, x + math.cos(a) * 0.3, -3.0 + math.sin(a) * 0.3, 2.2 + (k % 2) * 0.12, random.choice(['#8fd67a', '#7fcf6a', '#a4e486']), seg=10, ring=7, noise_amt=0.04)
+        for k in range(4):
+            a = k / 4 * 6.2832 + 0.5; B.sph(0.11, x + math.cos(a) * 0.36, -3.0 + math.sin(a) * 0.36, 2.5, random.choice([PINK, '#fff0a0', '#ffffff']), seg=6, ring=4, noise_amt=0.0)
+    # --- ちかくの こもの(どうろう・いけがき) ---
+    for s in (-1, 1):
+        x = s * 8.0
+        for k in range(4):
+            B.sph(0.8 + (k % 2) * 0.1, x + s * (k * 0.6 - 0.8), 0.2 + (k % 2) * 0.3, 0.9 + (k % 2) * 0.1, ['#6cc35c', '#7fcf6a', '#93dc78', '#6cc35c'][k], scale=(1, 1, 0.85), seg=12, ring=8, noise_amt=0.05)
+    for k in range(5):   # おいてある ほし の かざり
+        B.sph(random.uniform(0.15, 0.3), random.uniform(-5.2, 5.2), random.uniform(-3.4, -2.0), 0.55, '#fff6c8', scale=(1, 1, 0.7), seg=8, ring=6, noise_amt=0.0, glow=0.1)
 
 @asset
 def gym_portal():   # いりぐちの なかの ひかる めん(ふくろ。ゲームで かさねあわせる)

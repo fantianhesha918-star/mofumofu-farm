@@ -9,7 +9,7 @@ import { ITEMS } from './data.js';
 import { GYM_QUIZ } from './gymquiz.js';
 import { sfx, unlockAudio } from './audio.js';
 import { setFieldBgm } from './bgm.js';
-import { healParty, giveStarter } from './battle.js';
+import { healParty, giveStarter, questData } from './battle.js';
 import { FIELDS } from './fielddata.js';
 import { parseLevel, newState, step, doorOpen, DIRS } from './gymlogic.js';
 import { GYM_MAPS } from './gymmaps.js';
@@ -23,9 +23,12 @@ document.body.classList.toggle('touch', isTouch);
 const lam = (k, dt) => 1 - Math.exp(-k * dt);
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const FID = FIELDS[params.get('f')] && GYM_MAPS[params.get('f')] ? params.get('f') : 'forest';
-const F = FIELDS[FID], BOSS = F.boss, TH = GYM_THEMES[FID] || GYM_THEMES.forest, MAP = GYM_MAPS[FID];
-const ELITE = ['castle', 'temple', 'dragon', 'end'].includes(FID);
-const ROLE = ELITE ? 'してんのう' : 'ぬし';
+const SH = FIELDS[params.get('f')] && params.get('shrine') ? params.get('shrine') : null;   // ほこらの なか(でんせつの モンスターの いる どうくつ)
+const TKEY = SH ? 'shrine' : FID;   // かべ・かざり・いろの なまえ
+const SHRINE_MAP = { rows: ['####@####', '#.......#', '#.......#', '####S####'], hints: ['おくに でんせつの モンスターが いる。しかけは ないよ'], steps: 0, seed: 0 };
+const F = FIELDS[FID], BOSS = SH ? { key: 'shrine:' + SH, id: SH, sprite: SH, name: 'でんせつの モンスター' } : F.boss, TH = GYM_THEMES[TKEY] || GYM_THEMES.forest, MAP = SH ? SHRINE_MAP : GYM_MAPS[FID];
+const ELITE = !SH && ['castle', 'temple', 'dragon', 'end'].includes(FID);
+const ROLE = SH ? 'でんせつの モンスター' : ELITE ? 'してんのう' : 'ぬし';
 const CELL = 2, FLOOR_T = 0.34, WALL_H = 0.6;   // かべは ひくめに(うえから みても プレイヤーが かくれない)
 document.title = `${TH.name} - もふもふ牧場`;
 
@@ -48,7 +51,7 @@ $('#hud').hidden = false; $('#mm').hidden = true; $('#goal').hidden = true; $('#
 const loader = new GLTFLoader();
 const KIT = {};
 async function loadKit() {
-  const names = ['gym_floor', 'gym_wall', 'gym_wall_low', 'gym_ice', 'gym_rock', 'gym_hole', 'gym_lava', 'gym_plate', 'gym_door_frame', 'gym_door_bars', 'gym_quiz_frame', 'gym_quiz_leaf', 'gym_lock', 'gym_key', 'gym_arrow', 'gym_warp', 'gym_crumble', 'gym_sign', 'gym_goal', 'gym_checkpoint', 'gym_wall_' + FID, 'gym_deco_' + FID, ...(TH.extra || [])];
+  const names = ['gym_floor', 'gym_wall', 'gym_wall_low', 'gym_ice', 'gym_rock', 'gym_hole', 'gym_lava', 'gym_plate', 'gym_door_frame', 'gym_door_bars', 'gym_quiz_frame', 'gym_quiz_leaf', 'gym_lock', 'gym_key', 'gym_arrow', 'gym_warp', 'gym_crumble', 'gym_sign', 'gym_goal', 'gym_checkpoint', 'gym_wall_' + TKEY, 'gym_deco_' + TKEY, ...(TH.extra || [])];
   await Promise.all(names.map(async n => {
     try { const gl = await loader.loadAsync(`./assets/gym/${n}_lite.glb`); let m = null; gl.scene.traverse(o => { if (!m && o.isMesh) m = o; }); if (m) { if (!m.geometry.attributes.normal) m.geometry.computeVertexNormals(); KIT[n] = m.geometry; } } catch (e) { console.warn('gym part failed', n, e); }
   }));
@@ -63,7 +66,7 @@ const matFor = (kind) => {
   return mats[kind] = new THREE.MeshStandardMaterial({ ...o, roughness: 0.82, metalness: 0.02 });
 };
 const tint = (hex, mul = 1) => new THREE.Color(hex).multiplyScalar(mul);
-const THEMED = () => !!KIT['gym_wall_' + FID], WALLM = () => THEMED() ? 'gym_wall_' + FID : 'gym_wall';   // ジムごとの せんようの かべ(フルカラー)があれば つかう
+const THEMED = () => !!KIT['gym_wall_' + TKEY], WALLM = () => THEMED() ? 'gym_wall_' + TKEY : 'gym_wall';   // ジムごとの せんようの かべ(フルカラー)があれば つかう
 const wallTint = (mul) => THEMED() ? tint('#ffffff', Math.min(1, mul * 1.08)) : tint(TH.wall, mul);
 
 // ---- レベル ----
@@ -149,7 +152,7 @@ async function buildBoss() {
   arena.userData.bx = bx; arena.userData.bz = bz;
 }
 function buildDecor() {   // へやの まわり・ボスの へやの かどに ジムの せんようの かざりを ならべる
-  const g = KIT['gym_deco_' + FID]; if (!g) return; const deco = new THREE.Group(); scene.add(deco);
+  const g = KIT['gym_deco_' + TKEY]; if (!g) return; const deco = new THREE.Group(); scene.add(deco);
   const spots = [], hw = W * CELL / 2, hh = H * CELL / 2, gx = cx(LV.goal[0]);
   for (let z = -hh + 2; z <= hh + 2; z += 7.5) { spots.push([-hw - 4.2, z], [hw + 4.2, z + 2.6]); }
   for (let k = 0; k <= AR_D + 1; k += 2) { const z = cz(0) - k * CELL - 2; spots.push([gx - ((AR_W + 1) / 2) * CELL - 4.2, z], [gx + ((AR_W + 1) / 2) * CELL + 4.2, z + 1.6]); }
@@ -170,6 +173,7 @@ const AMBIENT = {
   sky: { c: '#ffffff', n: 70, size: 0.4, mode: 'drift', vy: 0.15, top: 8 },
   sun: { c: '#ffe58a', n: 90, size: 0.3, mode: 'drift', vy: 0.2, top: 8 },
   cosmos: { c: '#cfe0ff', n: 110, size: 0.3, mode: 'twinkle', vy: 0, top: 9 },
+  shrine: { c: '#ffe9a0', n: 90, size: 0.34, mode: 'twinkle', vy: 0, top: 8 },
   grove: { c: '#ffe8f4', n: 60, size: 0.45, mode: 'up', vy: 0.55, top: 8 },
   castle: { c: '#d8a8ff', n: 60, size: 0.34, mode: 'up', vy: 0.5, top: 7 },
   temple: { c: '#ffe9a0', n: 90, size: 0.34, mode: 'twinkle', vy: 0, top: 9 },
@@ -178,7 +182,7 @@ const AMBIENT = {
 };
 let ambient = null;
 function buildAmbient() {
-  const A = AMBIENT[FID]; if (!A) return; const n = ECO ? Math.round(A.n * 0.5) : A.n;
+  const A = AMBIENT[TKEY]; if (!A) return; const n = ECO ? Math.round(A.n * 0.5) : A.n;
   const cv = document.createElement('canvas'); cv.width = cv.height = 64; const cg = cv.getContext('2d'), gr = cg.createRadialGradient(32, 32, 2, 32, 32, 30);
   gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.4, 'rgba(255,255,255,0.6)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); cg.fillStyle = gr; cg.fillRect(0, 0, 64, 64);
   const geo = new THREE.BufferGeometry(), pos = new Float32Array(n * 3), ph = new Float32Array(n);
@@ -318,8 +322,14 @@ async function talkBoss() {
   if (k === 0) { sfx('quest'); fade(true); await sleep(600); save(); location.href = `field.html?f=${FID}&boss=1&_=${Date.now()}`; return; }
   busy = false;
 }
+async function talkShrine() {
+  if (busy || !bossOpen) return; busy = true; sfx('pet');
+  const who = BOSS.name, k = await dlgShow(['……ふしぎな けはいが ただよっている。', `${BOSS.name}が しずかに こちらを みつめている。`, 'つよい あいてだ。HPと かいふくの たべものは じゅんびしたかな?'], ['ちょうせんする', 'まだ やめておく'], who);
+  if (k === 0) { sfx('quest'); fade(true); await sleep(600); save(); location.href = `field.html?f=${FID}&legend=${SH}&_=${Date.now()}`; return; }
+  busy = false;
+}
 const fade = (on) => { const f = $('#fade'); f.textContent = ''; f.classList.toggle('on', on); };
-function exitGym(toVillage) { busy = true; fade(true); save(); setTimeout(() => { location.href = `field.html?f=${FID}&fromgym=1&_=${Date.now()}`; }, 500); }
+function exitGym(toVillage) { busy = true; fade(true); save(); setTimeout(() => { location.href = SH ? `field.html?f=${FID}&fromshrine=${SH}&_=${Date.now()}` : `field.html?f=${FID}&fromgym=1&_=${Date.now()}`; }, 500); }
 
 // ---- ボタン(やりなおし・ヒント・でる) ----
 function addButtons() {
@@ -355,7 +365,7 @@ function frame() {
     if (bossObj && !bossObj.isSprite) bossObj.rotation.y = Math.atan2(P.x - arena.userData.bx, P.z - arena.userData.bz);
     // はなしかけ
     let target = null;
-    if (bossOpen && !busy && Math.hypot(P.x - arena.userData.bx, P.z - arena.userData.bz) < 7) target = { label: bossBeaten() ? BOSS.name + 'に さいせんする' : BOSS.name + 'に はなしかける', sub: 'つよい あいてだよ。HPと かいふくの たべものを じゅんびしてね', short: 'はなしかけ', can: true, act: talkBoss };
+    if (bossOpen && !busy && Math.hypot(P.x - arena.userData.bx, P.z - arena.userData.bz) < 7) target = { label: SH ? BOSS.name + 'に ちかづく' : bossBeaten() ? BOSS.name + 'に さいせんする' : BOSS.name + 'に はなしかける', sub: 'つよい あいてだよ。HPと かいふくの たべものを じゅんびしてね', short: 'はなしかけ', can: true, act: SH ? talkShrine : talkBoss };
     ui.setPrompt(ui.panelOpen() ? null : target);
     if (input.action) { input.action = false; if (target && target.can) target.act(); }
     input.tap = null;
@@ -376,7 +386,7 @@ async function bootMain() {
   chin = makeChin(0.95); scene.add(chin.outer);
   S = freshState(); buildBackdrop(); buildLevel(); buildArena(); buildDecor(); buildAmbient(); await buildBoss(); addButtons();
   ui.setCoins(); ui.setClock && ui.setClock(); ui.setLevel && ui.setLevel();
-  const cleared = state.gyms && state.gyms[FID] && state.gyms[FID].solved;
+  const cleared = SH || (state.gyms && state.gyms[FID] && state.gyms[FID].solved);
   if (cleared || params.has('arena')) { setPlayerCell(LV.goal[0], LV.goal[1]); P.z = cz(0) - (AR_D - 2) * CELL; P.x = cx(LV.goal[0]); solved = true; bossOpen = true; }
   else { setPlayerCell(S.x, S.y); P.face = Math.PI; }
   updateDoorsAndPlates(true); updateKeysHud();
@@ -384,7 +394,8 @@ async function bootMain() {
   cam.pos.set(P.x, 17, P.z + 5.5); cam.look.set(P.x, 0.6, P.z - 4.5);
   setFieldBgm(FID); $('#loading2').classList.add('done');
   busy = false;
-  setTimeout(() => ui.toast(TH.name, (MAP.hints || [])[0] || '', `${ROLE} ${BOSS.name}が おくで まっている`, 6000), 800);
+  if (SH) { try { const GD = await questData(), m = GD.MONSTERS[SH]; if (m) BOSS.name = m.name; } catch (e) { console.warn('shrine name', e); } }
+  setTimeout(() => ui.toast(TH.name, (MAP.hints || [])[0] || '', SH ? `${BOSS.name}が おくで まっている` : `${ROLE} ${BOSS.name}が おくで まっている`, 6000), 800);
   window.__g = { S: () => S, LV, step, doStep, P, scene, camera, TH, resetLevel, state };
   if (params.has('shot')) document.title = 'ready';   // かくにん用の さつえい(shot.py)が まつ めじるし
 }

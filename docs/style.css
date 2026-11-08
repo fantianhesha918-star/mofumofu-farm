@@ -509,3 +509,19 @@ body { word-break: keep-all; overflow-wrap: break-word; line-break: strict; }
 @keyframes csPop { 0% { transform: translateX(-50%) scale(.4); opacity: 0; } 12% { transform: translateX(-50%) scale(1.15); opacity: 1; } 22% { transform: translateX(-50%) scale(1); } 85% { opacity: 1; } 100% { opacity: 0; } }
 
 #namemodal .anbtns { display: flex; gap: 10px; justify-content: center; margin-top: 10px; } #namemodal .anbtns .pill { flex: 1; margin: 0; } #namemodal .pill.alt { background: #4a3a2a; color: #f4ead2; border: 1px solid #ffffff33; }
+
+/* タイトルの セーブの わく(3つ)と シリーズの タブ */
+#seriesTabs { display: flex; gap: 8px; justify-content: center; margin: -10px 0 14px; flex-wrap: wrap; }
+#seriesTabs button { padding: 7px 16px; font-size: 14px; font-weight: 700; border-radius: 20px; background: #2c1f14d9; color: var(--cream); border: 2px solid #d9b25a88; font-family: inherit; }
+#seriesTabs button.on { background: linear-gradient(#f4dc96, #d9b25a); color: #3d2b1c; border-color: #fff3c0; }
+#slots { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+#slots .slot { display: flex; gap: 6px; width: min(86vw, 380px); }
+#slots .sgo { flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 10px 18px; border-radius: 18px; text-align: left; font-family: inherit; background: linear-gradient(#f4dc96, #d9b25a); color: #3d2b1c; border: 2px solid #fff3c0; box-shadow: 0 4px 0 #8a6a2a, 0 8px 20px #0007; }
+#slots .sgo b { font-size: 13px; letter-spacing: .15em; opacity: .75; }
+#slots .sgo span { font-size: 18px; font-weight: 700; letter-spacing: .08em; }
+#slots .sgo small { font-size: 12px; opacity: .8; }
+#slots .slot.empty .sgo { background: #2c1f14d9; color: var(--cream); border-color: #d9b25a; box-shadow: 0 4px 14px #0007; }
+#slots .slot.last .sgo { border-color: #fff; box-shadow: 0 0 0 2px #ffe08a, 0 4px 0 #8a6a2a, 0 8px 20px #0007; }
+#slots .sdel { padding: 0 14px; border-radius: 18px; font-size: 13px; font-weight: 700; font-family: inherit; background: #3a1c1cd9; color: #ffb0a0; border: 2px solid #a85a4a; }
+#slots button:active { transform: translateY(2px); }
+#slots button[disabled] { opacity: .5; }

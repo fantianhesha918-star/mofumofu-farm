@@ -13,4 +13,5 @@ export const GYM_THEMES = {
   temple:  { name: 'ほしの ジム', sky: '#1e2458', fogN: 22, fogF: 64, hemi: [0xdce4ff, 0x5a6aa8, 1.7], sun: [0xffecc0, 1.9], wall: '#5e6cac', floor: '#aab4e0', accent: '#ffe9a0', rock: '#dcdff2', ground: '#141a44' },
   dragon:  { name: 'せいりゅうの ジム', sky: '#14403c', fogN: 22, fogF: 64, hemi: [0xd0fff4, 0x2c6a66, 1.5], sun: [0xc0ffec, 1.8], wall: '#307470', floor: '#8cc8c0', arrow: '#b8fff0', accent: '#7affd8', rock: '#d0eae4', ground: '#0c2a28' },
   end:     { name: 'うちゅうの はての ジム', sky: '#1c1038', fogN: 20, fogF: 62, hemi: [0xf0e0ff, 0x6a5a98, 1.75], sun: [0xffe0ff, 1.9], wall: '#60408c', floor: '#b498e4', ice: '#e4d0ff', arrow: '#f0d8ff', accent: '#ffd8ff', rock: '#e4d8f4', ground: '#0e0a22' },
+  shrine:  { name: 'でんせつの ほこら', sky: '#241c48', fogN: 18, fogF: 60, hemi: [0xe8dcff, 0x6a5a98, 1.8], sun: [0xffe8c8, 1.7], wall: '#8e87aa', floor: '#c4bade', accent: '#ffe9a0', rock: '#d8d0e8', ground: '#2a2250' },
 };
