@@ -4,9 +4,11 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { input, pollInput, setupInput } from './input.js';
 import { ui } from './ui.js';
-import { ECO, state, load, save, bus, addItem, count } from './state.js';
+import { ECO, state, load, save, bus, addItem, count, moonOn } from './state.js';
 import { ITEMS } from './data.js';
-import { GYM_QUIZ } from './gymquiz.js';
+import { GYM_QUIZ as GYM_QUIZ_MAIN } from './gymquiz.js';
+import { GYM_QUIZ_MOON } from './gymquiz_moon.js';
+import { GYM_MAPS_MOON } from './gymmaps_moon.js';
 import { sfx, unlockAudio } from './audio.js';
 import { setFieldBgm } from './bgm.js';
 import { healParty, giveStarter, questData } from './battle.js';
@@ -26,7 +28,7 @@ const FID = FIELDS[params.get('f')] && GYM_MAPS[params.get('f')] ? params.get('f
 const SH = FIELDS[params.get('f')] && params.get('shrine') ? params.get('shrine') : null;   // ほこらの なか(でんせつの モンスターの いる どうくつ)
 const TKEY = SH ? 'shrine' : FID;   // かべ・かざり・いろの なまえ
 const SHRINE_MAP = { rows: ['####@####', '#.......#', '#.......#', '####S####'], hints: ['おくに でんせつの モンスターが いる。しかけは ないよ'], steps: 0, seed: 0 };
-const F = FIELDS[FID], BOSS = SH ? { key: 'shrine:' + SH, id: SH, sprite: SH, name: 'でんせつの モンスター' } : F.boss, TH = GYM_THEMES[TKEY] || GYM_THEMES.forest, MAP = SH ? SHRINE_MAP : GYM_MAPS[FID];
+const F = FIELDS[FID], BOSS = SH ? { key: 'shrine:' + SH, id: SH, sprite: SH, name: 'でんせつの モンスター' } : F.boss, TH = GYM_THEMES[TKEY] || GYM_THEMES.forest, MAP = SH ? SHRINE_MAP : (moonOn() && GYM_MAPS_MOON[FID]) || GYM_MAPS[FID];
 const ELITE = !SH && ['castle', 'temple', 'dragon', 'end'].includes(FID);
 const ROLE = SH ? 'でんせつの モンスター' : ELITE ? 'してんのう' : 'ぬし';
 const CELL = 2, FLOOR_T = 0.34, WALL_H = 0.6;   // かべは ひくめに(うえから みても プレイヤーが かくれない)
@@ -73,6 +75,8 @@ const wallTint = (mul) => THEMED() ? tint('#ffffff', Math.min(1, mul * 1.08)) : 
 const LV = parseLevel(MAP.rows);
 const W = LV.w, H = LV.h;
 const cx = (x) => (x - W / 2 + 0.5) * CELL, cz = (y) => (y - H / 2 + 0.5) * CELL;   // マス → せかい ざひょう
+const GYM_QUIZ = moonOn() ? { ...GYM_QUIZ_MAIN, ...GYM_QUIZ_MOON } : GYM_QUIZ_MAIN;
+if (moonOn()) { const GN = { forest: 'つきみの ジム', lake: 'かがみの ジム', volcano: 'あかつきの ジム', ghost: 'かげぼうしの ジム', sky: 'たかだいの ジム', sun: 'ほしすなの ジム', cosmos: 'うみべの ジム', grove: 'ほたるの ジム', castle: 'かげの しろ', temple: 'つきの しんでん', dragon: 'とけいの ジム', end: 'しんげつの ジム' }; if (GN[FID]) TH.name = GN[FID]; }
 const quizDone = () => !!(state.gyms && state.gyms[FID] && state.gyms[FID].quiz);
 function freshState() { const st = newState(LV); if (quizDone()) st.cells = st.cells.map(c => c === 'Q' ? '.' : c); return st; }   // もう こたえた とびらは ひらいたまま
 let S = newState(LV);
@@ -106,9 +110,40 @@ function buildTiles(cells) {   // ゆか・かべ・こおり・あな・よう�
   }
   instOf('gym_floor', 'std', floors); instOf(WALLM(), 'std', walls); iceMesh = instOf('gym_ice', 'ice', ices); instOf('gym_hole', 'std', holes); lavaMesh = instOf('gym_lava', 'lava', lavas); instOf('gym_arrow', 'std', arrows);
 }
+
+// ---- 「月」シリーズの しかけの みため(Blender を つかわず かんたんな かたちで つくる) ----
+const SPECIAL = new Set(['M', 'W', 'w', 'h', '/', 'z', 'G', 'V', 'e', 'D']);
+const _gm = {}; const GM = (k, f) => _gm[k] || (_gm[k] = f());
+function sm(color, em = 0, op = 1) { const m = new THREE.MeshStandardMaterial({ color, roughness: 0.55, metalness: 0.1, emissive: color, emissiveIntensity: em, transparent: op < 1, opacity: op }); return m; }
+function makeSpecial(c) {
+  const g = new THREE.Group();
+  if (c === 'M') { const d = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.12, 24), sm('#fff0b0', 0.8)); d.position.y = 0.08; g.add(d); const r = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.05, 8, 24), sm('#ffd86a', 0.6)); r.rotation.x = Math.PI / 2; r.position.y = 0.1; g.add(r); g.userData.moon = d; }
+  else if (c === 'W' || c === 'w') { const b = new THREE.Mesh(new THREE.BoxGeometry(CELL * 0.98, 1.5, CELL * 0.98), sm(c === 'W' ? '#bcd8ff' : '#ffd6a0', 0.35, 0.92)); b.position.y = 0.75; g.add(b); g.userData.blk = b; const cap = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 10), sm(c === 'W' ? '#ffffff' : '#ff9a4a', 0.9)); cap.position.y = 1.6; g.add(cap); g.userData.cap = cap; }
+  else if (c === 'h') { const w = new THREE.Mesh(new THREE.BoxGeometry(CELL * 0.98, 0.5, CELL * 0.98), sm('#3a8ae0', 0.25, 0.8)); w.position.y = 0.2; g.add(w); g.userData.water = w; }
+  else if (c === '/' || c === '\\') { const m = new THREE.Mesh(new THREE.BoxGeometry(CELL * 1.25, 1.5, 0.12), new THREE.MeshStandardMaterial({ color: '#e8f4ff', roughness: 0.08, metalness: 0.95, emissive: '#7ab8ff', emissiveIntensity: 0.25 })); m.position.y = 0.85; m.rotation.y = c === '/' ? -Math.PI / 4 : Math.PI / 4; g.add(m); const fr = new THREE.Mesh(new THREE.BoxGeometry(CELL * 1.3, 0.1, 0.2), sm('#c8a050', 0.2)); fr.position.y = 0.05; fr.rotation.y = m.rotation.y; g.add(fr); }
+  else if (c === 'z') { const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.34), sm('#8a9ac8', 0.2)); st.position.y = 0.7; g.add(st); g.userData.star = st; }
+  else if (c === 'G') { for (let k = -2; k <= 2; k++) { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.7, 8), sm('#ffd86a', 0.5)); b.position.set(k * 0.38, 0.85, 0); g.add(b); } g.userData.bars = g.children.slice(); }
+  else if (c === 'V') { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.46, 0.2, 14), sm('#8a6a3a', 0.1)); b.position.y = 0.1; g.add(b); const st = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.9, 8), sm('#c8a050', 0.3)); st.position.y = 0.6; g.add(st); const kn = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), sm('#ff6a6a', 0.6)); kn.position.y = 1.05; g.add(kn); g.userData.lever = st; }
+  else if (c === 'e') { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.8, 8), sm('#7a5a30', 0.1)); b.position.y = 0.4; g.add(b); const o = new THREE.Mesh(new THREE.SphereGeometry(0.26, 14, 12), sm('#ffe08a', 1.2)); o.position.y = 1.0; g.add(o); g.userData.orb = o; }
+  else if (c === 'D') { const d = new THREE.Mesh(new THREE.BoxGeometry(CELL * 0.98, 0.06, CELL * 0.98), sm('#14122a', 0, 0.88)); d.position.y = 0.04; g.add(d); g.userData.dark = d; }
+  g.traverse(o => { if (o.isMesh) o.castShadow = false; }); return g;
+}
+function updateSpecials(instant) {
+  if (!dyn || !dyn.sp) return;
+  for (const [i, { o, c }] of dyn.sp) {
+    const cell = S.cells[i], u = o.userData;
+    if (c === 'W') { const open = S.ph === 1; u.blk.scale.y = open ? 0.05 : 1; u.blk.position.y = open ? 0.04 : 0.75; u.cap.visible = !open; }
+    else if (c === 'w') { const open = S.ph === 0; u.blk.scale.y = open ? 0.05 : 1; u.blk.position.y = open ? 0.04 : 0.75; u.cap.visible = !open; }
+    else if (c === 'h') { const hi = (S.t % 4) >= 2; u.water.scale.y = hi ? 1.7 : 0.25; u.water.position.y = hi ? 0.34 : 0.08; u.water.material.opacity = hi ? 0.88 : 0.35; }
+    else if (c === 'z') { const lit = cell === 'y'; u.star.material.emissiveIntensity = lit ? 1.4 : 0.15; u.star.material.color.set(lit ? '#fff2a0' : '#8a9ac8'); u.star.material.emissive.set(lit ? '#ffe070' : '#2a3050'); }
+    else if (c === 'G') { const open = !S.cells.includes('z'); for (const b of u.bars) b.position.y = open ? 2.6 : 0.85; }
+    else if (c === 'D') { u.dark.material.opacity = S.lamp > 0 ? 0.35 : 0.9; }
+    else if (c === 'M') { u.moon.material.emissiveIntensity = S.ph ? 1.3 : 0.4; u.moon.material.color.set(S.ph ? '#fff7c8' : '#8a90a8'); }
+  }
+}
 function buildLevel() {
   for (let k = level.children.length - 1; k >= 0; k--) { const o = level.children[k]; level.remove(o); if (o.material && o.material.dispose && !o.isInstancedMesh) o.material.dispose(); }
-  dyn = { rocks: new Map(), keys: new Map(), doors: new Map(), plates: new Map(), crumbles: new Map(), locks: new Map(), cps: new Map(), warps: [], goal: null };
+  dyn = { sp: new Map(), rocks: new Map(), keys: new Map(), doors: new Map(), plates: new Map(), crumbles: new Map(), locks: new Map(), cps: new Map(), warps: [], goal: null };
   const base = -FLOOR_T; buildTiles(S.cells);
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const i = y * W + x, c = LV.cells[i], X = cx(x), Z = cz(y);
@@ -122,6 +157,7 @@ function buildLevel() {
     else if (c === 's') addMesh(level, 'gym_sign', 'std', X, 0, Z, '#ffffff');
     else if (c === '=') dyn.cps.set(i, addMesh(level, 'gym_checkpoint', 'glow', X, base, Z, TH.accent || '#ffe9a0'));
     else if (c === '@') dyn.goal = addMesh(level, 'gym_goal', 'glow', X, base, Z, TH.accent || '#ffe9a0');
+    else if (SPECIAL.has(c) || c === '\\') { const o = makeSpecial(c); if (o) { o.position.set(X, base, Z); level.add(o); dyn.sp.set(i, { o, c }); } }
   }
   for (const i of S.rocks) { const x = i % W, y = (i / W) | 0; dyn.rocks.set(i, addMesh(level, 'gym_rock', 'std', cx(x), 0, cz(y), TH.rock || '#ffffff', ((x * 3 + y) % 4) * 1.57)); }
 }
@@ -265,6 +301,11 @@ async function playActs(acts) {
     else if (a.t === 'key') { const m = dyn.keys.get(a.at); dyn.keys.delete(a.at); sfx('quest'); if (m) level.remove(m); updateKeysHud(); ui.toast('かぎを てにいれた!', 'かぎの とびらを あけられるよ', '', 1800); }
     else if (a.t === 'unlock') { const m = dyn.locks.get(a.at); dyn.locks.delete(a.at); sfx('quest'); if (m) { tween(380, t => { m.position.y = -FLOOR_T + t * 2.6; }).then(() => level.remove(m)); } updateKeysHud(); await wait(120); }
     else if (a.t === 'crumble') { const m = dyn.crumbles.get(a.at); dyn.crumbles.delete(a.at); sfx('no'); if (m) { tween(360, t => { m.position.y = -FLOOR_T - t * 1.4; m.rotation.x = t * 0.3; }).then(() => level.remove(m)); } refreshTiles(a.at); }
+    else if (a.t === 'moon') { sfx('quest'); ui.toast(a.ph ? 'まんげつに なった' : 'しんげつに なった', 'つきの かべが いれかわるよ', '', 1800); updateSpecials(); }
+    else if (a.t === 'star') { sfx('pick'); updateSpecials(); if (a.left === 0) { sfx('quest'); ui.toast('せいざが かんせい!', 'ほしの とびらが ひらいたよ', '', 2200); } }
+    else if (a.t === 'clock') { sfx('quest'); ui.toast('とけいの はりが まわった', 'ベルトの むきが かわったよ', '', 1800); refreshTiles(); }
+    else if (a.t === 'lamp') { sfx('quest'); ui.toast('あかりを てにいれた', 'かげの ゆかを 6ほ あるけるよ', '', 1800); }
+    else if (a.t === 'mirror') { sfx('pick'); }
     else if (a.t === 'warp') { sfx('quest'); await tween(120, t => { P.scale = 1 - t; }); P.x = cx(a.x); P.z = cz(a.y); await tween(160, t => { P.scale = t; }); P.scale = 1; }
     else if (a.t === 'fall') { sfx('no'); await tween(380, t => { P.scale = 1 - t * 0.9; chin.outer.position.y = -t * 1.2; }); }
     else if (a.t === 'respawn') { P.x = cx(a.x); P.z = cz(a.y); chin.outer.position.y = 0; await tween(240, t => { P.scale = 0.1 + t * 0.9; }); P.scale = 1; ui.toast('おちてしまった!', 'スタートに もどったよ', '', 1600); }
@@ -276,7 +317,14 @@ function updateDoorsAndPlates(instant) {
   for (const [i, d] of dyn.doors) { const ch = S.cells[i]; if (!ch || !/[ABC]/.test(ch)) continue; const open = doorOpen(S, LV, ch) ? 1 : 0; if (open !== d.open) { d.open = open; if (!instant) sfx(open ? 'quest' : 'no'); } }
   for (const [i, m] of dyn.plates) { const on = S.rocks.includes(i) || (S.x + S.y * W) === i; m.material.emissive.set(on ? PLATE_COL[S.cells[i]] || '#ffffff' : '#000000'); m.material.emissiveIntensity = on ? 0.9 : 0; }
 }
-function updateKeysHud() { let el = $('#gymkeys'); if (!el) return; el.textContent = S.keys > 0 ? `かぎ ×${S.keys}` : ''; el.hidden = S.keys <= 0; }
+function updateKeysHud() {
+  let el = $('#gymkeys'); if (!el) return; const t = [];
+  if (S.keys > 0) t.push(`かぎ ×${S.keys}`);
+  if (LV.cells.includes('M')) t.push(`つき: ${S.ph ? 'まんげつ' : 'しんげつ'}`);
+  if (LV.cells.includes('h')) t.push(`しお: ${(S.t % 4) >= 2 ? 'みち' : 'ひき'}`);
+  if (LV.cells.includes('D') || LV.cells.includes('e')) t.push(`あかり ${S.lamp}`);
+  el.textContent = t.join(' / '); el.hidden = !t.length; updateSpecials();
+}
 
 // ---- そうさ ----
 let moveQueue = null;

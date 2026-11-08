@@ -152,6 +152,14 @@ export const BADGES = [
   { id: 'dragon', name: 'せいりゅうの バッジ', boss: 'ソウリュウ', color: '#2a9a8a', bonus: 'バトルの けいけんちが さらに +15%', sym: 'M14 30c4-14 14-2 18-12M32 18l4 1-2 3M14 30l-3 3' },
   { id: 'end', name: 'うちゅうの かみの バッジ', boss: 'カムイ', color: '#d8b8f0', bonus: 'なかまの ステータスが ぜんぶ +10%', sym: 'M24 12a12 12 0 1 0 0 24 12 12 0 0 0 0-24zM24 18v12M18 24h12' },
 ];
+// 「月」シリーズ: バッジの なまえ・ぬしの なまえを さしかえる
+try {
+  const m = (localStorage.getItem('chinchilla-ranch-active') || '').match(/^([a-z0-9]+):/);
+  if (m && m[1] === 's2') {
+    const MB = { forest: ['つきみの バッジ', 'ツキミノ'], lake: ['かがみの バッジ', 'ミカゲ'], volcano: ['あかつきの バッジ', 'アカツチ'], ghost: ['かげぼうしの バッジ', 'クラヤミ'], sky: ['たかだいの バッジ', 'ウンカイ'], sun: ['ほしすなの バッジ', 'スナボシ'], cosmos: ['うみべの バッジ', 'シオサイ'], grove: ['ほたるの バッジ', 'ホタルビ'], castle: ['かげの しろの バッジ', 'カゲロウ'], temple: ['つきの バッジ', 'ゲツレイ'], dragon: ['とけいの バッジ', 'ハグルマ'], end: ['しんげつの バッジ', 'シンゲツ'] };
+    for (const b of BADGES) if (MB[b.id]) { b.name = MB[b.id][0]; b.boss = MB[b.id][1]; }
+  }
+} catch { /* むし */ }
 export const HEAL = { grilled_fish: 50, fish_soup: 55, squid_grill: 65, tai_shio: 80, octo_marinade: 75, nori_roll: 60, seaweed_soup: 40, shell_butter: 55, boiled_egg: 25, jam: 20, grilled_corn: 40, veg_soup: 45, omelet: 60, corn_soup: 70, ratatouille: 70, pumpkin_stew: 90, golden_omelet: 100 };
 
 // 家の もようがえ(かべがみ・ゆか)。n = assets/interior/wall_n.jpg / floor_n.jpg

@@ -1,5 +1,5 @@
 // なかまの ぼくじょう: モンスターを あずけておくと、まいあさ コインや ざいりょうを もってきて、すこしずつ せいちょうする
-import { state, addItem, bus } from './state.js';
+import { state, addItem, bus, evoId } from './state.js';
 import { DROP_BY_ELEMENT, ITEMS } from './data.js';
 import { questData, needExp } from './battle.js';
 
@@ -27,7 +27,7 @@ export async function pastureDay() {
     m.exp = (m.exp || 0) + Math.round(needExp(m.lv, m.id) * 0.25); m.bond = (m.bond || 0) + 1; const lv0 = m.lv;
     while (m.lv < 999 && m.exp >= needExp(m.lv, m.id)) { m.exp -= needExp(m.lv, m.id); m.lv++; }
     if (m.lv > lv0) up.push(d.name);
-    const ev = GD.MONSTERS[m.id].evolvesTo; if (ev && m.lv >= ev.level && GD.MONSTERS[ev.id]) { evo.push([d.name, GD.MONSTERS[ev.id].name]); m.id = ev.id; state.mdex[ev.id] = 2; m.moves = null; }
+    const ev = GD.MONSTERS[m.id].evolvesTo, eid = evoId(ev); if (ev && m.lv >= ev.level && GD.MONSTERS[eid]) { evo.push([d.name, GD.MONSTERS[eid].name]); m.id = eid; state.mdex[eid] = 2; m.moves = null; }
   }
   state.coins += coins; for (const [id, n] of Object.entries(items)) addItem(id, n);
   const res = { day: state.day, coins, items, up, evo }; state.pastureLast = res; bus.emit('coins'); bus.emit('pasture'); return res;

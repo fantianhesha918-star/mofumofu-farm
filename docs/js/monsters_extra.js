@@ -161,9 +161,17 @@ export const EXTRA_APPEAR = {
   ...NEW_APPEAR,
   ...Object.fromEntries(BOSS_FORMS.map(f => [f.id, { [f.id.slice(5) + '!']: 1 }])),   // 「!」= ぬしを たおして つかまえる(ずかんの でる ばしょに ぬしの なまえが でる)
 };
+import { MOON_MONS } from './monsters_moon.js';
+// ---- 新シリーズ「月」の 御三家(がぞうは かりの もの。あとで あたらしい えに さしかえる) ----
+export { MOON_MONS };
+export const STARTERS_S2 = [
+  { id: 'tsukiusa', name: 'つきうさ', el: 'つき', text: 'つきあかりを あびて ぴょんと はねる。バランスの いい こ' },
+  { id: 'hoshifuku', name: 'ほしふくろう', el: 'ほし', text: 'ほしを よむ ものしり。すばやく こうげきが たかい' },
+  { id: 'yumehitsuji', name: 'ゆめひつじ', el: 'ゆめ', text: 'もこもこで ねむそう。たいりょくと まもりが たかい' },
+];
 export function installExtraMons(GD) {
   if (GD._extraInstalled) return; GD._extraInstalled = true;
-  for (const m of [...EXTRA_MONS, ...BOSS_FORMS]) { GD.MONSTERS[m.id] = m; if (Array.isArray(GD.DEX_ORDER) && !GD.DEX_ORDER.includes(m.id)) GD.DEX_ORDER.push(m.id); }
+  for (const m of [...EXTRA_MONS, ...BOSS_FORMS, ...MOON_MONS]) { GD.MONSTERS[m.id] = m; if (Array.isArray(GD.DEX_ORDER) && !GD.DEX_ORDER.includes(m.id)) GD.DEX_ORDER.push(m.id); }
 }
 
 // はじめに えらべる 御三家(1だんめ)

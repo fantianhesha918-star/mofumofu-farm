@@ -81,6 +81,7 @@ const fresh = () => ({
   titles: {}, titleSel: null,   // とった しょうごう {id: 1} / つけている しょうごう {id, pos:'pre'|'post'}
   casinoAt: null,   // カジノを たてた ばしょ {x,z}
   where: null,   // いま もりに いるとき { f: フィールド名, x, z }(つづきから で そこから はじめる)
+  moon: { phase: 0, clock: 0 },   // 「月」シリーズの つきの みちかけ(0〜7)と すすみぐあい
   savedAt: 0,
 });
 export const state = fresh();
@@ -89,6 +90,13 @@ const TITLE_CAT = Object.fromEntries(TITLES.map(t => [t.id, t.cat])), CROP_ITEMS
 const sellCat = (id) => DISH_IDS.has(id) ? 'cook' : CROP_ITEMS.has(id) ? 'farm' : (id === 'milk' || id === 'egg' || id === 'golden_egg') ? 'ranch' : ITEMS[id] && ITEMS[id].kind === 'fish' ? 'fish' : null;
 const titleSell = (id) => { const c = sellCat(id); return c ? 1 + 0.02 * Object.keys(state.titles || {}).filter(k => TITLE_CAT[k] === c).length : 1; };   // しょうごう 1つで その ぶんやの うりねが +2%
 export const sellOf = (id) => Math.round(((ITEMS[id] && ITEMS[id].sell) || 0) * (hasBadge('lake') ? 1.1 : 1) * titleSell(id) * (festivalNow(state.day) ? 1.25 : 1));   // おまつりの 日は うりね+25%   // みずうみの バッジで うりね+10%
+export const MOON_NAMES = ['しんげつ', 'みかづき', 'じょうげん', 'じゅうさんや', 'まんげつ', 'じゅうはちや', 'かげん', 'ありあけ'];
+export const moonName = () => MOON_NAMES[((state.moon && state.moon.phase) || 0) % 8];
+export const moonOn = () => getActive().series === 's2';
+export const MOON_BRIGHT = [0, 0.3, 0.55, 0.85, 1, 0.85, 0.55, 0.3];   // つきの あかるさ(しんげつ0〜まんげつ1)
+// しんかさきの id(つきの みちかけで わかれる しんかは evolvesTo.moon = { new: id, full: id })。しんげつ よりの ときは new、まんげつ よりの ときは full
+export const evoId = (ev) => (ev && ev.moon && moonOn()) ? (MOON_BRIGHT[((state.moon && state.moon.phase) || 0) % 8] >= 0.55 ? ev.moon.full : ev.moon.new) || ev.id : ev && ev.id;
+export function moonStep(n = 1) { if (!state.moon) state.moon = { phase: 0, clock: 0 }; state.moon.phase = ((state.moon.phase || 0) + n) % 8; }   // 日が かわると 1だん すすむ(月見台でも すすめる よてい)
 export function reset() { Object.assign(state, fresh()); state.series = getActive().series; }
 
 const listeners = {};

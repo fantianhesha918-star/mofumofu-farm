@@ -4,7 +4,8 @@ import { startSky } from './battlesky.js';
 import { AIL, STAGE_LABEL, stageMult, fxOf, fxText, isStatusSkill, installStatus, enemyStatusPool } from './status.js';
 import { installExtraMons } from './monsters_extra.js';
 import { installExtraSkills, traitSkillsFor } from './skills_extra.js';
-import { state, count, addItem, addStat, villageBoost, villageLevel, hasBadge, ECO } from './state.js';
+import { state, count, addItem, addStat, villageBoost, villageLevel, hasBadge, ECO, moonOn, evoId } from './state.js';
+import { installMoonElements, MOON_ELS } from './moon_elements.js';
 import { ITEMS, HOLD, MON_HEAL, DROP_BY_ELEMENT, BUFFS, buffText, ABILITIES, ABILITY_BY_ELEMENT } from './data.js';
 import { itemIcon } from './ui.js';
 import { sfx } from './audio.js';
@@ -34,8 +35,8 @@ const fxSeen = new Set();
 const preloadFx = (G) => { try { const L = [...Object.values(G.ELEMENT_EFFECTS || {}), ...Object.values(G.ELEMENT_EFFECT_ANIM || {}).flat(2), ...FX_PARTS.map(n => `assets/effects/parts/${n}.webp`), ...[...Object.values(SP_FX), ...FX_COMMON].flatMap(n => [1, 2, 3, 4].map(k => `assets/effects/anim/${n}/f${k}.webp`)), 'assets/effects/boss/boss_sun.webp', 'assets/effects/boss/boss_hole.webp', 'assets/effects/boss/boss_eclipse.webp']; for (const u of L) if (!fxSeen.has(u)) { fxSeen.add(u); const i = new Image(); i.src = 'quest/' + u; } } catch (e) {} };   // わざの えを さきに よみこむ(こうかいばんで おくれて でないように)
 export function questData() {
   return new Promise((res, rej) => {
-    if (window.GAME_DATA) { GD = window.GAME_DATA; installStatus(GD); installExtraSkills(GD); installExtraMons(GD); registerExtraFx(GD); setTimeout(() => preloadFx(GD), 2500); return res(GD); }
-    const s = document.createElement('script'); s.src = 'quest/data.js?v=' + (new URL(import.meta.url).searchParams.get('v') || ''); s.onload = () => { GD = window.GAME_DATA; installStatus(GD); installExtraSkills(GD); installExtraMons(GD); registerExtraFx(GD); setTimeout(() => preloadFx(GD), 2500); res(GD); }; s.onerror = rej; document.head.appendChild(s);
+    if (window.GAME_DATA) { GD = window.GAME_DATA; installStatus(GD); installExtraSkills(GD); installExtraMons(GD); if (moonOn()) installMoonElements(GD); registerExtraFx(GD); setTimeout(() => preloadFx(GD), 2500); return res(GD); }
+    const s = document.createElement('script'); s.src = 'quest/data.js?v=' + (new URL(import.meta.url).searchParams.get('v') || ''); s.onload = () => { GD = window.GAME_DATA; installStatus(GD); installExtraSkills(GD); installExtraMons(GD); if (moonOn()) installMoonElements(GD); registerExtraFx(GD); setTimeout(() => preloadFx(GD), 2500); res(GD); }; s.onerror = rej; document.head.appendChild(s);
   });
 }
 const img = (p) => 'quest/' + p;
@@ -97,7 +98,7 @@ const $ = (s, el = document) => el.querySelector(s);
 export const elemName = (el) => (el && GD.ELEMENT_LABELS[el]) || 'ノーマル';
 export const elemChip = (el) => `<span class="ty ty-${el || 'none'}">${el && GD.ELEMENT_ICONS && GD.ELEMENT_ICONS[el] ? `<img src="quest/${GD.ELEMENT_ICONS[el]}" alt="">` : ''}${elemName(el)}</span>`;
 // 相性のヒント(わざを えらぶとき: こうげき側のタイプ → 相手のタイプ)
-const EL_ORDER = ['fire', 'water', 'grass', 'wind', 'earth', 'thunder', 'heaven', 'dark', 'magic', 'beast'];
+const EL_ORDER = ['fire', 'water', 'grass', 'wind', 'earth', 'thunder', 'heaven', 'dark', 'magic', 'beast', ...(moonOn() ? MOON_ELS : [])];
 export const weakOf = (defEl) => (defEl && defEl !== 'none') ? EL_ORDER.filter(x => GD.getElementMatchup(x, defEl).tier === 'strong') : [];
 export const resistOf = (defEl) => (defEl && defEl !== 'none') ? EL_ORDER.filter(x => GD.getElementMatchup(x, defEl).tier === 'weak') : [];
 export const weakLine = (defEl) => { const w = weakOf(defEl), r = resistOf(defEl); return (w.length ? `<span class="wk wk-s">ばつぐん ${w.map(elemChip).join('')}</span>` : '') + (r.length ? `<span class="wk wk-w">いまひとつ ${r.map(elemChip).join('')}</span>` : ''); };
@@ -111,7 +112,7 @@ export const growthMul = (id) => {
 };
 // モンスターの おおきさ(バトル): しんかまえ(よわい)は ひかえめ → 1しんか → 2しんか の じゅんに おおきく。しんかしない ふつうの こは 1しんかくらい、でんせつ・まぼろしは 2しんかより きもち おおきく
 let PRE_IDS = null;
-const preIds = () => { if (PRE_IDS) return PRE_IDS; PRE_IDS = new Set(); for (const d of Object.values(GD.MONSTERS)) { const t = (d.evolvesTo && d.evolvesTo.id) || (d.evolveStone && d.evolveStone.id); if (t) PRE_IDS.add(t); } return PRE_IDS; };
+const preIds = () => { if (PRE_IDS) return PRE_IDS; PRE_IDS = new Set(); for (const d of Object.values(GD.MONSTERS)) { const t = (d.evolvesTo && d.evolvesTo.id) || (d.evolveStone && d.evolveStone.id); if (t) PRE_IDS.add(t); if (d.evolvesTo && d.evolvesTo.moon) { PRE_IDS.add(d.evolvesTo.moon.new); PRE_IDS.add(d.evolvesTo.moon.full); } } return PRE_IDS; };
 export const sizeMul = (id, boss) => {
   const d = GD.MONSTERS[id]; if (!d) return 1;
   let k;
@@ -964,7 +965,7 @@ export async function runBattle(enemyId0, opts = {}) {
     while (a.lv < MAX_LV && a.exp >= needExp(a.lv, a.id)) {
       const before = knownOf(a), oldLv = a.lv, oldSt = monStats(a); a.exp -= needExp(a.lv, a.id); a.lv++; a.hp = hpOf({ ...a, hp: null }); draw(); sfx('levelup'); msg(`${monName(a)} は レベル ${a.lv} に あがった!`); await levelPopup(monName(a), oldLv, a.lv, oldSt, monStats(a));
       await learnNew(a, before);
-      const ev = GD.MONSTERS[a.id].evolvesTo; if (ev && a.lv >= ev.level && GD.MONSTERS[ev.id]) await evolve(a, ev.id);
+      const ev = GD.MONSTERS[a.id].evolvesTo, eid = evoId(ev); if (ev && a.lv >= ev.level && GD.MONSTERS[eid]) await evolve(a, eid);
     }
     draw();
     }
@@ -977,7 +978,7 @@ export async function runBattle(enemyId0, opts = {}) {
         const before = knownOf(m), oldLv = m.lv, oldSt = monStats(m), alive = hpOf(m) > 0; m.exp -= needExp(m.lv, m.id); m.lv++; if (alive) m.hp = null; sfx('levelup');
         msg(`${nm} は レベル ${m.lv} に あがった!`); await levelPopup(nm, oldLv, m.lv, oldSt, monStats(m));
         await learnNew(m, before);   // ひかえの なかまも せんとうの なかまと おなじ(わざが いっぱいなら えらべる)
-        const ev2 = GD.MONSTERS[m.id].evolvesTo; if (ev2 && m.lv >= ev2.level && GD.MONSTERS[ev2.id]) { const old = nm; if (await evoOverlay(GD.MONSTERS[m.id].image, GD.MONSTERS[ev2.id].image, old, GD.MONSTERS[ev2.id].name)) { m.id = ev2.id; state.mdex[ev2.id] = 2; msg(`${old} は ${monName(m)} に しんかした!`); await sleep(1000); } else { msg('なにも おきなかった…'); await sleep(1000); } }
+        const ev2 = GD.MONSTERS[m.id].evolvesTo, eid2 = evoId(ev2); if (ev2 && m.lv >= ev2.level && GD.MONSTERS[eid2]) { const old = nm; if (await evoOverlay(GD.MONSTERS[m.id].image, GD.MONSTERS[eid2].image, old, GD.MONSTERS[eid2].name)) { m.id = eid2; state.mdex[eid2] = 2; msg(`${old} は ${monName(m)} に しんかした!`); await sleep(1000); } else { msg('なにも おきなかった…'); await sleep(1000); } }
       }
     }
   };

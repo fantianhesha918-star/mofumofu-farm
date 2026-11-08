@@ -1,6 +1,7 @@
 import { seasonOf } from './season.js';
 import { BUCKET, APPEAR, FIELD_NAMES, HOLD, EVO_STONES, MON_GROUPS, ALL_MONS, CRAFT_RECIPES, MDEX_REWARDS, ELEMENT_REWARD, ABILITIES, BADGES, MON_HEAL, ITEMS, SHOP_SEEDS, CROPS, QUESTS, RECIPES, HEAL, DECOR, SHOP_GOODS, FURNI, DECO, DEX, FIELD_MONS } from './data.js';
-import { blockSave, SAVE_KEY, ECO, ECO_KEY, lastSaveOk, state, bus, save, addItem, count, addStat, activeQuests, villageLevel, villagePoints, villageBoost, sellOf, hasBadge } from './state.js';
+import { FIELDS } from './fielddata.js';
+import { blockSave, SAVE_KEY, ECO, ECO_KEY, lastSaveOk, state, bus, save, addItem, count, addStat, activeQuests, villageLevel, villagePoints, villageBoost, sellOf, hasBadge, moonOn, moonName, moonStep } from './state.js';
 import { titlesHtml, bindTitles } from './titles.js';
 import { sfx } from './audio.js';
 
@@ -113,7 +114,7 @@ export function setCoins() { $('#coins').textContent = state.coins; }
 export function setClock() {
   const h = Math.floor(state.hour), m = Math.floor((state.hour - h) * 60 / 10) * 10;
   const slot = state.hour < 5 ? 'よる' : state.hour < 11 ? 'あさ' : state.hour < 16 ? 'ひる' : state.hour < 19 ? 'ゆうがた' : 'よる';
-  const se = seasonOf(state.day); $('#clock').textContent = `${se.name}${se.festival ? '・まつり' : ''} ${state.day}日目 ${slot} ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  const se = seasonOf(state.day); $('#clock').textContent = `${moonOn() ? '【' + moonName() + '】' : ''}${se.name}${se.festival ? '・まつり' : ''} ${state.day}日目 ${slot} ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 export function setGoal() {
   const q = activeQuests()[0], el = $('#goal');
@@ -246,11 +247,13 @@ function renderPanel() {
       <div class="row menurow" data-m="village"><div class="grow">むらの ようす<small>むらレベル・うりあげ・どうぶつ</small></div><span class="chev">›</span></div>
       <div class="row menurow" data-m="types"><div class="grow">タイプそうせいひょう<small>どの タイプが どれに つよい・よわい</small></div><span class="chev">›</span></div>
       <div class="row menurow" data-m="badge"><div class="grow">バッジ<small>ぬしを たおすと もらえる・おんけい</small></div><span class="chev">›</span></div>
+      ${moonOn() ? `<div class="row menurow" data-m="moon"><div class="grow">つきみだい<small>いまの つき: ${moonName()} ・ タップで つぎの つきに すすめる</small></div><span class="chev">›</span></div>` : ''}
       <div class="row menurow" data-m="save"><div class="grow">${saveRowText()}</div><span class="chev">›</span></div>
       <div class="row menurow" data-m="title"><div class="grow">タイトルへ もどる<small>セーブして ゲームを おわる</small></div><span class="chev">›</span></div>`;
     body.querySelectorAll('.menurow').forEach(r => r.onclick = () => {
       const m = r.dataset.m;
-      if (m === 'bag') openPanel('bag'); else if (m === 'quest') openPanel('quest');
+      if (m === 'moon') { moonStep(); save(); sfx('quest'); toast('つきみだい', 'つきが ' + moonName() + ' に なった'); openPanel('menu'); }
+      else if (m === 'bag') openPanel('bag'); else if (m === 'quest') openPanel('quest');
       else if (m === 'dex') openPanel('dex');
       else if (m === 'party') openPanel('party');
       else if (m === 'mdex') openPanel('mdex');
@@ -323,7 +326,7 @@ function renderPanel() {
     body.innerHTML = '<p class="hint">よみこみ中...</p>';
     import('./battle.js').then(async (B) => {
       const GD = await B.questData(); if (panelKind !== 'types') return;
-      const O = ['fire', 'water', 'grass', 'wind', 'earth', 'thunder', 'heaven', 'dark', 'magic', 'beast'];
+      const O = ['fire', 'water', 'grass', 'wind', 'earth', 'thunder', 'heaven', 'dark', 'magic', 'beast', ...(moonOn() ? ['tsuki', 'hoshi', 'yume', 'shio', 'shimo', 'kage', 'yoru'] : [])];
       body.innerHTML = '<p class="hint">わざの タイプと あいての タイプで ダメージが かわるよ。ばつぐん=2ばい、いまひとつ=はんぶん。バトルでは あいての よわてんも でるよ。</p>' +
         O.map(e => { const st = O.filter(d => GD.getElementMatchup(e, d).tier === 'strong'), wk = O.filter(d => GD.getElementMatchup(e, d).tier === 'weak'); return `<div class="row"><div class="grow">${B.elemChip(e)}<small>◎ ばつぐん: ${st.map(B.elemChip).join('')}　△ いまひとつ: ${wk.map(B.elemChip).join('')}</small></div></div>`; }).join('') +
         `<div class="row"><div class="grow">${B.elemChip('kami')}<small>どの タイプにも ばつぐん(よわてんは ない)</small></div></div>`;
@@ -334,7 +337,9 @@ function renderPanel() {
   } else if (panelKind === 'gate') {
     h2.textContent = 'どこへ いく?';
     const D = [['forest', 'はじまりの もり', 'くさむらで モンスターと たたかえる(ぬし: ガブリソウ)'], ['lake', 'みずうみの ほとり', 'みず・かぜの モンスターが いる(ぬし: ブリザ)'], ['volcano', 'ようがんやま', 'ほのお・つち・やみの モンスターが いる。かなり つよいよ'], ['ghost', 'ゆうれいの はかば', 'やみ・まほうの モンスターが いる。とても つよいよ'], ['sky', 'てんくうの はら', 'てん・かみなりの モンスターが いる'], ['sun', 'たいようの はら', 'ほのおの モンスターが いる'], ['cosmos', 'うちゅうの うみ', 'みずの モンスターが いる'], ['grove', 'しんじゅの いせき', 'くさ・かぜの モンスターが いる'], ['castle', 'やみの しろ', 'してんのう① やみの しろ。くさむらは ない。てしたと ぬしの れんせん(バッジ8つで ひらく)'], ['temple', 'ほしの しんでん', 'してんのう② ほしの しんでん。くさむらは ない。かいふくの たべものは 3かいまで'], ['dragon', 'せいりゅうの そら', 'してんのう③ せいりゅうの そら。くさむらは ない。とちゅうで かいふくは できない'], ['end', 'うちゅうの はて', 'してんのう④(さいごの たたかい)。うちゅうの かみが まっている']].map((r, i, all) => [...r, i === 0 || !!state.boss[all[i - 1][0]], i ? all[i - 1][1] : '']);
-    body.innerHTML = '<p class="hint">いきさきを えらんでね。ぬしを たおした ばしょの つぎまで、ワープで いけるよ。もどるときは マップの ゲートから。バッジを8つ あつめると でんせつの ほこらが あらわれて、やみの しろから してんのうとの たたかいが はじまるよ。</p>' + D.map(([id, n, d, ok, prev]) => `<div class="row"><div class="grow">${n}${state.boss[id] ? ' <small style="display:inline;color:var(--gold2)">たおした</small>' : ''}<small>${ok ? d : prev + 'の ぬし(してんのう)を たおすと ひらくよ'}</small></div><button class="pill" data-go="${id}" ${ok ? '' : 'disabled'}>${ok ? 'いく' : 'とじている'}</button></div>`).join('');
+    D.forEach(r => { if (FIELDS[r[0]]) { r[1] = FIELDS[r[0]].name; if (moonOn()) { const bo = FIELDS[r[0]].boss.over || FIELDS[r[0]].boss; r[2] = `おすすめ Lv${Math.max(1, (bo.level || 10) - 4)}〜 ・ ぬし: ${bo.name}`; } } });
+    D.forEach((r, i) => { if (i) r[4] = D[i - 1][1]; if (moonOn() && i < 4) r[3] = true; });   // 「月」: さいしょの 4つは すきな じゅんで いける(じゆうに たびが できる)
+    body.innerHTML = '<p class="hint">' + (moonOn() ? 'つきの せかいでは、さいしょの 4つの ばしょを すきな じゅんで たびできるよ。' : '') + 'いきさきを えらんでね。ぬしを たおした ばしょの つぎまで、ワープで いけるよ。もどるときは マップの ゲートから。バッジを8つ あつめると でんせつの ほこらが あらわれて、やみの しろから してんのうとの たたかいが はじまるよ。</p>' + D.map(([id, n, d, ok, prev]) => `<div class="row"><div class="grow">${n}${state.boss[id] ? ' <small style="display:inline;color:var(--gold2)">たおした</small>' : ''}<small>${ok ? d : prev + 'の ぬし(してんのう)を たおすと ひらくよ'}</small></div><button class="pill" data-go="${id}" ${ok ? '' : 'disabled'}>${ok ? 'いく' : 'とじている'}</button></div>`).join('');
     body.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { closePanel(); bus.emit('goField', b.dataset.go); });
   } else if (panelKind === 'names') {
     h2.textContent = 'なまえを かえる';

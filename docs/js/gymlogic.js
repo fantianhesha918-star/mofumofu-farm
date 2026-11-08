@@ -5,6 +5,9 @@
 //  a b c スイッチ(いわ か じぶんが のると オン)  A B C とびら(おなじ もじの スイッチが ぜんぶ オンで ひらく)
 //  = チェックポイント(おちたとき ここから やりなおし)
 //  Q クイズの とびら(ぶつかると もんだい。こたえの アイテムを わたすと ひらく。ソルバーは lv.free で いつでも ひらく あつかい)
+//  【月シリーズの しかけ】 M つきの ゆか(のると つきが かわる) W/w つきの かべ(Wは まんげつで ひらく・wは しんげつで ひらく)
+//  h しお(2ほごとに みちひき。ひいている あいだだけ あるける) / \ かがみ(すすむ むきを かえる) z ほしの ゆか(のると ひかる) G ほしの とびら(ぜんぶ ひかると ひらく)
+//  V とけいの レバー(のると ベルトが 1つ まわる) e あかり(つえの ひかりが 6ほ ぶん たまる) D かげの ゆか(ひかりが ある あいだだけ あるける)
 //  k かぎ  L かぎの とびら  > < ^ v ベルトコンベア  1〜9 ワープ(おなじ すうじと ペア)  x くずれる ゆか(はなれると あなに なる)
 export const DIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]];   // うえ みぎ した ひだり
 const ARROW = { '^': 0, '>': 1, 'v': 2, '<': 3 };
@@ -23,8 +26,8 @@ export function parseLevel(rows) {
   }
   return { w, h, cells, rocks, start, goal, signs, warps };
 }
-export const newState = (lv) => ({ x: lv.start[0], y: lv.start[1], dir: 0, keys: 0, cp: -1, cells: lv.cells.slice(), rocks: lv.rocks.slice().sort((a, b) => a - b), solved: false });
-export const keyOf = (s) => `${s.x},${s.y},${s.keys},${s.cp},${s.cells.join('')},${s.rocks.join('.')}`;
+export const newState = (lv) => ({ x: lv.start[0], y: lv.start[1], dir: 0, keys: 0, ph: 0, t: 0, lamp: 0, cp: -1, cells: lv.cells.slice(), rocks: lv.rocks.slice().sort((a, b) => a - b), solved: false });
+export const keyOf = (s) => `${s.x},${s.y},${s.keys},${s.ph},${s.t % 4},${s.lamp},${s.cp},${s.cells.join('')},${s.rocks.join('.')}`;
 const cloneState = (s) => ({ ...s, cells: s.cells.slice(), rocks: s.rocks.slice() });
 
 // いま とびらが ひらいているか(おなじ もじの スイッチが ぜんぶ ふまれている)。px,py=じぶんの いち
@@ -40,6 +43,10 @@ function walkable(s, lv, x, y, rocks, px, py) {
   if (x < 0 || y < 0 || x >= lv.w || y >= lv.h) return false; const i = y * lv.w + x, c = s.cells[i];
   if (c === '#' || c === ' ' || c === 's' || c === 'Q') return false; if (rocks.includes(i)) return false;
   if (isDoor(c) && !plateOn(s, lv, c, px, py, rocks)) return false;
+  if (c === 'W' && s.ph === 0) return false; if (c === 'w' && s.ph === 1) return false;   // つきの かべ
+  if (c === 'h' && (s.t % 4) >= 2) return false;   // しお(みちている)
+  if (c === 'G' && s.cells.includes('z')) return false;   // ほしの とびら
+  if (c === 'D' && !(s.lamp > 0)) return false;   // かげの ゆか(ひかりが ない)
   return true;
 }
 
@@ -60,6 +67,7 @@ export function step(s0, lv, d) {
     if (c === 'L') { if (s.keys > 0) { s.keys--; s.cells[ti] = '.'; acts.push({ t: 'unlock', at: ti }); c = '.'; } else return { state: s, acts: [{ t: 'turn', d }], moved: false }; }
     else if (!walkable(s, lv, tx, ty, s.rocks, tx, ty)) return { state: s, acts: [{ t: 'turn', d }], moved: false };
   }
+  s.t++;   // しおの みちひきは 1ほごとに すすむ(あるきおわった ときの じかんで かぞえる)
   // あるく(こおり・ベルトで つづけて うごく)
   let x = tx, y = ty, dir = d, guard = 0; const from = s.y * W + s.x;
   if (s.cells[from] === 'x') { s.cells[from] = 'o'; acts.push({ t: 'crumble', at: from }); }
@@ -69,11 +77,17 @@ export function step(s0, lv, d) {
     const i = y * W + x; c = s.cells[i];
     if (c === 'o' || c === 'l') { acts.push({ t: 'fall', kind: c }); if (s.cp >= 0) { x = s.cp % W; y = (s.cp / W) | 0; } else { x = lv.start[0]; y = lv.start[1]; } acts.push({ t: 'respawn', x, y }); break; }
     if (c === '=') { s.cp = i; acts.push({ t: 'cp', at: i }); }
+    if (c === 'M') { s.ph ^= 1; acts.push({ t: 'moon', ph: s.ph }); }
+    if (c === 'z') { s.cells[i] = 'y'; acts.push({ t: 'star', at: i, left: s.cells.filter(q => q === 'z').length }); }
+    if (c === 'V') { const R = { '^': '>', '>': 'v', 'v': '<', '<': '^' }; s.cells = s.cells.map(q => R[q] || q); acts.push({ t: 'clock' }); }
+    if (c === 'e') { s.lamp = 6; acts.push({ t: 'lamp', n: 6 }); }
+    if (c === 'D') { s.lamp--; acts.push({ t: 'dark', n: s.lamp }); }
     if (c === 'k') { s.keys++; s.cells[i] = '.'; acts.push({ t: 'key', at: i }); }
     if (c === '@') { s.solved = true; break; }
     if (/[1-9]/.test(c)) { const pair = (lv.warps[c] || []).find(j => j !== i); if (pair != null) { x = pair % W; y = (pair / W) | 0; acts.push({ t: 'warp', x, y }); } break; }
     let nd = null;
     if (c === 'i') nd = dir; else if (c in ARROW) nd = ARROW[c];
+    else if (c === '/') { nd = [1, 0, 3, 2][dir]; acts.push({ t: 'mirror', at: i }); } else if (c === '\\') { nd = [3, 2, 1, 0][dir]; acts.push({ t: 'mirror', at: i }); }
     if (nd == null) break;
     const nx = x + DIRS[nd][0], ny = y + DIRS[nd][1];
     if (!walkable(s, lv, nx, ny, s.rocks, nx, ny)) break;
@@ -88,8 +102,8 @@ export function step(s0, lv, d) {
 }
 
 // ソルバー: ゴールまでの さいたんの てじゅん(ぜんたんさく)。なければ null
-export function solve(lv, limit = 400000) {
-  const s0 = newState(lv), seen = new Map([[keyOf(s0), null]]), q = [s0]; let head = 0;
+export function solve(lv, limit = 400000, init = null) {
+  const s0 = Object.assign(newState(lv), init || {}), seen = new Map([[keyOf(s0), null]]), q = [s0]; let head = 0;
   while (head < q.length && seen.size < limit) {
     const s = q[head++];
     for (let d = 0; d < 4; d++) {

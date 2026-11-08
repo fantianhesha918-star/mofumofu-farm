@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { input, pollInput, setupInput } from './input.js';
 import { ui } from './ui.js';
-import { ECO, state, load, save, bus, count, addItem, unlockSeries } from './state.js';
+import { ECO, state, load, save, bus, count, addItem, unlockSeries, moonOn, MOON_BRIGHT } from './state.js';
 import { sfx, unlockAudio } from './audio.js';
 import { lawnKit } from './world.js';
 import { BADGES, DAY_SECONDS, DROP_BY_ELEMENT, ITEMS, HEAL, EVO_STONES } from './data.js';
@@ -21,7 +21,7 @@ const R = (a, b) => a + (b - a) * rnd();
 const lam = (k, dt) => 1 - Math.exp(-k * dt);
 
 // ---- フィールドの しゅるい(?f=lake で みずうみ)。1ページ=1マップ ----
-import { FIELDS } from './fielddata.js';
+import { FIELDS, MOON_TRAINER_LINES } from './fielddata.js';
 import { GYM_MAPS } from './gymmaps.js';
 import { GYM_THEMES } from './gymthemes.js';   // フィールドの データ(ぬし・やせい など)は fielddata.js
 const FID = ['lake', 'volcano', 'ghost', 'sky', 'sun', 'cosmos', 'grove', 'castle', 'temple', 'dragon', 'end'].includes(params.get('f')) ? params.get('f') : 'forest', F = FIELDS[FID], LC = F.lake || null, WATER_Y = -0.9;
@@ -533,7 +533,7 @@ async function makeTrainers() {
     const mt = new THREE.CanvasTexture(mk); mt.colorSpace = THREE.SRGBColorSpace; const mark = new THREE.Sprite(new THREE.SpriteMaterial({ map: mt, transparent: true, depthWrite: false })); mark.scale.set(0.9, 0.9, 1); mark.position.y = 4.0; outer.add(mark);
     const circ = { x, z, r: 0.9 }; circles.push(circ);
     const key = FID + '_' + i;
-    trainers.push({ key, name, mon: wild, over, team, ball: fi < 3 ? 'nakama_ball' : fi < 7 ? 'super_ball' : 'hyper_ball', x, z, outer, mark, circ, hx: x, hz: z, hd: R(0, 6.28), want: R(0, 6.28), wt: R(1, 3), tx: x, tz: z, walk: false, sp: 0, lines: [`${name}: やあ! きみも ぼうけんしゃ かい?`, `${name}: ぼくの なかまと しょうぶしよう! まけないよ!`], afterLines: [`${name}: つよいね! また きたえておくよ。`] });
+    trainers.push({ key, name, mon: wild, over, team, ball: fi < 3 ? 'nakama_ball' : fi < 7 ? 'super_ball' : 'hyper_ball', x, z, outer, mark, circ, hx: x, hz: z, hd: R(0, 6.28), want: R(0, 6.28), wt: R(1, 3), tx: x, tz: z, walk: false, sp: 0, lines: (moonOn() && MOON_TRAINER_LINES[FID] ? MOON_TRAINER_LINES[FID][i % 3].slice(0, 2).map(l => `${name}: ${l}`) : [`${name}: やあ! きみも ぼうけんしゃ かい?`, `${name}: ぼくの なかまと しょうぶしよう! まけないよ!`]), afterLines: (moonOn() && MOON_TRAINER_LINES[FID] ? [`${name}: ${MOON_TRAINER_LINES[FID][i % 3][2]}`] : [`${name}: つよいね! また きたえておくよ。`]) });
   });
 }
 async function talkTrainer(t) {
@@ -603,18 +603,24 @@ const gate = new THREE.Group(); const GZ = ELITE ? 25 : 56;
   gate.position.set(0, hAt(0, GZ), GZ); scene.add(gate); circles.push({ x: -2.2, z: GZ, r: 0.5 }, { x: 2.2, z: GZ, r: 0.5 });
 }
 
+if (moonOn() && !ELITE && FID !== 'forest') { const g3 = gate.clone(true); g3.position.set(14, hAt(14, GZ), GZ); scene.add(g3); circles.push({ x: 11.8, z: GZ, r: 0.5 }, { x: 16.2, z: GZ, r: 0.5 }); g3.userData.portal = g3.children.find(c => c.geometry.type === 'PlaneGeometry'); gate.userData.v = g3; }   // 「月」: まんなかの ゲート=まえの ばしょ、よこの ゲート=むら
 // ---- つぎの フィールドへの ゲート(ぬしを たおすと ひらく) ----
 const ORDER = ['forest', 'lake', 'volcano', 'ghost', 'sky', 'sun', 'cosmos', 'grove', 'castle', 'temple', 'dragon', 'end'], NEXT = ORDER[ORDER.indexOf(FID) + 1], GR = ELITE ? 25 : 63, NX = F.boss.x * GR / Math.hypot(F.boss.x, F.boss.z), NZ = F.boss.z * GR / Math.hypot(F.boss.x, F.boss.z);   // ぬしの うしろ(あるける はんいの いちばん おく)に ひらく
 let gate2 = null;
 function buildGate2() {
-  if (!(NEXT && FIELDS[NEXT] && state.boss[BOSS.key])) return;
+  if (!(NEXT && FIELDS[NEXT] && (state.boss[BOSS.key] || (moonOn() && ORDER.indexOf(FID) < 3)))) return;   // 「月」: さいしょの 3つは ぬしを たおさなくても つぎへ すすめる(じゆうな たび)
   gate2 = gate.clone(true); const pm = new THREE.MeshBasicMaterial({ color: '#9ad0ff', transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
   gate2.children.forEach(c => { if (c === gate.userData.portal || c.geometry.type === 'PlaneGeometry') c.material = pm; }); gate2.userData.portal = gate2.children.find(c => c.material === pm);
   gate2.position.set(NX, hAt(NX, NZ), NZ); scene.add(gate2); circles.push({ x: NX - 2.2, z: NZ, r: 0.5 }, { x: NX + 2.2, z: NZ, r: 0.5 });
 }
+const ELITE_SET = new Set(['castle', 'temple', 'dragon', 'end']);
+function goPrev() {
+  busy = true; fading = true; save(); fadeTo(nbColor(ORDER[ORDER.indexOf(FID) - 1]));
+  setTimeout(() => { state.where = null; save(); location.href = 'field.html?f=' + ORDER[ORDER.indexOf(FID) - 1] + '&arrive=back&from=' + nbColor(ORDER[ORDER.indexOf(FID) - 1]).getHexString() + '&_=' + Date.now(); }, 800);
+}
 function goNext() {
-  busy = true; fading = true; save(); fade(true);
-  setTimeout(() => { state.pos = { x: 0, z: 46 }; state.where = null; save(); location.href = 'field.html?f=' + NEXT + '&_=' + Date.now(); }, 800);
+  busy = true; fading = true; save(); if (MOON()) fadeTo(nbColor(NEXT)); else fade(true);
+  setTimeout(() => { state.pos = { x: 0, z: 46 }; state.where = null; save(); location.href = 'field.html?f=' + NEXT + (MOON() ? '&from=' + nbColor(NEXT).getHexString() : '') + '&_=' + Date.now(); }, 800);
 }
 
 // ---- 入力・移動 ----
@@ -662,6 +668,7 @@ function normalizeWild(GD) {
   F.wild.length = 0; for (const [id, w] of by) F.wild.push([id, Math.max(1, Math.round(w))]);   // F.wild の ちゅうしんを そのまま かきかえる(WILD も おなじ はいれつ)
 }
 async function pickWild() { const GD = await questData(), h = hourNow(), ws = WILD.map(([id, w]) => [id, w * elemWeight((GD.MONSTERS[id] && GD.MONSTERS[id].element) || 'none', h)]), tot = ws.reduce((a, b) => a + b[1], 0); let r = rnd() * tot; for (const [id, w] of ws) { r -= w; if (r <= 0) return id; } return ws[0][0]; }
+const fadeTo = (c) => { const f = $('#fade'); f.textContent = ''; f.style.background = '#' + c.getHexString(); f.classList.add('on'); };
 const fade = (on) => { const f = $('#fade'); f.textContent = ''; f.classList.toggle('on', on); };
 async function startEncounter(forceId) {
   if (busy) return; busy = true; sfx('quest'); fade(true); await new Promise(r => setTimeout(r, 700));
@@ -681,6 +688,11 @@ function goVillage(lost) {
 let target = null;
 function updateTarget() {
   const d = Math.hypot(P.pos.x, P.pos.z - GZ);
+  const PREV = ORDER[ORDER.indexOf(FID) - 1], backOn = moonOn() && !ELITE && PREV && FIELDS[PREV] && !ELITE_SET.has(PREV);
+  if (backOn) {
+    const dv = Math.hypot(P.pos.x - 14, P.pos.z - GZ);
+    target = d < 5 && !busy ? { label: FIELDS[PREV].name + 'へ もどる', sub: 'まえの ばしょに もどるよ。むらへは すぐよこの ゲートから', short: 'もどる', can: true, act: goPrev } : dv < 5 && !busy ? { label: 'むらへ かえる', sub: 'ぼくじょうの むらに もどるよ', short: 'かえる', can: true, act: () => goVillage(false) } : null;
+  } else
   target = d < 5 && !busy ? (ELITE && FID !== 'castle' && !bossBeaten() ? { label: 'ひきかえせない', sub: 'してんのうとの たたかいの とちゅうだ。この してんのうを たおすまで もどれないよ', short: 'ひきかえせない', can: false, act: () => {} } : { label: 'むらへ かえる', sub: 'ぼくじょうの むらに もどるよ', short: 'かえる', can: true, act: () => goVillage(false) }) : null;
   if (!target && gate2 && !busy && Math.hypot(P.pos.x - NX, P.pos.z - NZ) < 5) target = { label: FIELDS[NEXT].name + 'へ すすむ', sub: 'ぬしを たおしたので ひらいたよ。むらの ゲートからも えらべるよ', short: 'すすむ', can: true, act: goNext };
   if (!target && gymDoor && !busy && Math.hypot(P.pos.x - gymDoor.x, P.pos.z - (gymDoor.z + 2.5)) < 5) target = { label: GYM_TH.name ? GYM_TH.name + 'に はいる' : 'ジムに はいる', sub: bossBeaten() ? `${ROLE} ${BOSS.name}に さいせん できるよ` : `しかけを といて おくへ。おくで ${ROLE} ${BOSS.name}が まっている`, short: 'はいる', can: true, act: enterGym };
@@ -768,18 +780,49 @@ const FI = Math.max(0, ['forest', 'lake', 'volcano', 'ghost', 'sky', 'sun', 'cos
 let WX = 'clear';
 const pickWx = () => { const tb = FIELD_WX[FID] || FIELD_WX.def; let x = ((state.day || 1) * 2654435761 + FI * 40503) >>> 0; x = (x ^ (x >>> 15)) * 2246822519 >>> 0; const r = (x % 1000) / 1000 * tb.reduce((a, b) => a + b[1], 0); let acc = 0; for (const [k, w] of tb) { acc += w; if (r < acc) return k; } return 'clear'; };
 const hourNow = () => state.hour == null ? 10 : state.hour;
-const nightK = (h) => h >= 20 || h < 5 ? 1 : h >= 18 ? (h - 18) / 2 : h < 7 ? (7 - h) / 2 : 0;   // 夜の こさ(0〜1)
-const timeName = (h) => h >= 20 || h < 5 ? 'よる' : h < 7 ? 'あさやけ' : h < 17 ? 'ひるま' : 'ゆうがた';
+const MOON = () => moonOn(), mBright = () => MOON_BRIGHT[((state.moon && state.moon.phase) || 0) % 8];
+const nightK = (h) => MOON() ? 0.8 : h >= 20 || h < 5 ? 1 : h >= 18 ? (h - 18) / 2 : h < 7 ? (7 - h) / 2 : 0;   // 夜の こさ(0〜1)
+const timeName = (h) => MOON() ? 'よる' : h >= 20 || h < 5 ? 'よる' : h < 7 ? 'あさやけ' : h < 17 ? 'ひるま' : 'ゆうがた';
 function elemWeight(el, h) {
   let m = (WX_MULT[WX] || {})[el] || 1; const night = nightK(h);
+  if (MOON()) { const b = mBright(); m *= ({ magic: 1 + b * 0.8, heaven: 1 + b * 0.8, tsuki: 1 + b * 1.2, hoshi: 1 + b * 1.0, yume: 1 + (1 - b) * 0.8, kage: 1 + (1 - b) * 1.4, yoru: 1.3, shio: 1 + b * 0.6, shimo: 1 + (1 - b) * 0.6, dark: 1 + (1 - b) * 1.2, beast: 1.2 })[el] || 1; return m; }   // 「月」: つきの みちかけで でやすさが かわる
   if (night > 0.9) m *= ({ dark: 2.5, magic: 1.8, beast: 1.4, heaven: 0.5, fire: 0.8 })[el] || 1; else if (h >= 7 && h < 17) m *= ({ grass: 1.3, heaven: 1.5, wind: 1.2, dark: 0.6 })[el] || 1;
   return m;
 }
 const baseSky = new THREE.Color(F.sky), nightSky = new THREE.Color('#0c1230'), tmpC = new THREE.Color(), hemiBase = LT.hemi[2], sunBase = LT.sun[1], fogN0 = scene.fog.near, fogF0 = scene.fog.far, hemiSky0 = new THREE.Color(LT.hemi[0]);
-let flash = 0;
+
+// ---- 「月」: ばしょの つなぎめ ----
+const nbColor = (id) => { const c = new THREE.Color(FIELDS[id].sky); c.lerp(nightSky, 0.75 * 0.8); return c; };
+function gateBlend() {   // いちばん ちかい ゲートまでの きょりから なじませる つよさ(0〜1)と あいての ばしょ
+  const cand = [];
+  const PREV = ORDER[ORDER.indexOf(FID) - 1];
+  if (gate2 && NEXT && FIELDS[NEXT]) cand.push([Math.hypot(P.pos.x - NX, P.pos.z - NZ), NEXT]);
+  if (!ELITE && PREV && FIELDS[PREV] && !ELITE_SET.has(PREV)) cand.push([Math.hypot(P.pos.x, P.pos.z - GZ), PREV]);
+  let best = null; for (const [d, id] of cand) if (!best || d < best[0]) best = [d, id];
+  if (!best) return { k: 0 }; const k = Math.max(0, Math.min(1, 1 - (best[0] - 6) / 26)); return k > 0 ? { k, id: best[1] } : { k: 0 };
+}
+let flash = 0, moonMesh = null, moonPh = -1;
+function drawMoon(ph) {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 256; const c = cv.getContext('2d'), R0 = 100;
+  const g = c.createRadialGradient(128, 128, 60, 128, 128, 128); g.addColorStop(0, 'rgba(255,244,200,0.55)'); g.addColorStop(1, 'rgba(255,244,200,0)'); c.fillStyle = g; c.fillRect(0, 0, 256, 256);
+  c.fillStyle = '#fff3c4'; c.beginPath(); c.arc(128, 128, R0, 0, 6.283); c.fill();
+  c.fillStyle = '#e8d8a0'; for (const [x, y, r] of [[100, 100, 14], [150, 120, 10], [118, 156, 12]]) { c.beginPath(); c.arc(x, y, r, 0, 6.283); c.fill(); }
+  const k = [1, 0.85, 0.5, 0.2, 0, 0.2, 0.5, 0.85][ph], dir = ph < 4 ? 1 : -1;   // かげの おおきさ
+  if (k > 0) { c.globalCompositeOperation = 'destination-out'; c.beginPath(); c.arc(128 + dir * (1 - k) * R0 * 0.0 - dir * (k < 1 ? (1 - k) * 0 : 0), 128, R0 + 1, 0, 6.283); c.clip(); c.fillStyle = '#000'; c.globalAlpha = 0.93; c.beginPath(); c.arc(128 + dir * (R0 * (1 - k) * 1.0 - R0 * 0.1), 128, R0 * (0.2 + 0.8 * k) + (k >= 1 ? 20 : 0), 0, 6.283); c.fill(); }
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+function updateMoon() {
+  if (!MOON()) return; const ph = ((state.moon && state.moon.phase) || 0) % 8;
+  if (!moonMesh) { moonMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, fog: false })); moonMesh.scale.set(70, 70, 1); moonMesh.renderOrder = -1; moonMesh.frustumCulled = false; scene.add(moonMesh); }
+  if (moonPh !== ph) { moonPh = ph; moonMesh.material.map = drawMoon(ph); moonMesh.material.needsUpdate = true; }
+  const d = new THREE.Vector3(); camera.getWorldDirection(d); const az = Math.atan2(-0.55, -0.83);
+  moonMesh.position.set(camera.position.x - 140, camera.position.y + 62, camera.position.z - 200); moonMesh.quaternion.copy(camera.quaternion);
+}
 function updateSky(dt) {
-  const n = nightK(hourNow()), wl = ({ clear: 1, rain: 0.82, storm: 0.6, fog: 0.9, snow: 0.95, ash: 0.82, flare: 1.12, meteor: 1, petal: 1, spirit: 0.8 })[WX], lm = (1 - 0.5 * n) * wl;
+  updateMoon();
+  const n = nightK(hourNow()), wl = ({ clear: 1, rain: 0.82, storm: 0.6, fog: 0.9, snow: 0.95, ash: 0.82, flare: 1.12, meteor: 1, petal: 1, spirit: 0.8 })[WX], lm = (MOON() ? 0.34 + 0.4 * mBright() : 1 - 0.5 * n) * wl;
   tmpC.copy(baseSky).lerp(nightSky, 0.75 * n); if (WX === 'fog' || WX === 'storm') tmpC.lerp(new THREE.Color('#9aa4ac'), WX === 'fog' ? 0.45 : 0.3); else if (WX === 'ash') tmpC.lerp(new THREE.Color('#7a6a62'), 0.45); else if (WX === 'flare') tmpC.lerp(new THREE.Color('#ff9a50'), 0.35); else if (WX === 'sun') tmpC.lerp(new THREE.Color('#ffd890'), 0.28); else if (WX === 'sand') tmpC.lerp(new THREE.Color('#c8a870'), 0.5); else if (WX === 'hail') tmpC.lerp(new THREE.Color('#aab8c8'), 0.32); else if (WX === 'spirit') tmpC.lerp(new THREE.Color('#5a6a98'), 0.4); else if (WX === 'meteor') tmpC.lerp(nightSky, 0.5);
+  if (MOON()) { const gb = gateBlend(); if (gb.k > 0) tmpC.lerp(nbColor(gb.id), gb.k * 0.85); }   // 「月」: ゲートに ちかづくと、そらの いろが つぎの ばしょの いろに なじんでいく
   scene.background.copy(tmpC); scene.fog.color.copy(tmpC); scene.fog.near = fogN0 * (WX === 'fog' ? 0.3 : WX === 'spirit' ? 0.4 : 1); scene.fog.far = fogF0 * (WX === 'fog' ? 0.45 : WX === 'spirit' ? 0.55 : WX === 'ash' ? 0.6 : WX === 'sand' ? 0.45 : WX === 'hail' ? 0.75 : WX === 'rain' || WX === 'storm' ? 0.75 : WX === 'flare' ? 0.9 : 1);
   hemiL.intensity = hemiBase * lm + flash * 2.4; sun.intensity = sunBase * lm * (WX === 'storm' ? 0.5 : 1) + flash * 2;
 }
@@ -934,7 +977,7 @@ function frame() {
     if (bossModel) { bossModel.rotation.y = Math.atan2(P.pos.x - BOSS.x, P.pos.z - BOSS.z); bossModel.position.y = hAt(BOSS.x, BOSS.z) + Math.sin(T * 1.6) * 0.06; }
     if (bossSprite) bossSprite.userData.ring.material.opacity = 0.4 + Math.sin(T * 3) * 0.2;
     if (gymPortal) gymPortal.material.opacity = 0.42 + Math.sin(T * 2.4) * 0.16;
-    gate.userData.portal.material.opacity = 0.4 + Math.sin(T * 2.2) * 0.12;
+    gate.userData.portal.material.opacity = 0.4 + Math.sin(T * 2.2) * 0.12; if (gate.userData.v) gate.userData.v.userData.portal.material.opacity = 0.4 + Math.sin(T * 2.2 + 2) * 0.12;
     if (gate2) gate2.userData.portal.material.opacity = 0.4 + Math.sin(T * 2.2 + 1) * 0.12;
     updateEmbers(dt); updateWeather(dt); updateSky(dt); updateChests(dt); updateShrines(dt); updatePet(dt, T); if ((wxT += dt) > 1) { wxT = 0; updateWxLabel(); }
     updateTrainers(dt, T);
@@ -949,10 +992,10 @@ async function boot() {
   if (F.flyers) buildFlyers(F.flyers);
   normalizeWild(await questData()); const first = giveStarter(); save();
   ui.setCoins(); ui.setClock && ui.setClock(); ui.setLevel && ui.setLevel();
-  { const w = params.has('resume') && state.where && state.where.f === FID ? state.where : null, sx = w ? w.x : 0, sz = w ? w.z : SPZ; if (w && !isWater(sx, sz)) P.pos.set(sx, hAt(sx, sz), sz); else P.pos.set(0, hAt(0, SPZ), SPZ); posReady = true; } cam.yaw = 0; cam.pitch = 0.36; updateCamera(0, true);
+  { const w = params.has('resume') && state.where && state.where.f === FID ? state.where : null, sx = w ? w.x : 0, sz = w ? w.z : SPZ; if (w && !isWater(sx, sz)) P.pos.set(sx, hAt(sx, sz), sz); else if (params.get('arrive') === 'back') { const ax = NX * 0.7, az = NZ * 0.7 + 14; P.pos.set(ax, hAt(ax, az), az); cam.yaw = Math.PI; } else P.pos.set(0, hAt(0, SPZ), SPZ); posReady = true; } cam.yaw = 0; cam.pitch = 0.36; updateCamera(0, true);
   if (GYM_ON && (params.has('fromgym') || params.has('boss'))) { const gx = BOSS.x, gz = BOSS.z + 8; P.pos.set(gx, hAt(gx, gz), gz); cam.yaw = 0; updateCamera(0, true); }
   setFieldBgm(FID); $('#loading2').classList.add('done'); updateWxLabel();
-  { const h = hourNow(), hints = [WX_HINT[WX], nightK(h) > 0.9 ? 'よるは やみや まほうの モンスターが でやすいよ' : (h >= 7 && h < 17 ? 'ひるまは てんや くさの モンスターが でやすいよ' : '')].filter(Boolean); if (WX !== 'clear' || hints.length) setTimeout(() => ui.toast(`てんき: ${WX_NAME[WX]} / ${timeName(h)}`, hints.join(' / ') || 'おだやかな ひだよ', '', 4200), 1500); } busy = false; fade(false); document.title = 'ready';
+  { const h = hourNow(), hints = [WX_HINT[WX], MOON() ? ({0:'しんげつ: やみの モンスターが でやすいよ',4:'まんげつ: つき・ほしの モンスターが でやすいよ'})[(state.moon && state.moon.phase) || 0] || 'つきの みちかけで でやすい モンスターが かわるよ' : nightK(h) > 0.9 ? 'よるは やみや まほうの モンスターが でやすいよ' : (h >= 7 && h < 17 ? 'ひるまは てんや くさの モンスターが でやすいよ' : '')].filter(Boolean); if (WX !== 'clear' || hints.length) setTimeout(() => ui.toast(`てんき: ${WX_NAME[WX]} / ${timeName(h)}`, hints.join(' / ') || 'おだやかな ひだよ', '', 4200), 1500); } busy = false; fade(false); document.title = 'ready';
   if (ELITE && !bossBeaten()) setTimeout(() => ui.toast(`してんのう ${ELITE_NO}人目(ぜんいん 4人)`, `${BOSS.name}が まっている`, ELITE_NO === 4 ? 'さいごの してんのうを たおすと でんどういり!' : 'たおすと つぎの してんのうの ところへ いけるよ', 5200), 1200);
   if (first) ui.toast('なかまが できた!', 'まめちんちらが ついてきたよ', 'くさむらを あるくと モンスターが でてくるよ', 5200);
   else ui.toast(F.name, 'くさむらを あるくと モンスターが でてくるよ', FID === 'lake' ? 'ここの モンスターは すこし つよいよ' : '', 3600);

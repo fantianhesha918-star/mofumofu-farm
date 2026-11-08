@@ -10,12 +10,12 @@ import { budgetReport, disposeObject, BUDGET } from './mapmgr.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { initSwimFish, updateSwimFish } from './swimfish.js';
 import { buildWorld, heightAt, WORLD_R, mulberry32, SEA_A, SEA_Y, seaMask, RIVER, riverDist } from './world.js';
-import { ECO, state, bus, save, load, reset, hasSave, SAVE_KEY, SERIES, SLOTS, getActive, setActive, slotInfo, deleteSlot, unlockedSeries, addItem, count, addStat, activeQuests, checkQuests, sellOf } from './state.js';
+import { ECO, state, bus, save, load, reset, hasSave, SAVE_KEY, SERIES, SLOTS, getActive, setActive, slotInfo, deleteSlot, unlockedSeries, addItem, count, addStat, activeQuests, checkQuests, sellOf, moonOn, moonStep } from './state.js';
 import { ITEMS, CROPS, QUESTS, DAY_SECONDS, BUCKET } from './data.js';
 import { ui, itemIcon } from './ui.js';
 import { input, pollInput, setupInput } from './input.js';
 import { sfx, unlockAudio } from './audio.js';
-import { STARTERS } from './monsters_extra.js';
+import { STARTERS, STARTERS_S2 } from './monsters_extra.js';
 import { openCasinoMenu } from './casino.js';
 import { fullName, checkTitles } from './titles.js';
 
@@ -321,15 +321,17 @@ function refreshPlot(i) {
     r.position.y = 0.2 - cm.bb.min.y * sc * k;
   }
 }
-function newDay() {   // 朝になったとき: 水をあげた作物が1日ぶん育つ
+function newDay() {
+  if (moonOn()) moonStep();   // 「月」シリーズ: 日が かわると つきが みちかけ   // 朝になったとき: 水をあげた作物が1日ぶん育つ
   state.prevDaily = state.daily || {}; state.daily = {};
   state.plots.forEach((s, i) => {
-    if (s.crop && !isReady(s) && s.watered) { s.days++; if (isReady(s)) { sfx('feed'); } }
+    if (s.crop && !isReady(s) && s.watered) { s.days++; if (moonOn() && state.moon && state.moon.phase === 4 && !isReady(s)) s.days++; if (isReady(s)) { sfx('feed'); } }   // 「月」: まんげつの あさは さくもつが もう 1日ぶん そだつ
     s.watered = false;
   });
   { const cnt = (k) => state.deco.filter(f => f.k === k).length, sc = cnt('scarecrow'), fb = Math.min(8, cnt('flowerbed'));
     if (sc > 0) state.plots.forEach((s) => { if (s.crop && !isReady(s) && s.watered && Math.random() < Math.min(0.6, sc * 0.25)) s.days++; });
     if (fb > 0) { const c = fb * 8; state.coins += c; bus.emit('coins'); setTimeout(() => ui.toast('はなだん', `きれいな はなが さいたよ。${c}コイン`, '', 3000), 2500); } }
+  if (moonOn() && state.moon && state.moon.phase === 4) setTimeout(() => ui.toast('まんげつの あさ', 'みずを あげた さくもつが ぐんぐん そだったよ', '', 4000), 1800);
   state.cows.forEach(a => { a.milked = false; });
   for (const n of nodes) if (n.regrow && state.day >= n.regrow) { n.regrow = 0; n.active = true; n.mesh.visible = true; delete state.hayCut[n.idx]; }
   state.nori.forEach(n => { if (n.crop && n.days < 3) n.days++; });
@@ -1652,9 +1654,9 @@ function askStarter() {
   return new Promise(res => {
     const m = document.createElement('div'); m.id = 'namemodal'; m.className = 'starter';
     m.innerHTML = '<div class="box"><h3>はじめの なかまを えらぼう</h3><p>いっしょに ぼうけんする パートナーだよ。しんかすると すがたが かわるよ</p><div class="starters">' +
-      STARTERS.map(s => `<button class="stcard" data-id="${s.id}"><img src="quest/assets/monsters/${s.id}.webp" alt=""><b>${s.name}</b><i>${s.el}</i><small>${s.text}</small></button>`).join('') + '</div></div>';
+      (getActive().series === 's2' ? STARTERS_S2 : STARTERS).map(s => `<button class="stcard" data-id="${s.id}"><img src="quest/assets/monsters/${s.id}.webp" alt=""><b>${s.name}</b><i>${s.el}</i><small>${s.text}</small></button>`).join('') + '</div></div>';
     document.body.appendChild(m);
-    m.querySelectorAll('.stcard').forEach(b => b.onclick = () => { const s = STARTERS.find(x => x.id === b.dataset.id); if (!confirm(`${s.name} に する?`)) return; sfx('quest'); m.remove(); res(s.id); });
+    m.querySelectorAll('.stcard').forEach(b => b.onclick = () => { const s = [...STARTERS, ...STARTERS_S2].find(x => x.id === b.dataset.id); if (!confirm(`${s.name} に する?`)) return; sfx('quest'); m.remove(); res(s.id); });
   });
 }
 // ---- タイトル: シリーズを えらんで、セーブの わく(3つ)から あそぶ ----

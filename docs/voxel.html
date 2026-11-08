@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#14183a">
+<title>もふもふ牧場 月 - ブロックの せかい(しさく)</title>
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/addons/"}}</script>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #14183a; font-family: "Zen Maru Gothic", system-ui, sans-serif; color: #fff; touch-action: none; user-select: none; -webkit-user-select: none; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #info { position: fixed; left: 8px; top: 8px; font-size: 12px; background: #0008; padding: 6px 9px; border-radius: 8px; line-height: 1.5; pointer-events: none; }
+  #cross { position: fixed; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; pointer-events: none; }
+  #cross:before, #cross:after { content: ""; position: absolute; background: #fffc; }
+  #cross:before { left: 8px; top: 0; width: 2px; height: 18px; } #cross:after { top: 8px; left: 0; height: 2px; width: 18px; }
+  #hot { position: fixed; left: 50%; bottom: 10px; transform: translateX(-50%); display: flex; gap: 5px; z-index: 5; }
+  #hot button { width: 46px; height: 52px; border-radius: 9px; border: 2px solid #fff6; background: #0008; color: #fff; font-size: 11px; display: grid; place-items: center; padding: 0; }
+  #hot button.on { border-color: #ffe9a0; background: #3a3320cc; }
+  #hot i { display: block; width: 24px; height: 24px; border-radius: 4px; border: 1px solid #0006; }
+  .ab { position: fixed; z-index: 5; width: 64px; height: 64px; border-radius: 50%; border: 2px solid #fff8; background: #0007; color: #fff; font-size: 13px; font-weight: bold; }
+  #bBreak { right: 18px; bottom: 100px; } #bPlace { right: 92px; bottom: 60px; } #bJump { right: 18px; bottom: 26px; width: 56px; height: 56px; }
+  #stick { position: fixed; left: 24px; bottom: 36px; width: 110px; height: 110px; border-radius: 50%; border: 2px solid #fff5; background: #0004; z-index: 5; }
+  #knob { position: absolute; left: 35px; top: 35px; width: 40px; height: 40px; border-radius: 50%; background: #fffa; pointer-events: none; }
+  #top { position: fixed; right: 8px; top: 8px; z-index: 6; display: flex; gap: 6px; }
+  #top button { border-radius: 8px; border: 1px solid #fff6; background: #0008; color: #fff; font-size: 12px; padding: 6px 9px; }
+  #msg { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); background: #000a; padding: 8px 14px; border-radius: 10px; font-size: 14px; opacity: 0; transition: opacity .4s; pointer-events: none; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="cross"></div>
+<div id="info">よみこみ中...</div>
+<div id="top"><button id="bDist">えんきょり</button><button id="bMode">サバイバル</button><button id="bReset">さいしょから</button></div>
+<div id="msg"></div>
+<div id="hot"></div>
+<div id="stick"><div id="knob"></div></div>
+<button class="ab" id="bBreak">こわす</button><button class="ab" id="bPlace">おく</button><button class="ab" id="bJump">ジャンプ</button>
+<script type="module" src="./js/voxel.js"></script>
+</body>
+</html>

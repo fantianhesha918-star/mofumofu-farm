@@ -224,6 +224,7 @@ body:not(.touch) #prompt { bottom: calc(26px + var(--sab)); }
 .ty { display: inline-flex; align-items: center; gap: 3px; margin-top: 4px; padding: 1px 7px 1px 3px; border-radius: 10px; font-size: 10px; font-weight: 700; color: #fff; background: #6a6a6a; line-height: 14px; }
 .ty img { width: 14px; height: 14px; object-fit: contain; }
 .ty-fire { background: #c8502a; } .ty-water { background: #3a78c0; } .ty-grass { background: #4a9a40; } .ty-wind { background: #4aa89a; } .ty-earth { background: #9a7240; }
+.ty-tsuki { background: #e0c860; color: #2c1f14; } .ty-hoshi { background: #f0e088; color: #2c1f14; } .ty-yume { background: #a88ad8; } .ty-shio { background: #3a9ac0; } .ty-shimo { background: #9ad8e8; color: #2c1f14; } .ty-kage { background: #3a3a5a; } .ty-yoru { background: #2a3a7a; }
 .ty-thunder { background: #c8a420; color: #2c1f14; } .ty-heaven { background: #c8b878; color: #2c1f14; } .ty-dark { background: #5a3a7a; } .ty-magic { background: #b04a9a; } .ty-beast { background: #a8683a; } .ty-kami { background: #d8b040; color: #2c1f14; }
 .bt-cmd button .ty { margin: 0 0 0 6px; vertical-align: middle; }
 .mu-s { color: #1a6a2a; } .mu-w { color: #8a3a1a; }
