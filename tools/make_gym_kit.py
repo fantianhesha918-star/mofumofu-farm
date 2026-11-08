@@ -242,24 +242,47 @@ def gym_goal():   # ゴール(きんの ほしの ぶたい)
         B.sph(0.17, s * 0.85, -0.7, 1.74, '#ffffff', seg=12, ring=8, noise_amt=0.0, glow=0.06)
 
 @asset
-def gym_entrance():   # フィールドに たつ ジムの いりぐち(まえが +Z。はば およそ 13・たかさ 8)。かわいい おしろ ふうの もん。いろは ゲームで うすく かける
+def gym_entrance():   # ジムの たてもの(まえが +Z。おくゆき のある おしろ。いろは ゲームで うすく かける)。まえの かいだん・だいアーチの いちは かえない(のぼれる かいだんの たかさと あわせてある)
     random.seed(77)
     CREAM = '#f6ecd6'; CREAM_D = '#e4d6b8'; GOLD = '#ffd45a'; PINK = '#ffb8cc'; SKY = '#b8d8ff'; MINT = '#bfeccf'
-    # --- だい と かいだん(まえに むかって ひろがる) ---
+    HY = 4.0   # ほんかんの おくゆきの ちゅうしん(まえの めんは y=-0.8)
+    # --- だい と かいだん ---
     B.rbox(14.0, 6.6, 0.4, 0, 0.6, 0.2, CREAM_D, bev=0.18, bseg=3, noise_amt=0.04, freq=1.1)
     B.rbox(12.0, 5.2, 0.4, 0, 0.6, 0.6, CREAM, bev=0.16, bseg=3, noise_amt=0.04)
-    for k in range(3):   # かいだん
-        B.rbox(4.6 - k * 0.3, 0.9, 0.22, 0, -2.05 - k * 0.0 - (2 - k) * 0.0, 0.2 + k * 0.0, CREAM, bev=0.1, bseg=3, noise_amt=0.03)
     for k in range(3):
         B.rbox(4.8 - k * 0.5, 0.95, 0.24, 0, -2.55 + k * 0.62, 0.52 + k * 0.24, CREAM if k % 2 == 0 else '#fff8e8', bev=0.1, bseg=3, noise_amt=0.03)
-    # --- ほんかん(まるい はこ) ---
-    B.rbox(9.2, 3.4, 4.4, 0, 0.9, 2.8, CREAM, bev=0.3, bseg=3, noise_amt=0.04, freq=1.0)
-    B.rbox(9.6, 3.7, 0.5, 0, 0.9, 1.05, CREAM_D, bev=0.18, bseg=3, noise_amt=0.04)   # うらべり
-    B.rbox(9.8, 3.9, 0.45, 0, 0.9, 5.15, '#ffd2a8', bev=0.2, bseg=3, noise_amt=0.04)   # やねの ふち
-    B.rbox(8.8, 3.3, 0.7, 0, 0.9, 5.65, '#ffc096', bev=0.25, bseg=3, noise_amt=0.05)
-    for k in range(9):   # やねの ふちの まるい かざり
-        B.sph(0.3, -4.1 + k * 1.025, -1.0, 5.05, '#ffe6c8', scale=(1, 1, 0.9), seg=10, ring=8, noise_amt=0.02)
-    # --- だいアーチ ---
+    # --- ほんかん(おくゆき 9.6 の しっかりした たてもの) ---
+    B.rbox(10.2, 10.2, 0.6, 0, HY, 0.3, CREAM_D, bev=0.18, bseg=3, noise_amt=0.04)   # きそ
+    B.rbox(9.6, 9.6, 4.4, 0, HY, 2.8, CREAM, bev=0.3, bseg=3, noise_amt=0.04, freq=1.0)
+    B.rbox(9.9, 9.9, 0.5, 0, HY, 1.05, CREAM_D, bev=0.18, bseg=3, noise_amt=0.04)   # したの おび
+    B.rbox(9.9, 9.9, 0.3, 0, HY, 3.6, '#fff8e8', bev=0.12, bseg=3, noise_amt=0.03)   # まんなかの おび(2かいの ざかい)
+    # --- やね: まるい ひさしの ついた ピラミッド やね ---
+    B.rbox(10.8, 10.8, 0.45, 0, HY, 5.15, '#ffd2a8', bev=0.22, bseg=3, noise_amt=0.04)
+    B.cyl(7.0, 3.8, 0, HY, 5.38 + 1.9, '#ffc096', seg=4, r2=0.25, rot=(0, 0, math.pi / 4), noise_amt=0.04, smooth=False)
+    for k in range(11):   # ひさしの まるい かざり(まえ・うしろ)
+        for yy in (HY - 5.3, HY + 5.3):
+            B.sph(0.3, -5.0 + k, yy, 5.0, '#ffe6c8', scale=(1, 1, 0.9), seg=10, ring=8, noise_amt=0.02)
+    for k in range(9):   # ひさしの まるい かざり(よこ)
+        for xx in (-5.3, 5.3):
+            B.sph(0.3, xx, HY - 4.0 + k, 5.0, '#ffe6c8', scale=(1, 1, 0.9), seg=10, ring=8, noise_amt=0.02)
+    B.sph(0.42, 0, HY, 9.45, GOLD, seg=14, ring=10, noise_amt=0.0, glow=0.08)   # てっぺんの たま
+    B.cyl(0.07, 1.0, 0, HY, 9.9, '#8a6a3a', seg=6, noise_amt=0.0)
+    B.rbox(0.05, 0.9, 0.45, 0, HY - 0.45, 10.2, PINK, bev=0.0, noise_amt=0.0)   # はた
+    # えんとつ(うしろがわ)
+    B.rbox(1.0, 1.0, 2.6, 2.7, HY + 1.6, 7.1, '#f0d4b0', bev=0.12, bseg=3, noise_amt=0.05)
+    B.rbox(1.25, 1.25, 0.25, 2.7, HY + 1.6, 8.5, CREAM_D, bev=0.08, bseg=3, noise_amt=0.03)
+    # --- よこの まど・うしろの まるい まど ---
+    for xx in (-4.82, 4.82):
+        for yy in (HY - 3.0, HY, HY + 3.0):
+            for zz in (2.1, 4.4):
+                B.rbox(0.16, 0.95, 1.05, xx, yy, zz, '#fff3c0', bev=0.14, bseg=3, noise_amt=0.0, glow=0.15)
+                B.rbox(0.22, 1.2, 0.16, xx, yy, zz - 0.62, CREAM_D, bev=0.05, bseg=2, noise_amt=0.0)
+                B.rbox(0.22, 1.2, 0.16, xx, yy, zz + 0.62, CREAM_D, bev=0.05, bseg=2, noise_amt=0.0)
+    B.cyl(1.2, 0.2, 0, HY + 4.85, 3.2, CREAM_D, seg=28, rot=(1.5708, 0, 0), noise_amt=0.0, smooth=True)
+    B.cyl(0.95, 0.24, 0, HY + 4.85, 3.2, '#fff3c0', seg=28, rot=(1.5708, 0, 0), noise_amt=0.0, glow=0.18, smooth=True)
+    for sx in (-1, 1):   # うらぐち
+        B.rbox(1.4, 0.2, 2.0, sx * 2.6, HY + 4.85, 1.7, '#e8c898', bev=0.1, bseg=3, noise_amt=0.04)
+    # --- だいアーチ(まえ) ---
     ay = -0.9
     for s in (-1, 1):
         B.cyl(0.46, 4.0, s * 1.95, ay, 2.4, '#fffaf0', seg=24, noise_amt=0.02, smooth=True)
@@ -274,42 +297,49 @@ def gym_entrance():   # フィールドに たつ ジムの いりぐち(まえ�
         a = (k + 0.5) / 7 * math.pi; B.sph(0.14, -math.cos(a) * 1.95, ay - 0.5, 3.9 + math.sin(a) * 1.95, '#fff6c8', seg=8, ring=6, noise_amt=0.0, glow=0.1)
     B.rbox(4.0, 1.2, 0.2, 0, ay + 0.1, 0.22, CREAM_D, bev=0.08, bseg=3, noise_amt=0.03)   # しきい
     B.rbox(3.4, 1.3, 4.6, 0, 0.55, 2.4, '#2a2340', bev=0.0, noise_amt=0.0)   # おくの くらい ばしょ(ひかる めんが うえから かさなる)
-    # --- バナー(ほしの もよう) ---
-    B.rbox(3.0, 0.14, 1.3, 0, ay - 0.65, 7.0, '#fff8e8', bev=0.06, bseg=3, noise_amt=0.0)
-    B.rbox(3.2, 0.12, 0.12, 0, ay - 0.7, 7.7, GOLD, bev=0.04, bseg=2, noise_amt=0.0); B.rbox(3.2, 0.12, 0.12, 0, ay - 0.7, 6.3, GOLD, bev=0.04, bseg=2, noise_amt=0.0)
-    B.cyl(0.34, 0.16, 0, ay - 0.75, 7.0, GOLD, seg=5, noise_amt=0.0, glow=0.06, smooth=True, rot=(1.5708, 0, 0))
+    # --- やねの うえの かんばん(やねの しゃめんに のせる) ---
+    ca, sa = math.cos(0.655), math.sin(0.655); cy, cz = 0.5, 6.75
+    def onroof(u, v, n=0.0): return (u, cy + v * ca - n * sa, cz + v * sa + n * ca)
+    px, py, pz = onroof(0, 0)
+    B.rbox(3.2, 0.16, 1.4, px, py, pz, '#fff8e8', bev=0.07, bseg=3, rot=(-0.655, 0, 0), noise_amt=0.0)
+    for v in (-0.78, 0.78):
+        qx, qy, qz = onroof(0, v, 0.05); B.rbox(3.4, 0.14, 0.14, qx, qy, qz, GOLD, bev=0.04, bseg=2, rot=(-0.655, 0, 0), noise_amt=0.0)
     for k in range(5):
-        a = k / 5 * 6.2832; B.cyl(0.18, 0.16, math.cos(a) * 0.34, ay - 0.75, 7.0 + math.sin(a) * 0.34, GOLD, seg=10, r2=0.03, noise_amt=0.0, smooth=True, rot=(1.5708, 0, 0))
-    # --- りょうがわの とう(まるい やね・はた) ---
-    for s, rc in ((-1, PINK), (1, SKY)):
-        x = s * 5.7
-        B.cyl(1.35, 6.2, x, 0.3, 3.5, CREAM, seg=28, noise_amt=0.03, smooth=True)
-        B.cyl(1.55, 0.35, x, 0.3, 0.75, CREAM_D, seg=28, noise_amt=0.03, smooth=True)
-        B.cyl(1.7, 0.4, x, 0.3, 6.5, '#fff8e8', seg=28, noise_amt=0.02, smooth=True)
-        B.cyl(2.05, 1.9, x, 0.3, 7.6, rc, seg=28, r2=0.1, noise_amt=0.04, smooth=True)   # とんがり やね
-        B.sph(0.3, x, 0.3, 8.65, GOLD, seg=12, ring=8, noise_amt=0.0, glow=0.08)
-        B.cyl(0.06, 1.2, x, 0.3, 9.2, '#8a6a3a', seg=6, noise_amt=0.0)
-        B.rbox(0.05, 0.9, 0.5, x + 0.0, 0.3 - 0.45, 9.4, rc, bev=0.0, noise_amt=0.0)   # はた
-        for z in (2.6, 4.4):   # まどから あかり
-            B.rbox(0.62, 0.3, 0.9, x, -0.98, z, '#fff3c0', bev=0.14, bseg=3, noise_amt=0.0, glow=0.2)
-            B.rbox(0.8, 0.12, 0.12, x, -1.0, z - 0.5, '#e4d6b8', bev=0.04, bseg=2, noise_amt=0.0)
-        for k in range(6):   # とうの おびの かざり
-            a = k / 6 * 6.2832 + 0.3; B.sph(0.16, x + math.cos(a) * 1.4, 0.3 + math.sin(a) * 1.4, 6.5, GOLD, seg=8, ring=6, noise_amt=0.0)
-    # --- かんばんの いし(ジムの なまえ いれ) ---
+        a = k / 5 * 6.2832 + 1.5708; qx, qy, qz = onroof(math.cos(a) * 0.42, math.sin(a) * 0.42 * 1.0, 0.12)
+        B.sph(0.17, qx, qy, qz, GOLD, seg=8, ring=6, noise_amt=0.0, glow=0.08)
+    qx, qy, qz = onroof(0, 0, 0.12); B.sph(0.3, qx, qy, qz, GOLD, seg=10, ring=8, noise_amt=0.0, glow=0.08)
+    # --- よすみの とう(まえ 2・うしろ 2。まるい やね・はた・まど) ---
+    for ty, wins in ((0.3, True), (HY * 2 - 0.3, False)):
+        for s, rc in ((-1, PINK), (1, SKY)):
+            x = s * 5.7
+            B.cyl(1.35, 6.2, x, ty, 3.5, CREAM, seg=28, noise_amt=0.03, smooth=True)
+            B.cyl(1.55, 0.35, x, ty, 0.75, CREAM_D, seg=28, noise_amt=0.03, smooth=True)
+            B.cyl(1.7, 0.4, x, ty, 6.5, '#fff8e8', seg=28, noise_amt=0.02, smooth=True)
+            B.cyl(2.05, 1.9, x, ty, 7.6, rc, seg=28, r2=0.1, noise_amt=0.04, smooth=True)
+            B.sph(0.3, x, ty, 8.65, GOLD, seg=12, ring=8, noise_amt=0.0, glow=0.08)
+            B.cyl(0.06, 1.2, x, ty, 9.2, '#8a6a3a', seg=6, noise_amt=0.0)
+            B.rbox(0.05, 0.9, 0.5, x, ty - 0.45, 9.4, rc, bev=0.0, noise_amt=0.0)
+            fy = -0.98 if ty < 2 else -0.98 + 0.0
+            sgn = -1 if ty < 2 else 1
+            for z in (2.6, 4.4):
+                B.rbox(0.62, 0.3, 0.9, x, ty + sgn * 1.0, z, '#fff3c0', bev=0.14, bseg=3, noise_amt=0.0, glow=0.2)
+                B.rbox(0.8, 0.12, 0.12, x, ty + sgn * 1.02, z - 0.5, CREAM_D, bev=0.04, bseg=2, noise_amt=0.0)
+            for k in range(6):
+                a = k / 6 * 6.2832 + 0.3; B.sph(0.16, x + math.cos(a) * 1.4, ty + math.sin(a) * 1.4, 6.5, GOLD, seg=8, ring=6, noise_amt=0.0)
+    for s in (-1, 1):   # よこの ひくい かべ(まるい)
+        B.rbox(1.0, 9.4, 1.1, s * 7.6, HY, 0.65, CREAM, bev=0.25, bseg=3, noise_amt=0.04)
+        for k in range(5):
+            B.sph(0.38, s * 7.6, HY - 4.0 + k * 2.0, 1.35, '#fff8e8', seg=10, ring=8, noise_amt=0.02)
+    # --- かんばんの いし と はなばち(まえ) ---
     for s in (-1, 1):
         x = s * 3.3
-        B.rbox(0.9, 0.9, 0.9, x, -3.0, 1.25, CREAM, bev=0.18, bseg=3, noise_amt=0.03)   # うえきばち
+        B.rbox(0.9, 0.9, 0.9, x, -3.0, 1.25, CREAM, bev=0.18, bseg=3, noise_amt=0.03)
         B.rbox(1.0, 1.0, 0.18, x, -3.0, 1.75, CREAM_D, bev=0.08, bseg=3, noise_amt=0.03)
         for k in range(6):
             a = k / 6 * 6.2832; B.sph(0.34, x + math.cos(a) * 0.3, -3.0 + math.sin(a) * 0.3, 2.2 + (k % 2) * 0.12, random.choice(['#8fd67a', '#7fcf6a', '#a4e486']), seg=10, ring=7, noise_amt=0.04)
         for k in range(4):
             a = k / 4 * 6.2832 + 0.5; B.sph(0.11, x + math.cos(a) * 0.36, -3.0 + math.sin(a) * 0.36, 2.5, random.choice([PINK, '#fff0a0', '#ffffff']), seg=6, ring=4, noise_amt=0.0)
-    # --- ちかくの こもの(どうろう・いけがき) ---
-    for s in (-1, 1):
-        x = s * 8.0
-        for k in range(4):
-            B.sph(0.8 + (k % 2) * 0.1, x + s * (k * 0.6 - 0.8), 0.2 + (k % 2) * 0.3, 0.9 + (k % 2) * 0.1, ['#6cc35c', '#7fcf6a', '#93dc78', '#6cc35c'][k], scale=(1, 1, 0.85), seg=12, ring=8, noise_amt=0.05)
-    for k in range(5):   # おいてある ほし の かざり
+    for k in range(5):
         B.sph(random.uniform(0.15, 0.3), random.uniform(-5.2, 5.2), random.uniform(-3.4, -2.0), 0.55, '#fff6c8', scale=(1, 1, 0.7), seg=8, ring=6, noise_amt=0.0, glow=0.1)
 
 @asset

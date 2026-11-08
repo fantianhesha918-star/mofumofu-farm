@@ -52,6 +52,86 @@ $('#hud').hidden = false; $('#mm').hidden = true; $('#goal').hidden = true; $('#
 
 // ---- 地面 ----
 let waterMesh = null; const lavaMeshes = [];
+// ---- マグマだまり・みずうみ(アニメする シェーダー) ----
+const poolU = { value: 0 };   // じかん(まいフレーム こうしん)
+const GLSL_NOISE = `
+float h21(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f); return mix(mix(h21(i), h21(i + vec2(1., 0.)), f.x), mix(h21(i + vec2(0., 1.)), h21(i + vec2(1., 1.)), f.x), f.y); }
+float fbm(vec2 p){ float a = .5, s = 0.; for (int i = 0; i < 4; i++) { s += a * vn(p); p = p * 2.03 + vec2(17., 9.); a *= .5; } return s; }
+`;
+function makePoolMaterial(r, style, hot, mid, dark) {   // style 0=ようがん(かたまった かわと ひかる われめ) 1=えきたい(うずまく いろと きらめき)
+  return new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, fog: false,
+    uniforms: { uTime: poolU, uR: { value: r }, uStyle: { value: style }, uHot: { value: new THREE.Color(hot) }, uMid: { value: new THREE.Color(mid) }, uDark: { value: new THREE.Color(dark) } },
+    vertexShader: 'varying vec2 vP; void main(){ vP = position.xz; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+    fragmentShader: GLSL_NOISE + `
+varying vec2 vP; uniform float uTime, uR, uStyle; uniform vec3 uHot, uMid, uDark;
+void main(){
+  float d = length(vP) / uR; vec3 col;
+  if (uStyle < .5) {
+    vec2 q = vP * .26, fl = vec2(uTime * .05, uTime * .035);
+    float n = fbm(q + fl + fbm(q * 1.7 - fl) * 1.3);
+    float crack = abs(n - .5) * 2.;
+    float c = smoothstep(.04, .5, crack);
+    vec3 crust = uDark * (.8 + .6 * vn(q * 5.)) + uMid * .08;
+    vec3 lava = uHot * (1.05 + .25 * sin(uTime * 2. + n * 9.)) + uMid * .25;
+    col = mix(lava, crust, c) + uHot * .3 * (1. - c) * (1. - c);
+    col = mix(col, crust * .7, smoothstep(.84, .98, d) * .8);
+    col += uMid * .55 * smoothstep(.62, .84, d) * (1. - smoothstep(.86, 1., d)) * (.7 + .3 * sin(uTime * 1.4 + d * 9.));
+    float b = vn(vP * .8 + floor(uTime * .6) * 5.1); col += uHot * smoothstep(.94, 1., b) * .8 * (1. - c);
+  } else {
+    float n = fbm(vP * .16 + vec2(uTime * .04, -uTime * .03)), n2 = fbm(vP * .5 - vec2(uTime * .09, uTime * .05));
+    col = mix(uDark, uHot, smoothstep(.2, .8, n));
+    col += uMid * pow(max(0., sin(n2 * 18.8 + uTime * 1.5)), 6.) * .5;
+    col += vec3(1.) * step(.987, vn(vP * 3.2 + floor(uTime * 2.) * 3.1)) * .8;
+    col = mix(col, uMid, smoothstep(.72, 1., d) * .45);
+  }
+  gl_FragColor = vec4(col, 1. - smoothstep(.965, 1., d));
+}`,
+  });
+}
+function makePoolGlow(r, color) {   // ふちの ぼんやり ひかり
+  const g = new THREE.RingGeometry(r * 0.92, r + 2.6, 64, 1); g.rotateX(-Math.PI / 2);
+  return new THREE.Mesh(g, new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, side: THREE.DoubleSide,
+    uniforms: { uTime: poolU, uR: { value: r }, uC: { value: new THREE.Color(color) } },
+    vertexShader: 'varying vec2 vP; void main(){ vP = position.xz; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+    fragmentShader: 'varying vec2 vP; uniform float uTime, uR; uniform vec3 uC; void main(){ float l = length(vP); float a = (1. - smoothstep(uR * .95, uR + 2.6, l)) * smoothstep(uR * .88, uR * 1., l) * (.55 + .2 * sin(uTime * 1.6 + l)); gl_FragColor = vec4(uC, a); }',
+  }));
+}
+function makeLakeMesh(LCx, LCz, R, waterY, depthAt) {   // みずうみ: きしの ふかさで いろ・あわ(なみうちぎわ)・すきとおりが かわる
+  const g = new THREE.RingGeometry(0.01, R, 112, 44); g.rotateX(-Math.PI / 2);
+  const pos = g.attributes.position, dep = new Float32Array(pos.count);
+  for (let i = 0; i < pos.count; i++) dep[i] = depthAt(LCx + pos.getX(i), LCz + pos.getZ(i));
+  g.setAttribute('depth', new THREE.BufferAttribute(dep, 1));
+  const m = new THREE.Mesh(g, new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, fog: false,
+    uniforms: { uTime: poolU, uSun: { value: new THREE.Vector3(-0.5, 0.75, 0.4).normalize() } },
+    vertexShader: 'attribute float depth; varying float vD; varying vec3 vW; void main(){ vD = depth; vec4 w = modelMatrix * vec4(position, 1.); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }',
+    fragmentShader: GLSL_NOISE + `
+varying float vD; varying vec3 vW; uniform float uTime; uniform vec3 uSun;
+void main(){
+  if (vD < 0.) discard;
+  vec2 p = vW.xz; float t = uTime;
+  float nx = cos(p.x * .8 + t * 1.1) * .32 + cos((p.x + p.y) * .5 + t * .7) * .13 + (vn(p * .9 + t * .15) - .5) * .5;
+  float nz = cos(p.y * 1.1 - t * .9) * .4 + cos((p.x + p.y) * .5 + t * .7) * .13 + (vn(p * .9 - t * .13 + 4.) - .5) * .5;
+  vec3 N = normalize(vec3(-nx, 1., -nz)), V = normalize(cameraPosition - vW);
+  float fres = pow(1. - max(dot(N, V), 0.), 3.);
+  float spec = pow(max(dot(reflect(-uSun, N), V), 0.), 70.);
+  vec3 shallow = vec3(.38, .86, .82), deep = vec3(.05, .26, .55);
+  vec3 col = mix(shallow, deep, smoothstep(0., 2.6, vD));
+  col = mix(col, vec3(.66, .86, .98), fres * .5);
+  col += spec * vec3(1., .97, .9) * .9;
+  col += vec3(.1, .2, .25) * smoothstep(.6, 1., vn(p * 1.6 + vec2(t * .2, -t * .15))) * (1. - smoothstep(0., 1.8, vD)) * .8;   // ひかりの もよう
+  float f = 1. - smoothstep(0., .4, vD + (fbm(p * 1.4 + t * .3) - .5) * .5);
+  col = mix(col, vec3(1.), f * .9);
+  gl_FragColor = vec4(col, mix(.58, .96, smoothstep(0., 1.3, vD)) + f * .3);
+}`,
+  }));
+  m.position.set(LCx, waterY, LCz);
+  return m;
+}
+
 const hBase = (x, z) => { const r = Math.hypot(x, z); return (Math.sin(x * 0.07 + 1.2) * Math.cos(z * 0.06) * 1.3 + Math.sin(x * 0.19 + z * 0.15) * 0.25) * Math.min(1, r / 24) * (F.relief || 1) + (F.hills ? (Math.sin(x * 0.032 + 2) * Math.cos(z * 0.028 + 1) + Math.sin(x * 0.05 - z * 0.04) * 0.5) * F.hills * Math.min(1, r / 34) : 0); };
 const PL = F.pool || null, LAVA = F.lava || [], LAVAY = LAVA.map(([cx, cz]) => hBase(cx, cz) - 0.5);
 const hAt = (x, z) => { let h = hBase(x, z); for (let i = 0; i < LAVA.length; i++) { const [cx, cz, r] = LAVA[i], d = Math.hypot(x - cx, z - cz); if (d < r + 4) { const t = THREE.MathUtils.smoothstep(r + 4 - d, 0, 4); h = h + (LAVAY[i] - h) * t; } } if (!LC) return h; const d = Math.hypot(x - LC.x, z - LC.z); if (d > LC.r + 7) return h; const t = Math.min(1, Math.max(0, (LC.r + 7 - d) / 12)); return h - t * t * (3 - 2 * t) * 3.4; };   // みずうみの くぼみ
@@ -80,8 +160,14 @@ const gtex = (() => { const c = document.createElement('canvas'); c.width = c.he
     x1.putImageData(A, 0, 0);
     const t = new THREE.CanvasTexture(c1); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(F.groundRep || 20, F.groundRep || 20); t.anisotropy = 4; gmat.map = t; gmat.color.setScalar(F.groundGain || 1); gmat.needsUpdate = true;
   }; gImg.onerror = () => {}; gImg.src = `./assets/textures/ground_${FID}.jpg`;
-  LAVA.forEach(([cx, cz, r], i) => { const m = new THREE.Mesh(new THREE.CircleGeometry(r, 36), new THREE.MeshBasicMaterial({ color: PL ? new THREE.Color().setHSL(PL.h, PL.s, PL.l) : '#ff6a1a', fog: false })); m.rotation.x = -Math.PI / 2; m.position.set(cx, LAVAY[i] + 0.1, cz); scene.add(m); lavaMeshes.push(m); const glow = new THREE.Mesh(new THREE.RingGeometry(r * 0.98, r + 1.6, 36), new THREE.MeshBasicMaterial({ color: PL ? PL.glow : '#ff9a3a', transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); glow.rotation.x = -Math.PI / 2; glow.position.set(cx, LAVAY[i] + 0.14, cz); scene.add(glow); });
-  if (LC) { waterMesh = new THREE.Mesh(new THREE.CircleGeometry(LC.r + 14, 48), new THREE.MeshBasicMaterial({ color: '#1c5f9c', transparent: true, opacity: 0.94, fog: false })); waterMesh.rotation.x = -Math.PI / 2; waterMesh.position.set(LC.x, WATER_Y, LC.z); scene.add(waterMesh); }
+  LAVA.forEach(([cx, cz, r], i) => {   // マグマだまり(ほかの フィールドでは えきたいの いけ)
+    const tc = PL ? new THREE.Color().setHSL(PL.h, PL.s, PL.l) : null;
+    const hot = tc ? '#' + tc.clone().offsetHSL(0, 0.05, 0.14).getHexString() : '#ffb030', dark = tc ? '#' + tc.clone().offsetHSL(0, 0, -0.14).getHexString() : '#5a2216', mid = PL ? PL.glow : '#ff7a1a';
+    const gm = new THREE.CircleGeometry(r, 72); gm.rotateX(-Math.PI / 2);
+    const m = new THREE.Mesh(gm, makePoolMaterial(r, PL ? 1 : 0, hot, mid, dark)); m.position.set(cx, LAVAY[i] + 0.1, cz); m.renderOrder = 1; scene.add(m); lavaMeshes.push(m);
+    const glow = makePoolGlow(r, PL ? PL.glow : '#ff9a3a'); glow.position.set(cx, LAVAY[i] + 0.16, cz); glow.renderOrder = 2; scene.add(glow);
+  });
+  if (LC) { waterMesh = makeLakeMesh(LC.x, LC.z, LC.r + 14, WATER_Y, (x, z) => WATER_Y - hAt(x, z)); waterMesh.renderOrder = 1; scene.add(waterMesh); }
 }
 
 // ---- 地面の もよう(F.patch=[[色,濃さ,ひかり?,個数,小さい半径,大きい半径],...]) ----
@@ -240,6 +326,16 @@ const rematchReady = () => bossBeaten() && (state.bossRe || {})[BOSS.key] !== (s
 // ---- ジムの いりぐち: ぬしは ジムの おくに いる。いりぐちから はいって しかけを とくと ぬしの まえに たどりつく(gym.html) ----
 const GYM_ON = !!GYM_MAPS[FID], GYM_TH = GYM_THEMES[FID] || {};
 let gymPortal = null, gymDoor = null;
+
+// ---- ジムの かいだん: のぼれる(めりこまない)。モデル(gym_entrance)の だんの たかさに あわせて プレイヤーの たかさを あげる ----
+function stairTop(x, z) {
+  if (!gymDoor) return 0;
+  const S = 1.05, lx = (x - gymDoor.x) / S, by = -((z - (gymDoor.z - 1.5)) / S), ax = Math.abs(lx); let t = 0;   // by = モデルの うしろ むき(まえが マイナス)
+  if (ax <= 7 && by >= -2.7 && by <= 3.9) t = 0.4;
+  if (ax <= 6 && by >= -2.0 && by <= 3.2) t = 0.8;
+  for (let k = 0; k < 3; k++) { const yc = -2.55 + 0.62 * k, w = 4.8 - 0.5 * k; if (ax <= w / 2 && Math.abs(by - yc) <= 0.475) t = Math.max(t, 0.64 + 0.24 * k); }
+  return t;
+}
 async function makeGymDoor() {
   gymDoor = { x: BOSS.x, z: BOSS.z };
   const gy = hAt(BOSS.x, BOSS.z);
@@ -251,7 +347,16 @@ async function makeGymDoor() {
     const body = new THREE.Mesh(m.geometry, new THREE.MeshLambertMaterial({ vertexColors: true, color: acc })); body.scale.setScalar(1.05); g.add(body);
     if (pm) { gymPortal = new THREE.Mesh(pm.geometry, new THREE.MeshBasicMaterial({ color: GYM_TH.accent || '#ffe9a0', transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); gymPortal.scale.setScalar(1.05); g.add(gymPortal); }
     g.position.set(BOSS.x, gy - 0.1, BOSS.z - 1.5); scene.add(g);
-    circles.push({ x: BOSS.x - 3.6, z: BOSS.z - 2.2, r: 2.0 }, { x: BOSS.x + 3.6, z: BOSS.z - 2.2, r: 2.0 }, { x: BOSS.x, z: BOSS.z - 3.4, r: 1.8 }, { x: BOSS.x - 6.0, z: BOSS.z - 1.8, r: 1.6 }, { x: BOSS.x + 6.0, z: BOSS.z - 1.8, r: 1.6 });
+    if (!ECO) try {   // ジムの まわりの にわ(はなだん・みち・うえき・きの・フェンス。省エネモードでは おかない)
+      const gg = await loader.loadAsync('./assets/gym/gym_garden_lite.glb'); let gm = null; gg.scene.traverse(o => { if (!gm && o.isMesh) gm = o; });
+      if (gm) { if (!gm.geometry.attributes.normal) gm.geometry.computeVertexNormals(); const tint = new THREE.Color('#ffffff').lerp(new THREE.Color(GYM_TH.wall || '#ffffff'), 0.2); const garden = new THREE.Mesh(gm.geometry, new THREE.MeshLambertMaterial({ vertexColors: true, color: tint })); garden.scale.setScalar(1.05); g.add(garden); }
+    } catch (e) { console.warn('gym garden failed', e); }
+    { const wz = (y) => BOSS.z - 1.5 - 1.05 * y, wx = (x) => BOSS.x + 1.05 * x;   // モデルの ざひょう(Blender)→ ワールド
+      for (const [x, y, s] of [[-12, -5.5, 1.1], [12, -5.5, 1.1], [-13.4, 1.5, 1.2], [13.4, 1.5, 1.2], [-12.2, 8, 1], [12.2, 8, 1], [-9, -13.5, 0.9], [9, -13.5, 0.9], [-14, -10.5, 1], [14, -10.5, 1]]) circles.push({ x: wx(x), z: wz(y), r: 0.55 * s * 1.05 + 0.3 });
+      for (const sd of [-1, 1]) for (let k = 0; k < 7; k++) circles.push({ x: wx(sd * 9.6), z: wz(-2.5 + k * 2), r: 1.0 });
+      for (let k = 0; k < 9; k++) circles.push({ x: wx(-8 + k * 2), z: wz(10.4), r: 1.0 }); }
+
+    { const C = [[-3.8, -2.4, 2.1], [3.8, -2.4, 2.1], [0, -3.6, 1.9], [-3.6, -5.6, 2.4], [3.6, -5.6, 2.4], [0, -5.8, 3.0], [-3.6, -8.6, 2.4], [3.6, -8.6, 2.4], [0, -8.8, 2.6], [-6.0, -1.8, 1.6], [6.0, -1.8, 1.6], [-6.0, -10.0, 1.6], [6.0, -10.0, 1.6], [-8.2, -5.6, 1.1], [8.2, -5.6, 1.1], [-8.2, -8.4, 1.1], [8.2, -8.4, 1.1]]; for (const [dx, dz, r] of C) circles.push({ x: BOSS.x + dx, z: BOSS.z + dz, r }); }   // ほんかん・とう・かこい
   } catch (e) { console.warn('gym door failed', e); }
 }
 function enterGym() {
@@ -528,7 +633,8 @@ function updatePlayer(dt) {
     const r = Math.hypot(P.pos.x, P.pos.z); if (r > WR) { P.pos.x *= WR / r; P.pos.z *= WR / r; }
     if (isWater(P.pos.x, P.pos.z)) { P.pos.x = ox; P.pos.z = oz; }   // みずうみには はいれない
   }
-  P.pos.y = hAt(P.pos.x, P.pos.z); P.t += dt * (0.6 + P.sp * 0.14);
+  { const gy0 = hAt(P.pos.x, P.pos.z), tt = stairTop(P.pos.x, P.pos.z), bump = tt > 0 ? Math.max(0, (hAt(gymDoor.x, gymDoor.z) - 0.1 + 1.05 * tt) - gy0) : 0; P.stairY = (P.stairY || 0) + (bump - (P.stairY || 0)) * Math.min(1, dt * 12); P.pos.y = gy0 + P.stairY; }   // かいだんは すこし のぼれる
+  P.t += dt * (0.6 + P.sp * 0.14);
   chin.outer.position.copy(P.pos); chin.outer.rotation.y = P.face; hop(chin, Math.min(1, P.sp / 4.1) * (dashing ? 1.25 : 1), P.t);
   const moved = Math.hypot(P.pos.x - ox, P.pos.z - oz);
   if (!busy && inZone(P.pos.x, P.pos.z)) { encDist += moved; grace -= dt; if (encDist > 6 && grace <= 0) { encDist = R(0, 2); if (rnd() < 0.5) startEncounter(); } } else if (!inZone(P.pos.x, P.pos.z)) encDist = Math.min(encDist, 2);
@@ -832,8 +938,7 @@ function frame() {
     if (gate2) gate2.userData.portal.material.opacity = 0.4 + Math.sin(T * 2.2 + 1) * 0.12;
     updateEmbers(dt); updateWeather(dt); updateSky(dt); updateChests(dt); updateShrines(dt); updatePet(dt, T); if ((wxT += dt) > 1) { wxT = 0; updateWxLabel(); }
     updateTrainers(dt, T);
-    lavaMeshes.forEach((m, i) => m.material.color.setHSL((PL ? PL.h : 0.045) + Math.sin(T * 1.7 + i) * 0.01, PL ? PL.s : 1, (PL ? PL.l : 0.36) + Math.sin(T * 2.3 + i * 2) * 0.04));
-    if (waterMesh) { waterMesh.material.color.setHSL(0.575, 0.7, 0.3 + Math.sin(T * 0.9) * 0.03); waterMesh.position.y = WATER_Y + Math.sin(T * 0.7) * 0.03; }
+    poolU.value = T;   // マグマ・みずうみの アニメ
   }
   renderer.render(scene, camera);
 }
