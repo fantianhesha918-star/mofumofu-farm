@@ -117,3 +117,37 @@ def build(name, shift=(0, 0, 0), ground=True):
     bpy.ops.export_scene.gltf(filepath=f'{OUT}/{name}_lite.glb', export_format='GLB', use_selection=True, export_yup=True, export_apply=True, export_vertex_color='ACTIVE')
     print('exported', name, len(o.data.polygons), 'faces')
     bpy.data.objects.remove(o, do_unlink=True); parts = []
+
+
+# ---- ほそかい かざりの ヘルパー(2026-11 追加) ----
+FL_COLS = ['#ffb8d4', '#fff0a0', '#ffffff', '#d8c8ff', '#ff9a9a', '#ffd0a0']
+
+def ground_extras(r, seed=0, peb=8, tufts=7, flowers=5, mush=2, leaves=0):   # あしもとの こいし・くさ・はな・きのこ・おちば
+    rnd = random.Random(seed * 13 + 5)
+    for i in range(peb):
+        a = rnd.uniform(0, 6.28); d = r * rnd.uniform(0.85, 1.4); rock(rnd.uniform(0.05, 0.1), math.cos(a) * d, math.sin(a) * d, 0.03, rnd.choice(['#9a9588', '#a8a294', '#8a8478']), (1, 1, 0.65), sub=1, seed=i + seed, noise_amt=0.1)
+    for i in range(tufts):
+        a = rnd.uniform(0, 6.28); d = r * rnd.uniform(0.8, 1.35); x, y = math.cos(a) * d, math.sin(a) * d
+        for k in range(5): leaf(rnd.uniform(0.22, 0.4), 0.06, x + rnd.uniform(-.05, .05), y + rnd.uniform(-.05, .05), 0.02, rnd.choice(['#5f8f38', '#6a9a3c', '#7aa848']), rot=(0.55, 0, rnd.uniform(0, 6.28)), bend=0.5)
+    for i in range(flowers):
+        a = rnd.uniform(0, 6.28); d = r * rnd.uniform(0.8, 1.4); x, y = math.cos(a) * d, math.sin(a) * d; h = rnd.uniform(0.25, 0.45); c = rnd.choice(FL_COLS)
+        tube([(x, y, 0.0), (x + 0.02, y, h)], 0.012, 0.01, '#4a7a30', seg=5)
+        for q in range(5): sph(0.045, x + math.cos(q * 1.26) * 0.06, y + math.sin(q * 1.26) * 0.06, h + 0.02, c, seg=6, ring=4)
+        sph(0.03, x, y, h + 0.03, '#ffd23a', seg=5, ring=3)
+    for i in range(mush):
+        a = rnd.uniform(0, 6.28); d = r * rnd.uniform(0.85, 1.2); x, y = math.cos(a) * d, math.sin(a) * d; s = rnd.uniform(0.12, 0.2)
+        cyl(s * 0.2, s, x, y, s / 2, '#fff2e0', 6); sph(s * 0.7, x, y, s, rnd.choice(['#ff8a7a', '#ffc07a', '#ff9ac0']), (1, 1, 0.65), seg=8, ring=6)
+    for i in range(leaves):
+        a = rnd.uniform(0, 6.28); d = r * rnd.uniform(0.5, 1.3); leaf(0.18, 0.12, math.cos(a) * d, math.sin(a) * d, 0.02, rnd.choice(['#d8872a', '#e8a838', '#c8602a']), rot=(0.1, 0, rnd.uniform(0, 6.28)), bend=0.1)
+
+def vine(x, y, z0, z1, a0=0.0, turns=1.5, r=0.025, n=14, rad=0.3, leaves=True, seed=0):   # らせんに まきつく つた
+    rnd = random.Random(seed)
+    pts = [(x + math.cos(a0 + t * turns * 6.283) * rad, y + math.sin(a0 + t * turns * 6.283) * rad, z0 + (z1 - z0) * t) for t in [i / n for i in range(n + 1)]]
+    tube(pts, r, r * 0.6, '#3f6a2a', seg=5)
+    if leaves:
+        for i in range(2, n, 2): leaf(0.26, 0.17, pts[i][0], pts[i][1], pts[i][2], rnd.choice(['#5f8f38', '#6a9a3c', '#4f8230']), rot=(0.45, 0, a0 + i), bend=0.3)
+
+def candle(x, y, z=0.0, h=0.28):   # ろうそく
+    cyl(0.045, h, x, y, z + h / 2, '#fff3dc', 10); sph(0.04, x, y, z + h + 0.05, '#ffcf5a', (0.8, 0.8, 1.4), seg=8, ring=6, glow=0.4)
+    sph(0.055, x, y, z + h + 0.05, '#ffd878', seg=8, ring=6, glow=0.3)
+

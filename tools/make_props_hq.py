@@ -4,13 +4,36 @@
 import bpy, sys, math, random, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import blib as B
-from blib import rbox, cyl, sph, rock, tube, leaf, start, build
+from blib import rbox, cyl, sph, rock, tube, leaf, start, build, ground_extras, vine, candle
 
 args = sys.argv[sys.argv.index('--') + 1:]; OUT = args[0]; ONLY = set(args[1:])
 G1, G2, G3 = '#5f9238', '#4a7a2c', '#7bb04a'
 def want(n): return not ONLY or n in ONLY
 def tuft(x, y, z, n=6, h=0.3, col=G1, w=0.06):
     for k in range(n): leaf(h * random.uniform(0.7, 1.2), w, x + random.uniform(-.05, .05), y + random.uniform(-.05, .05), z, col, rot=(0.55, 0, random.uniform(0, 6.28)), bend=0.5)
+
+
+# ================= ほそかい かざり(2026-11 クオリティ アップ) =================
+def extras_campfire():
+    rnd = random.Random(31)
+    for (a, ph) in ((0.5, 0), (2.7, 1), (4.5, 2)):   # マシュマロの くし
+        x0, y0 = math.cos(a) * 1.35, math.sin(a) * 1.35; x1, y1 = math.cos(a) * 0.32, math.sin(a) * 0.32
+        tube([(x0, y0, 0.05), ((x0 + x1) / 2, (y0 + y1) / 2, 0.38), (x1, y1, 0.62)], 0.014, 0.012, '#7a5a34', seg=5)
+        for k in range(2): sph(0.07, x1 + (x0 - x1) * 0.1 * k, y1 + (y0 - y1) * 0.1 * k, 0.62 + 0.0 - k * 0.07, '#fff6ea' if k else '#ffd8c0', (1, 1, 0.9), seg=8, ring=6)
+    for k in range(3):   # すわる まるた(こけつき)
+        a = k * 2.09 + 1.0; x, y = math.cos(a) * 1.65, math.sin(a) * 1.65
+        cyl(0.24, 0.42, x, y, 0.21, '#7a5632', 12, noise_amt=0.15, moss=('#59803a', 0.2)); cyl(0.21, 0.02, x, y, 0.43, '#c9a06a', 12)
+    for i in range(14): sph(0.02, rnd.uniform(-0.5, 0.5), rnd.uniform(-0.5, 0.5), 0.05 + rnd.uniform(0, 0.12), '#ff9a3a', seg=5, ring=4, glow=0.3)   # おきび
+    ground_extras(1.9, seed=41, peb=10, tufts=8, flowers=3, mush=2, leaves=3)
+
+def extras_ground(r, seed, **kw):
+    ground_extras(r, seed=seed, **kw)
+
+def extras_scarecrow():
+    sph(0.28, 0.6, 0.35, 0.22, '#ff9a2a', (1, 1, 0.8), seg=12, ring=8); cyl(0.04, 0.12, 0.6, 0.35, 0.46, '#4a7a30', 6)
+    sph(0.22, -0.55, 0.4, 0.18, '#e88a22', (1, 1, 0.8), seg=12, ring=8)
+    for k in range(3): leaf(0.4, 0.18, 0.6, 0.35, 0.3, '#5f9238', rot=(0.4, 0, k * 2.1), bend=0.3)
+    ground_extras(0.95, seed=43, peb=6, tufts=8, flowers=4, mush=1, leaves=2)
 
 def campfire():
     random.seed(1); start(OUT)
@@ -27,6 +50,7 @@ def campfire():
             a = k * 2.1 + ph; x, y = math.cos(a) * 0.12 * (k > 0), math.sin(a) * 0.12 * (k > 0)
             tube([(x, y, 0.28), (x + 0.03, y, 0.28 + h * 0.4), (x - 0.04, y + 0.03, 0.28 + h * 0.75), (x + 0.02, y, 0.28 + h)], r0, r1, col, seg=10, glow=gl, noise_amt=0.05)
     for i in range(9): sph(0.022, random.uniform(-.4, .4), random.uniform(-.4, .4), 0.6 + random.uniform(0, .5), '#ffd060', seg=6, ring=4, glow=0.2)
+    extras_campfire()
     build('campfire')
 
 def acorn():
@@ -97,6 +121,7 @@ def nori_rack():
     for i in range(6):                                                                                      # のり(ほしてある)
         x = -0.78 + i * 0.31; rbox(0.27, 0.025, 0.4, x, 0.0, 0.7, '#233a1c' if i % 2 else '#2d4a22', 0.01, noise_amt=0.2)
     for sx in (-0.9, 0, 0.9): tube([(sx - 0.05, 0, 0.9), (sx, 0.02, 0.88), (sx + 0.05, 0, 0.9)], 0.012, 0.012, '#c0a060', seg=5)
+    ground_extras(1.3, seed=55, peb=9, tufts=0, flowers=0, mush=0)
     build('nori_rack')
 
 def scarecrow():
@@ -114,6 +139,7 @@ def scarecrow():
     sph(0.03, 0, -0.22, 1.4, '#c8786a', seg=8, ring=6); tube([(-0.08, -0.2, 1.33), (0, -0.21, 1.31), (0.08, -0.2, 1.33)], 0.008, 0.008, '#6a3a2a', seg=4)
     cyl(0.4, 0.04, 0, 0, 1.6, '#e0b858', 24, noise_amt=0.1); cyl(0.2, 0.2, 0, 0, 1.7, '#e0b858', 20, noise_amt=0.1); cyl(0.205, 0.05, 0, 0, 1.64, '#c8483a', 20)   # ぼうし
     for sx in (-1, 1): sph(0.045, sx * 0.1, -0.3, 0.78, '#e8e8e0', seg=8, ring=6)
+    extras_scarecrow()
     build('scarecrow')
 
 def bench():
@@ -126,6 +152,7 @@ def bench():
         rbox(0.09, 0.4, 0.07, sx, 0.0, 0.58, W2, 0.015); rbox(0.1, 0.1, 0.07, sx, -0.15, 0.62, W2, 0.015)
     rbox(1.4, 0.05, 0.05, 0, 0.0, 0.15, W2, 0.01)
     for sx in (-0.75, 0.75): cyl(0.02, 0.1, sx, 0.0, 0.5, '#5a5a62', 8, rot=(0, math.pi / 2, 0))
+    ground_extras(1.2, seed=45, peb=6, tufts=7, flowers=4, mush=1, leaves=2)
     build('bench')
 
 def flowerbed():
@@ -140,6 +167,7 @@ def flowerbed():
         leaf(0.2, 0.08, x, y, 0.34, G1, rot=(0.7, 0, random.uniform(0, 6.28)), bend=0.4)
         for k in range(6): a = k * 1.047; sph(0.045, x + math.cos(a) * 0.055, y + math.sin(a) * 0.055, 0.3 + h + 0.01, c, (1, 1, 0.5), seg=8, ring=6)
         sph(0.03, x, y, 0.3 + h + 0.02, '#ffd040', seg=8, ring=6)
+    ground_extras(1.3, seed=57, peb=6, tufts=6, flowers=0, mush=1, leaves=2)
     build('flowerbed')
 
 def egg_nest():
@@ -154,6 +182,7 @@ def egg_nest():
         sph(0.18, x, y, 0.28, '#f0e0c0', (0.82, 0.82, 1.1), seg=16, ring=12, rot=rot, noise_amt=0.05)
         for k in range(6): a = k * 1.2; sph(0.018, x + math.cos(a) * 0.12, y + math.sin(a) * 0.12, 0.3 + math.sin(a * 2) * 0.1, '#b89a70', seg=5, ring=4)
     for k in range(5): leaf(0.2, 0.05, random.uniform(-.5, .5), random.uniform(-.5, .5), 0.14, '#fff8ee', rot=(0.5, 0, random.uniform(0, 6.28)), bend=0.4, noise_amt=0.04)
+    ground_extras(0.9, seed=47, peb=6, tufts=7, flowers=3, mush=1)
     build('egg_nest')
 
 def birch():
@@ -166,6 +195,7 @@ def birch():
         tube(bp, 0.022, 0.01, '#d8d0c0', seg=6)
         for k in range(8): sph(0.1, bp[2][0] + random.uniform(-.2, .2), bp[2][1] + random.uniform(-.2, .2), bp[2][2] + random.uniform(-.1, .22), random.choice(['#9ac04a', '#b0d060', '#86b03c']), (1, 1, 0.7), seg=8, ring=6, noise_amt=0.15)
     for k in range(10): sph(0.1, random.uniform(-.2, .2), random.uniform(-.2, .2), 1.65 + random.uniform(0, .35), random.choice(['#9ac04a', '#b0d060', '#86b03c']), (1, 1, 0.75), seg=8, ring=6, noise_amt=0.15)
+    ground_extras(1.0, seed=51, peb=6, tufts=8, flowers=3, mush=3, leaves=6)
     build('birch')
 
 for n, f in (('campfire', campfire), ('acorn', acorn), ('berrybush', berrybush), ('dandelion', dandelion), ('kelp', kelp), ('mushroom', mushroom), ('nori_rack', nori_rack), ('scarecrow', scarecrow), ('bench', bench), ('flowerbed', flowerbed), ('egg_nest', egg_nest), ('birch', birch)):

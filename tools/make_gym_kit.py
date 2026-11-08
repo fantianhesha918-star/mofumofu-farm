@@ -341,6 +341,30 @@ def gym_entrance():   # ジムの たてもの(まえが +Z。おくゆき の�
             a = k / 4 * 6.2832 + 0.5; B.sph(0.11, x + math.cos(a) * 0.36, -3.0 + math.sin(a) * 0.36, 2.5, random.choice([PINK, '#fff0a0', '#ffffff']), seg=6, ring=4, noise_amt=0.0)
     for k in range(5):
         B.sph(random.uniform(0.15, 0.3), random.uniform(-5.2, 5.2), random.uniform(-3.4, -2.0), 0.55, '#fff6c8', scale=(1, 1, 0.7), seg=8, ring=6, noise_amt=0.0, glow=0.1)
+    # --- ほそかい かざり(2026-11 クオリティ アップ) ---
+    for z in (1.4, 2.4, 3.4, 4.4):   # ほんかんの よこの すじ
+        for xx in (-4.84, 4.84): B.rbox(0.1, 9.7, 0.08, xx, HY, z, CREAM_D, bev=0.02, bseg=2, noise_amt=0.0)
+        B.rbox(9.7, 0.1, 0.08, 0, HY + 4.84, z, CREAM_D, bev=0.02, bseg=2, noise_amt=0.0)
+    for ty in (0.3, HY * 2 - 0.3):   # とうの れんがの すじと つた・のぼり
+        for s_ in (-1, 1):
+            x = s_ * 5.7
+            for z in (1.3, 2.1, 2.9, 3.7, 4.5, 5.3): B.cyl(1.36, 0.04, x, ty, z, CREAM_D, seg=28, noise_amt=0.0)
+            B.vine(x, ty, 0.8, 5.6, a0=1.0 + s_, turns=1.2, rad=1.36, n=16, r=0.04, seed=int(x * 3 + ty))
+    for xx in (-4.82, 4.82):   # まどの したの はなばこ
+        for yy in (HY - 3.0, HY, HY + 3.0):
+            sgn = -1 if xx < 0 else 1
+            B.rbox(0.5, 1.2, 0.3, xx + sgn * 0.25, yy, 1.35, '#c99a5e', bev=0.06, bseg=2, noise_amt=0.04)
+            for k in range(5):
+                B.sph(0.14, xx + sgn * 0.3, yy - 0.4 + k * 0.2, 1.62, ['#8fd67a', '#7fcf6a'][k % 2], scale=(1, 1, 0.8), seg=6, ring=4, noise_amt=0.0)
+                B.sph(0.08, xx + sgn * 0.3, yy - 0.4 + k * 0.2, 1.8, [PINK, '#fff0a0', '#ffffff', '#d8c8ff', '#ff9a9a'][k], seg=5, ring=4, noise_amt=0.0)
+    for s_ in (-1, 1):   # アーチの よこの つるす ちょうちん
+        B.tube([(s_ * 2.9, ay - 0.5, 4.6), (s_ * 2.9, ay - 0.5, 4.2)], 0.025, 0.025, '#8a6a3a', seg=5, noise_amt=0.0)
+        B.sph(0.3, s_ * 2.9, ay - 0.5, 3.85, '#ffb878', (1, 1, 1.25), seg=10, ring=8, noise_amt=0.0, glow=0.3); B.cyl(0.18, 0.06, s_ * 2.9, ay - 0.5, 4.2, GOLD, seg=8, noise_amt=0.0)
+    for k in range(4):   # やねの たいら(かわらの すじ)
+        a = k / 4 * 6.283 + math.pi / 4
+        B.tube([(math.cos(a) * 0.3, HY + math.sin(a) * 0.3, 9.1), (math.cos(a) * 4.9, HY + math.sin(a) * 4.9, 5.5)], 0.14, 0.14, '#ff9a6a', seg=6, noise_amt=0.0)
+    for k in range(6):   # きょうかいの ほし
+        B.sph(random.uniform(0.1, 0.2), random.uniform(-4.5, 4.5), random.uniform(-3.4, -2.2), 0.18, random.choice(['#fff6c8', PINK, '#ffffff']), scale=(1, 1, 0.5), seg=6, ring=4, noise_amt=0.0, glow=0.15)
 
 @asset
 def gym_portal():   # いりぐちの なかの ひかる めん(ふくろ。ゲームで かさねあわせる)

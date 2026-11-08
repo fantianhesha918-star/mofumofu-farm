@@ -81,6 +81,18 @@ def shrine_cave():
     # --- けっしょう ---
     def crystal(x, y, z, h, col, tilt):
         B.cyl(h * 0.2, h, x, y, z + h / 2, col, seg=6, r2=h * 0.03, rot=(tilt[0], tilt[1], 0), noise_amt=0.03, glow=0.16, smooth=True)
+    # --- ほそかい かざり(2026-11) ---
+    for (x, y) in ((-4.6, -2.8), (4.6, -2.6)):   # つみいし(ケルン)
+        for k in range(4): B.rock(0.42 - k * 0.07, x + random.uniform(-0.05, 0.05), y, 0.25 + k * 0.38, random.choice(['#cfc8e0', '#b8b0d0', '#a8a0c4']), scale=(1, 1, 0.65), rough=0.1, sub=1, seed=k + int(x), noise_amt=0.04)
+    gp = [(-3.6 + 7.2 * t, ay - 0.7, 2.6 - 0.45 * math.sin(t * math.pi) + 0.0) for t in [i / 18 for i in range(19)]]
+    B.tube(gp, 0.03, 0.03, '#8a6a3a', seg=5, noise_amt=0.0)   # かざりなわ(はたの ガーランド)
+    for i, t in enumerate([j / 12 for j in range(1, 12)]):
+        B.rbox(0.22, 0.03, 0.26, -3.6 + 7.2 * t, ay - 0.72, 2.45 - 0.45 * math.sin(t * math.pi), ['#ffb8d4', '#fff0a0', '#c0e8ff', '#c8f0c0'][i % 4], bev=0.0, rot=(0, 0, 0.78), noise_amt=0.0)
+    for s_ in (-1, 1): B.vine(s_ * 1.7, ay, 0.4, 3.0, a0=s_, turns=1.1, rad=0.46, n=14, r=0.04, seed=int(s_ * 7 + 20))
+    for k in range(10): B.sph(random.uniform(0.04, 0.08), random.uniform(-4, 4), random.uniform(-4.5, 2.0), random.uniform(0.6, 5.0), '#fff2a0', seg=5, ring=4, noise_amt=0.0, glow=0.4)   # ほたる
+    B.tube([(0.5, 3.0, 5.0), (0.6, 3.0, 5.8), (0.5, 3.1, 6.5)], 0.08, 0.04, '#b98a5c', seg=6, noise_amt=0.05)   # わかぎ
+    for k in range(5): B.sph(0.3, 0.5 + math.cos(k * 1.26) * 0.25, 3.1 + math.sin(k * 1.26) * 0.25, 6.6, random.choice(['#ffc4dc', '#ffb0cc']), seg=7, ring=5, noise_amt=0.0)
+    B.ground_extras(5.4, seed=33, peb=14, tufts=10, flowers=8, mush=0, leaves=0)
     for (x, y, z, h, c) in [(-3.2, 0.9, 0.6, 1.9, '#ffc0e0'), (-3.8, 1.6, 0.5, 1.2, '#c0d4ff'), (3.3, 0.9, 0.6, 2.1, '#c0e8ff'), (3.9, 1.7, 0.5, 1.1, '#ffe0a0'), (-1.5, 4.4, 3.5, 1.4, '#e8c8ff'), (1.7, 4.2, 3.6, 1.7, '#ffd0ec'), (0.2, 3.4, 4.2, 1.2, '#c0f0ff'), (-0.8, 2.4, 4.6, 1.0, '#ffe9a0'), (-2.4, 3.0, 3.2, 1.2, '#c0d4ff')]:
         crystal(x, y, z, h, c, (random.uniform(-0.2, 0.2), random.uniform(-0.2, 0.2)))
 
