@@ -22,13 +22,13 @@ def crystal(x, y, z, h, col, tilt=(0, 0)):
 def shrine_cave():
     random.seed(21)
     # --- おやま: おおきな いわを かさねる(したに こけ・うえに くさ) ---
-    B.sph(3.9, 0, 2.7, 1.4, '#a9a4c4', scale=(1.2, 1.05, 0.95), seg=24, ring=16, noise_amt=0.06, freq=1.2, moss=('#86cf74', 1.3))
-    B.sph(2.6, 0.2, 3.2, 3.0, '#b8b3d4', scale=(1.2, 1.1, 0.9), seg=20, ring=14, noise_amt=0.06, freq=1.4)
+    B.sph(3.9, 0, 2.7, 1.4, '#9a8ee0', scale=(1.2, 1.05, 0.95), seg=24, ring=16, noise_amt=0.06, freq=1.2, moss=('#86cf74', 1.3))
+    B.sph(2.6, 0.2, 3.2, 3.0, '#b4a8f0', scale=(1.2, 1.1, 0.9), seg=20, ring=14, noise_amt=0.06, freq=1.4)
     for k in range(18):   # まわりの ごろごろ いわ
         a = random.uniform(0, 6.28); r = random.uniform(2.6, 4.3)
         x, y = math.cos(a) * r * 1.15, 2.5 + math.sin(a) * r * 0.95
         if y < 0.4: y = 0.4 + random.uniform(0, 0.8)
-        B.rock(random.uniform(0.7, 1.4), x, y, random.uniform(0.3, 1.6), random.choice(['#a39eb8', '#b4afc8', '#948fab', '#bdb8d0', '#aca0c8']), scale=(1, 1, 0.8), rough=0.14, sub=2, seed=k, noise_amt=0.05, moss=('#86cf74', 0.9))
+        B.rock(random.uniform(0.7, 1.4), x, y, random.uniform(0.3, 1.6), random.choice(['#9a8ee0', '#aa9ef0', '#8a84d8', '#b8aef4', '#a0b0f0', '#c0a8e8']), scale=(1, 1, 0.8), rough=0.14, sub=2, seed=k, noise_amt=0.05, moss=('#86cf74', 0.9))
     # --- うえの くさ・つた・おはな ---
     for k in range(11):
         a = random.uniform(0, 6.28); r = random.uniform(0.2, 2.4)

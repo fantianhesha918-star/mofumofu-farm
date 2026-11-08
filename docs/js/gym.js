@@ -159,6 +159,30 @@ function buildDecor() {   // へやの まわり・ボスの へやの かどに
   spots.push([gx - 5, cz(0) - (AR_D + 1) * CELL - 5], [gx + 5, cz(0) - (AR_D + 1) * CELL - 5], [gx, cz(0) - (AR_D + 1) * CELL - 7]);
   spots.forEach(([x, z], i) => { const m = new THREE.Mesh(g, matFor('std').clone()); const sc = 1.0 + ((i * 7) % 5) * 0.1; m.scale.setScalar(sc); m.position.set(x, -FLOOR_T - 0.05, z); m.rotation.y = i * 1.7; deco.add(m); });
 }
+// ---- へやの そとの けしき(とおくの おか・やま・くも・わくせい。きりで かすむ) ----
+const SCENERY = {
+  forest: { t: 'hills', c: ['#7fcf6a', '#6cc35c', '#93dc78'] }, lake: { t: 'spires', c: ['#d8f2ff', '#c4e8fa', '#e8f8ff'] }, volcano: { t: 'cones', c: ['#c98a72', '#b87a62', '#d89a80'] },
+  ghost: { t: 'hills', c: ['#8a80c8', '#7a70b8', '#9a90d8'] }, sky: { t: 'clouds', c: ['#ffffff', '#f0f8ff', '#e4f0ff'] }, sun: { t: 'hills', c: ['#f7cc78', '#ffd88a', '#eebb66'] },
+  cosmos: { t: 'planets', c: ['#ffb4d8', '#b4d8ff', '#ffe58a'] }, grove: { t: 'hills', c: ['#6bb898', '#7cc4a4', '#8fd0b2'] }, castle: { t: 'spires', c: ['#8468ac', '#9078b8', '#a088c8'] },
+  temple: { t: 'planets', c: ['#fff2a8', '#aab4e0', '#ffdc6a'] }, dragon: { t: 'hills', c: ['#4eb4a2', '#5cc2b0', '#6ed0be'] }, end: { t: 'crystals', c: ['#e8c8ff', '#ffd0ec', '#c0d4ff'] },
+  shrine: { t: 'crystals', c: ['#c0d4ff', '#ffc0e0', '#e8c8ff'] },
+};
+function buildScenery() {
+  const S = SCENERY[TKEY]; if (!S) return; const grp = new THREE.Group(); scene.add(grp);
+  let seed = 7; for (const ch of TKEY) seed = (seed * 31 + ch.charCodeAt(0)) % 9973; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  const mat = (c, emissive) => { const m = new THREE.MeshLambertMaterial({ color: c }); if (emissive) { m.emissive = new THREE.Color(emissive); m.emissiveIntensity = 0.55; } return m; };
+  const R0 = Math.max(W, H) * CELL / 2 + 16, n = ECO ? 14 : 26, base = -FLOOR_T - 0.4;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * 6.2832 + rnd() * 0.2, r = R0 + rnd() * 26, x = Math.cos(a) * r * 1.2, z = -4 + Math.sin(a) * r, col = S.c[(rnd() * S.c.length) | 0];
+    if (S.t === 'hills') { const rr = 7 + rnd() * 11, m = new THREE.Mesh(new THREE.SphereGeometry(rr, 14, 10), mat(col)); m.scale.y = 0.5; m.position.set(x, base - rr * 0.1, z); grp.add(m); if (rnd() < 0.5) { const t = new THREE.Mesh(new THREE.SphereGeometry(1.3 + rnd(), 8, 6), mat('#ffffff')); t.scale.y = 0.8; t.position.set(x + rr * 0.3, base + rr * 0.5, z); grp.add(t); } }
+    else if (S.t === 'dunes') { const rr = 8 + rnd() * 10, m = new THREE.Mesh(new THREE.SphereGeometry(rr, 14, 10), mat(col)); m.scale.set(1.4, 0.35, 1); m.position.set(x, base, z); grp.add(m); }
+    else if (S.t === 'spires') { const rr = 3 + rnd() * 3.5, h = 12 + rnd() * 16, m = new THREE.Mesh(new THREE.ConeGeometry(rr, h, 8), mat(col)); m.position.set(x, base + h * 0.4, z); grp.add(m); const k = new THREE.Mesh(new THREE.SphereGeometry(rr * 0.35, 8, 6), mat('#ffffff')); k.position.set(x, base + h * 0.4 + h / 2, z); grp.add(k); }
+    else if (S.t === 'cones') { const rr = 6 + rnd() * 6, h = 9 + rnd() * 9, m = new THREE.Mesh(new THREE.ConeGeometry(rr, h, 12), mat(col)); m.position.set(x, base + h * 0.35, z); grp.add(m); const g = new THREE.Mesh(new THREE.SphereGeometry(rr * 0.22, 8, 6), new THREE.MeshBasicMaterial({ color: '#ff9a3a' })); g.position.set(x, base + h * 0.35 + h / 2 - 0.2, z); grp.add(g); }
+    else if (S.t === 'clouds') { const rr = 5 + rnd() * 6, y = base - 2 + rnd() * 6; for (let j = 0; j < 4; j++) { const m = new THREE.Mesh(new THREE.SphereGeometry(rr * (0.6 + rnd() * 0.5), 10, 8), mat(col)); m.scale.y = 0.65; m.position.set(x + (j - 1.5) * rr * 0.9, y + rnd() * 1.5, z + rnd() * 3); grp.add(m); } }
+    else if (S.t === 'planets') { const rr = 3 + rnd() * 6, y = 8 + rnd() * 24, m = new THREE.Mesh(new THREE.SphereGeometry(rr, 14, 10), new THREE.MeshBasicMaterial({ color: col })); m.position.set(x, y, z); grp.add(m); if (rnd() < 0.5) { const ring = new THREE.Mesh(new THREE.TorusGeometry(rr * 1.7, 0.25, 6, 28), new THREE.MeshBasicMaterial({ color: '#ffe58a' })); ring.rotation.x = 1.2; ring.position.copy(m.position); grp.add(ring); } }
+    else if (S.t === 'crystals') { const rr = 1.6 + rnd() * 2, h = 9 + rnd() * 10, m = new THREE.Mesh(new THREE.ConeGeometry(rr, h, 6), new THREE.MeshLambertMaterial({ color: col, emissive: col, emissiveIntensity: 0.35 })); m.position.set(x, base + h * 0.4, z); m.rotation.z = (rnd() - 0.5) * 0.3; grp.add(m); }
+  }
+}
 function buildBackdrop() {   // へやの そとがわ: ゆか・ちいさな かざり
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(260, 260), new THREE.MeshLambertMaterial({ color: tint(TH.ground || TH.sky, 0.6) })); ground.rotation.x = -Math.PI / 2; ground.position.y = -FLOOR_T - 0.02; scene.add(ground);
 }
@@ -384,7 +408,7 @@ async function bootMain() {
   await loadKit();
   chinGL = await loader.loadAsync('./assets/chin_storybook_lite.glb'); chinGL.scene.traverse(o => { if (o.isMesh && !o.geometry.attributes.normal) o.geometry.computeVertexNormals(); });
   chin = makeChin(0.95); scene.add(chin.outer);
-  S = freshState(); buildBackdrop(); buildLevel(); buildArena(); buildDecor(); buildAmbient(); await buildBoss(); addButtons();
+  S = freshState(); buildBackdrop(); buildScenery(); buildLevel(); buildArena(); buildDecor(); buildAmbient(); await buildBoss(); addButtons();
   ui.setCoins(); ui.setClock && ui.setClock(); ui.setLevel && ui.setLevel();
   const cleared = SH || (state.gyms && state.gyms[FID] && state.gyms[FID].solved);
   if (cleared || params.has('arena')) { setPlayerCell(LV.goal[0], LV.goal[1]); P.z = cz(0) - (AR_D - 2) * CELL; P.x = cx(LV.goal[0]); solved = true; bossOpen = true; }
