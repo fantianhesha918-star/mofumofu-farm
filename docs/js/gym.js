@@ -4,7 +4,9 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { input, pollInput, setupInput } from './input.js';
 import { ui } from './ui.js';
-import { ECO, state, load, save, bus } from './state.js';
+import { ECO, state, load, save, bus, addItem, count } from './state.js';
+import { ITEMS } from './data.js';
+import { GYM_QUIZ } from './gymquiz.js';
 import { sfx, unlockAudio } from './audio.js';
 import { setFieldBgm } from './bgm.js';
 import { healParty, giveStarter } from './battle.js';
@@ -46,7 +48,7 @@ $('#hud').hidden = false; $('#mm').hidden = true; $('#goal').hidden = true; $('#
 const loader = new GLTFLoader();
 const KIT = {};
 async function loadKit() {
-  const names = ['gym_floor', 'gym_wall', 'gym_wall_low', 'gym_ice', 'gym_rock', 'gym_hole', 'gym_lava', 'gym_plate', 'gym_door_frame', 'gym_door_bars', 'gym_lock', 'gym_key', 'gym_arrow', 'gym_warp', 'gym_crumble', 'gym_sign', 'gym_goal', 'gym_checkpoint', 'gym_wall_' + FID, 'gym_deco_' + FID, ...(TH.extra || [])];
+  const names = ['gym_floor', 'gym_wall', 'gym_wall_low', 'gym_ice', 'gym_rock', 'gym_hole', 'gym_lava', 'gym_plate', 'gym_door_frame', 'gym_door_bars', 'gym_quiz_frame', 'gym_quiz_leaf', 'gym_lock', 'gym_key', 'gym_arrow', 'gym_warp', 'gym_crumble', 'gym_sign', 'gym_goal', 'gym_checkpoint', 'gym_wall_' + FID, 'gym_deco_' + FID, ...(TH.extra || [])];
   await Promise.all(names.map(async n => {
     try { const gl = await loader.loadAsync(`./assets/gym/${n}_lite.glb`); let m = null; gl.scene.traverse(o => { if (!m && o.isMesh) m = o; }); if (m) { if (!m.geometry.attributes.normal) m.geometry.computeVertexNormals(); KIT[n] = m.geometry; } } catch (e) { console.warn('gym part failed', n, e); }
   }));
@@ -68,6 +70,8 @@ const wallTint = (mul) => THEMED() ? tint('#ffffff', Math.min(1, mul * 1.08)) : 
 const LV = parseLevel(MAP.rows);
 const W = LV.w, H = LV.h;
 const cx = (x) => (x - W / 2 + 0.5) * CELL, cz = (y) => (y - H / 2 + 0.5) * CELL;   // マス → せかい ざひょう
+const quizDone = () => !!(state.gyms && state.gyms[FID] && state.gyms[FID].quiz);
+function freshState() { const st = newState(LV); if (quizDone()) st.cells = st.cells.map(c => c === 'Q' ? '.' : c); return st; }   // もう こたえた とびらは ひらいたまま
 let S = newState(LV);
 const level = new THREE.Group(); scene.add(level);
 let dyn = null;   // うごく もの(いわ・かぎ・とびら・スイッチ・くずれる ゆか・ワープ) の メッシュ
@@ -107,6 +111,7 @@ function buildLevel() {
     const i = y * W + x, c = LV.cells[i], X = cx(x), Z = cz(y);
     if (c === 'a' || c === 'b' || c === 'c') dyn.plates.set(i, addMesh(level, 'gym_plate', 'glow', X, base, Z, PLATE_COL[c]));
     else if (c === 'A' || c === 'B' || c === 'C') { addMesh(level, 'gym_door_frame', 'std', X, base, Z, TH.wall); const bars = addMesh(level, 'gym_door_bars', 'glow', X, base, Z, PLATE_COL[c.toLowerCase()]); dyn.doors.set(i, { bars, open: 0, baseY: base }); }
+    else if (c === 'Q' && S.cells[i] === 'Q') { addMesh(level, 'gym_quiz_frame', 'std', X, base, Z, '#ffffff'); const bars = addMesh(level, 'gym_quiz_leaf', 'std', X - 0.75, base, Z, '#ffffff'); dyn.doors.set(i, { bars, open: 0, baseY: base, quiz: true }); }
     else if (c === 'L') dyn.locks.set(i, addMesh(level, 'gym_lock', 'std', X, base, Z, '#ffffff'));
     else if (c === 'k') dyn.keys.set(i, addMesh(level, 'gym_key', 'glow', X, 0.3, Z, '#ffffff'));
     else if (c === 'x') dyn.crumbles.set(i, addMesh(level, 'gym_crumble', 'std', X, base, Z, '#ffffff'));
@@ -131,7 +136,7 @@ function buildArena() {
 }
 function instOfTo(parent, name, kind, list) { const save = level.children.length; instOf(name, kind, list); const im = level.children.pop(); if (im) parent.add(im); }
 async function buildBoss() {
-  const bx = cx(LV.goal[0]), bz = cz(0) - (AR_D - 1) * CELL;
+  const bx = cx(LV.goal[0]), bz = cz(0) - AR_D * CELL;   // ボスは さいおくの マス(プレイヤーは 2マス まえで とまる)
   const tex = new THREE.TextureLoader().load(`quest/assets/monsters/${BOSS.sprite || BOSS.id}.webp`); tex.colorSpace = THREE.SRGBColorSpace;
   const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, fog: true })); sp.scale.set(6.2, 6.2, 1); sp.center.set(0.5, 0.04); sp.position.set(bx, 0, bz); arena.add(sp); bossObj = sp;
   if (BOSS.model) {
@@ -153,6 +158,48 @@ function buildDecor() {   // へやの まわり・ボスの へやの かどに
 }
 function buildBackdrop() {   // へやの そとがわ: ゆか・ちいさな かざり
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(260, 260), new THREE.MeshLambertMaterial({ color: tint(TH.ground || TH.sky, 0.6) })); ground.rotation.x = -Math.PI / 2; ground.position.y = -FLOOR_T - 0.02; scene.add(ground);
+}
+
+// ---- ふわふわ ひかる つぶ(ジムごとの くうき) ----
+// kind: up=のぼる / down=おちる / drift=ただよう / twinkle=その ばで またたく
+const AMBIENT = {
+  forest: { c: '#fff7a0', n: 70, size: 0.34, mode: 'drift', vy: 0.25, top: 6 },
+  lake: { c: '#ffffff', n: 110, size: 0.26, mode: 'down', vy: 0.9, top: 9 },
+  volcano: { c: '#ffb050', n: 80, size: 0.3, mode: 'up', vy: 1.3, top: 9 },
+  ghost: { c: '#d8d0ff', n: 55, size: 0.5, mode: 'up', vy: 0.35, top: 7 },
+  sky: { c: '#ffffff', n: 70, size: 0.4, mode: 'drift', vy: 0.15, top: 8 },
+  sun: { c: '#ffe58a', n: 90, size: 0.3, mode: 'drift', vy: 0.2, top: 8 },
+  cosmos: { c: '#cfe0ff', n: 110, size: 0.3, mode: 'twinkle', vy: 0, top: 9 },
+  grove: { c: '#ffe8f4', n: 60, size: 0.45, mode: 'up', vy: 0.55, top: 8 },
+  castle: { c: '#d8a8ff', n: 60, size: 0.34, mode: 'up', vy: 0.5, top: 7 },
+  temple: { c: '#ffe9a0', n: 90, size: 0.34, mode: 'twinkle', vy: 0, top: 9 },
+  dragon: { c: '#a8ffe8', n: 60, size: 0.42, mode: 'up', vy: 0.6, top: 8 },
+  end: { c: '#ffd0f4', n: 100, size: 0.34, mode: 'twinkle', vy: 0, top: 9 },
+};
+let ambient = null;
+function buildAmbient() {
+  const A = AMBIENT[FID]; if (!A) return; const n = ECO ? Math.round(A.n * 0.5) : A.n;
+  const cv = document.createElement('canvas'); cv.width = cv.height = 64; const cg = cv.getContext('2d'), gr = cg.createRadialGradient(32, 32, 2, 32, 32, 30);
+  gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.4, 'rgba(255,255,255,0.6)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); cg.fillStyle = gr; cg.fillRect(0, 0, 64, 64);
+  const geo = new THREE.BufferGeometry(), pos = new Float32Array(n * 3), ph = new Float32Array(n);
+  const hw = W * CELL / 2 + 3, hd = H * CELL / 2 + 3;
+  for (let i = 0; i < n; i++) { pos[i * 3] = (Math.random() * 2 - 1) * hw; pos[i * 3 + 1] = 0.3 + Math.random() * A.top; pos[i * 3 + 2] = (Math.random() * 2 - 1) * hd - 4; ph[i] = Math.random() * 6.28; }
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const mat = new THREE.PointsMaterial({ color: A.c, size: A.size * 3.2, map: new THREE.CanvasTexture(cv), transparent: true, opacity: 0.85, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true, fog: true });
+  const pts = new THREE.Points(geo, mat); pts.frustumCulled = false; scene.add(pts); ambient = { pts, pos, ph, A, n, hw, hd };
+}
+function updateAmbient(dt) {
+  if (!ambient) return; const { pos, ph, A, n, hw, hd } = ambient;
+  for (let i = 0; i < n; i++) {
+    const k = i * 3; ph[i] += dt;
+    if (A.mode === 'twinkle') continue;
+    pos[k + 1] += (A.mode === 'down' ? -A.vy : A.vy) * dt; pos[k] += Math.sin(ph[i] * 0.9 + i) * 0.25 * dt; pos[k + 2] += Math.cos(ph[i] * 0.7 + i * 1.3) * 0.2 * dt;
+    if (A.mode === 'drift') pos[k + 1] += Math.sin(ph[i] * 1.3) * 0.3 * dt;
+    if (pos[k + 1] > A.top + 0.5) pos[k + 1] = 0.2; else if (pos[k + 1] < 0.1) pos[k + 1] = A.top;
+    if (pos[k] > hw) pos[k] = -hw; else if (pos[k] < -hw) pos[k] = hw;
+  }
+  ambient.pts.geometry.attributes.position.needsUpdate = true;
+  ambient.pts.material.opacity = A.mode === 'twinkle' ? 0.55 + Math.sin(T * 2.2) * 0.3 : 0.85;
 }
 
 // ---- プレイヤー ----
@@ -209,7 +256,7 @@ async function doStep(d) {
   if (busy || solved) return; busy = true;
   try {
     const r = step(S, LV, d);
-    if (!r.moved) { await playActs(r.acts); return; }
+    if (!r.moved) { await playActs(r.acts); const qa = r.acts.find(a => a.t === 'quiz'); if (qa) await askQuiz(qa.at); return; }
     S = r.state; await playActs(r.acts); updateDoorsAndPlates(); updateKeysHud();
     if (S.solved) { solved = true; await onSolved(); }
   } catch (e) { console.warn('doStep failed', e); } finally { P.moving = false; P.scale = 1; if (chin) chin.outer.position.y = 0; if (solved) bossOpen = true; busy = false; }   // どこかで しっぱいしても そうさ ふのうに ならない
@@ -219,15 +266,15 @@ function readDir() {
   if (Math.abs(mx) > Math.abs(mz)) return mx > 0 ? 1 : 3; return mz > 0 ? 0 : 2;
 }
 async function onSolved() {
-  state.gyms = state.gyms || {}; state.gyms[FID] = { solved: 1, day: state.day || 1 }; save();
+  state.gyms = state.gyms || {}; state.gyms[FID] = { ...(state.gyms[FID] || {}), solved: 1, day: state.day || 1 }; save();
   sfx('quest'); ui.toast('しかけを とっぱ!', 'ゴールに とうたつ', `${ROLE}の まえに すすもう`, 3000);
   const gx = LV.goal[0];
-  for (let k = 1; k <= AR_D - 1; k++) { await tween(240, t => { P.z = cz(0) - (k - 1 + t) * CELL; P.x = cx(gx); P.face = Math.PI; }); }
+  for (let k = 1; k <= AR_D - 2; k++) { await tween(240, t => { P.z = cz(0) - (k - 1 + t) * CELL; P.x = cx(gx); P.face = Math.PI; }); }
   bossOpen = true; busy = false;
 }
 async function resetLevel() {
   if (busy) return; busy = true;
-  try { S = newState(LV); buildLevel(); setPlayerCell(S.x, S.y); P.face = Math.PI; P.moving = false; P.scale = 1; if (chin) chin.outer.position.y = 0; updateDoorsAndPlates(true); updateKeysHud(); sfx('ui'); }
+  try { S = freshState(); buildLevel(); setPlayerCell(S.x, S.y); P.face = Math.PI; P.moving = false; P.scale = 1; if (chin) chin.outer.position.y = 0; updateDoorsAndPlates(true); updateKeysHud(); sfx('ui'); }
   catch (e) { console.warn('reset failed', e); } finally { busy = false; }
 }
 
@@ -241,6 +288,24 @@ function dlgShow(lines, choices, who) {
       else { box.innerHTML = `<b>${who}</b><p>${lines[lines.length - 1]}</p><div class="ch">` + choices.map((c, k) => `<button data-k="${k}">${c}</button>`).join('') + '</div>'; box.querySelectorAll('[data-k]').forEach(b => b.onclick = () => { sfx('ui'); box.hidden = true; res(+b.dataset.k); }); }
     }; stepD();
   });
+}
+// ---- クイズの とびら ----
+async function askQuiz(at) {
+  const Q = GYM_QUIZ[FID], who = 'ふしぎな とびら'; if (!Q) return;
+  sfx('pet');
+  const name = (id) => (ITEMS[id] ? ITEMS[id].name : id);
+  let first = true;
+  for (;;) {
+    const opts = Q.opts.slice().sort(() => Math.random() - 0.5);
+    const k = await dlgShow(first ? ['とびらに もじが ほられている。', 'こたえの ものを わたすと ひらくようだ。', ...Q.q] : Q.q, [...opts.map(name), 'あとで'], who); first = false;
+    if (k === opts.length) return;
+    const id = opts[k];
+    if (id !== Q.ans) { sfx('no'); await dlgShow(['……ちがうようだ。', 'ヒント: ' + Q.hint], ['もういちど'], who); continue; }
+    if (count(id) < 1) { sfx('no'); await dlgShow([`こたえは「${name(id)}」だ。`, 'でも いま もっていない……。', 'むらで あつめてから また きてみよう。(ジムの そとへ でても とびらは かわらないよ)'], ['わかった'], who); return; }
+    addItem(id, -1); state.gyms = state.gyms || {}; state.gyms[FID] = { ...(state.gyms[FID] || {}), quiz: 1 }; save();
+    sfx('quest'); await dlgShow([`「${name(id)}」を わたした!`, 'ゴゴゴ……とびらが ひらいた!'], ['すすむ'], who);
+    S.cells[at] = '.'; const d = dyn.doors.get(at); if (d) d.open = 1; refreshTiles(); return;
+  }
 }
 const bossBeaten = () => !!state.boss[BOSS.key];
 const rematchReady = () => bossBeaten() && (state.bossRe || {})[BOSS.key] !== (state.day || 1);
@@ -279,10 +344,11 @@ function frame() {
     // カメラ
     const px = P.x, pz = P.z, tgt = new V3(px, 0.6, pz - 4.5), cp = new V3(px, 17, pz + 5.5);   // プレイヤーの すこし おくを みる(したが あきすぎない)
     cam.pos.lerp(cp, lam(6, dt)); cam.look.lerp(tgt, lam(9, dt)); camera.position.copy(cam.pos); camera.lookAt(cam.look);
+    updateAmbient(dt);
     // ゆらぎ
     if (lavaMesh) lavaMesh.material.color.setHSL(0.04 + Math.sin(T * 1.6) * 0.015, 0.9, 0.55 + Math.sin(T * 2.4) * 0.08);
     for (const [i, m] of dyn.keys) { m.rotation.y = T * 1.8; m.position.y = 0.3 + Math.sin(T * 2.2 + i) * 0.1; }
-    for (const [i, d] of dyn.doors) { const tgtY = d.baseY + (d.open ? 2.15 : 0); d.bars.position.y += (tgtY - d.bars.position.y) * lam(8, dt); }
+    for (const [i, d] of dyn.doors) { if (d.quiz) { d.bars.rotation.y += ((d.open ? 1.9 : 0) - d.bars.rotation.y) * lam(7, dt); continue; } const tgtY = d.baseY + (d.open ? 2.15 : 0); d.bars.position.y += (tgtY - d.bars.position.y) * lam(8, dt); }
     for (const m of dyn.warps) { m.rotation.y = T * 0.6; }
     if (dyn.goal) dyn.goal.material.emissiveIntensity = 0.5 + Math.sin(T * 3) * 0.3;
     if (arena.userData.ring) arena.userData.ring.material.opacity = 0.4 + Math.sin(T * 3) * 0.2;
@@ -308,13 +374,13 @@ async function bootMain() {
   await loadKit();
   chinGL = await loader.loadAsync('./assets/chin_storybook_lite.glb'); chinGL.scene.traverse(o => { if (o.isMesh && !o.geometry.attributes.normal) o.geometry.computeVertexNormals(); });
   chin = makeChin(0.95); scene.add(chin.outer);
-  buildBackdrop(); buildLevel(); buildArena(); buildDecor(); await buildBoss(); addButtons();
+  S = freshState(); buildBackdrop(); buildLevel(); buildArena(); buildDecor(); buildAmbient(); await buildBoss(); addButtons();
   ui.setCoins(); ui.setClock && ui.setClock(); ui.setLevel && ui.setLevel();
   const cleared = state.gyms && state.gyms[FID] && state.gyms[FID].solved;
   if (cleared || params.has('arena')) { setPlayerCell(LV.goal[0], LV.goal[1]); P.z = cz(0) - (AR_D - 2) * CELL; P.x = cx(LV.goal[0]); solved = true; bossOpen = true; }
   else { setPlayerCell(S.x, S.y); P.face = Math.PI; }
   updateDoorsAndPlates(true); updateKeysHud();
-  for (const d of dyn.doors.values()) d.bars.position.y = d.baseY + (d.open ? 2.15 : 0);
+  for (const d of dyn.doors.values()) { if (d.quiz) d.bars.rotation.y = d.open ? 1.9 : 0; else d.bars.position.y = d.baseY + (d.open ? 2.15 : 0); }
   cam.pos.set(P.x, 17, P.z + 5.5); cam.look.set(P.x, 0.6, P.z - 4.5);
   setFieldBgm(FID); $('#loading2').classList.add('done');
   busy = false;

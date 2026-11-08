@@ -24,140 +24,153 @@ def base_block(col, h=2.5, bev=0.06, **kw):
 
 # =====================================================================  かべ
 @asset
-def gym_wall_forest():   # いけがき
+def gym_wall_forest():   # まるい いけがき(ぽんぽんの はっぱ・おおきな おはな)
     random.seed(1)
-    B.rbox(1.9, 1.9, 0.5, 0, 0, 0.25, '#6b4b2a', bev=0.05, noise_amt=0.15)   # したの つち・きの わく
-    for k in range(34):
-        x, y = random.uniform(-0.8, 0.8), random.uniform(-0.8, 0.8); z = random.uniform(0.55, 2.3)
-        g = random.choice(['#3e8a3a', '#4f9c44', '#35762f', '#5aa64a', '#2f6a2c'])
-        B.sph(random.uniform(0.34, 0.55), x, y, z, g, scale=(1, 1, 0.85), seg=10, ring=7, noise_amt=0.16, freq=3.0)
-    for k in range(10):   # はな
-        a = random.uniform(0, 6.28); r = random.uniform(0.7, 0.98); B.sph(0.07, math.cos(a) * r, math.sin(a) * r, random.uniform(0.9, 2.2), random.choice(['#ffd1e8', '#fff3a0', '#ffffff']), seg=6, ring=4, noise_amt=0.0)
+    B.rbox(1.9, 1.9, 0.5, 0, 0, 0.25, '#c99a5e', bev=0.16, bseg=3, noise_amt=0.05)   # きの うえきばち
+    B.rbox(1.96, 1.96, 0.1, 0, 0, 0.5, '#e6bd82', bev=0.05, bseg=3, noise_amt=0.03)
+    G = ['#3fae4a', '#52bf55', '#34a043', '#63cb5e']
+    for k in range(16):
+        a = k / 16 * 6.28 + random.uniform(-0.2, 0.2); r = random.choice([0.5, 0.62, 0.0]) if k > 3 else 0.0
+        x, y = math.cos(a) * r * 1.2, math.sin(a) * r * 1.2; z = random.uniform(0.95, 2.05)
+        B.sph(random.uniform(0.42, 0.58), x, y, z, random.choice(G), scale=(1, 1, 0.9), seg=12, ring=8, noise_amt=0.06, freq=2.5)
+    for k in range(9):   # おおきな おはな(まんなかの きいろ)
+        a = random.uniform(0, 6.28); r = random.uniform(0.55, 0.95); cx, cy, cz = math.cos(a) * r, math.sin(a) * r, random.uniform(1.0, 2.2)
+        pc = random.choice(['#ffb8d4', '#fff0a0', '#ffffff', '#ffc8a0'])
+        for q in range(5):
+            b = q / 5 * 6.28; B.sph(0.065, cx + math.cos(b) * 0.09, cy + math.sin(b) * 0.09, cz, pc, seg=6, ring=4, noise_amt=0.0)
+        B.sph(0.055, cx, cy, cz + 0.02, '#ffd23a', seg=6, ring=4, noise_amt=0.0)
     for sx in (-1, 1):
-        for sy in (-1, 1): B.rbox(0.2, 0.2, 2.7, sx * 0.92, sy * 0.92, 1.35, '#7a5530', bev=0.04, noise_amt=0.14)
+        for sy in (-1, 1): B.rbox(0.22, 0.22, 2.7, sx * 0.92, sy * 0.92, 1.35, '#d9a86a', bev=0.1, bseg=3, noise_amt=0.05)
 
 @asset
-def gym_wall_lake():   # こおりの ブロック
+def gym_wall_lake():   # マシュマロみたいな こおりの ブロック(ゆきの ぼうし・まるい つらら)
     random.seed(2)
-    for k in range(4):
-        z = 0.35 + k * 0.62; B.rbox(1.94 - k * 0.03, 1.94 - k * 0.03, 0.58, random.uniform(-0.03, 0.03), random.uniform(-0.03, 0.03), z, random.choice(['#a9d9f2', '#bfe6f8', '#9fd0ec']), bev=0.1, jit=0.02, noise_amt=0.12, freq=1.7, glow=0.03)
-    B.rbox(2.0, 2.0, 0.1, 0, 0, 2.68, '#f2fbff', bev=0.05, noise_amt=0.04, glow=0.08)   # ゆきの ふた
-    for k in range(10):   # つらら
-        x, y = random.uniform(-0.85, 0.85), random.choice([-1, 1]) * 0.99; B.cyl(random.uniform(0.07, 0.13), random.uniform(0.4, 0.9), x, y, 2.3, '#d8f2ff', seg=6, r2=0.0, noise_amt=0.03, glow=0.06)
-    for k in range(8):   # しもの けっしょう
-        B.cyl(0.1, random.uniform(0.3, 0.6), random.uniform(-0.8, 0.8), random.uniform(-0.8, 0.8), 2.85, '#ffffff', seg=5, r2=0.0, noise_amt=0.02, glow=0.1)
+    for k in range(3):
+        z = 0.42 + k * 0.78; B.rbox(1.94 - k * 0.04, 1.94 - k * 0.04, 0.72, 0, 0, z, ['#bfe9fb', '#cdeffd', '#b2e0f6'][k], bev=0.22, bseg=3, noise_amt=0.05, freq=1.7, glow=0.03)
+    B.rbox(2.04, 2.04, 0.3, 0, 0, 2.52, '#ffffff', bev=0.15, bseg=3, noise_amt=0.02, glow=0.06)   # ゆきの ぼうし
+    for k in range(6):
+        B.sph(random.uniform(0.2, 0.34), random.uniform(-0.75, 0.75), random.uniform(-0.75, 0.75), 2.72, '#ffffff', scale=(1, 1, 0.7), seg=10, ring=7, noise_amt=0.0, glow=0.06)
+    for k in range(8):   # まるい つらら
+        x, y = random.uniform(-0.8, 0.8), random.choice([-1, 1]) * 0.99; h = random.uniform(0.35, 0.7)
+        B.cyl(0.11, h, x, y, 2.35 - h / 2 + 0.05, '#e4f8ff', seg=10, r2=0.03, noise_amt=0.0, glow=0.08, smooth=True); B.sph(0.05, x, y, 2.35 - h + 0.05, '#ffffff', seg=8, ring=6, noise_amt=0.0)
+    for k in range(4):   # ゆきの けっしょう(ほし)
+        B.sph(0.07, random.uniform(-0.7, 0.7), random.uniform(-0.7, 0.7), 2.9, '#e8fbff', seg=6, ring=4, noise_amt=0.0, glow=0.1)
 
 @asset
-def gym_wall_volcano():   # げんぶがんの はしら
-    random.seed(3)
-    for k in range(7):
-        a = k / 7 * 6.28; r = 0.62 if k else 0.0; x, y = math.cos(a) * r, math.sin(a) * r; h = random.uniform(2.1, 2.7)
-        B.cyl(0.38, h, x, y, h / 2, random.choice(['#3a3436', '#463e40', '#2f2a2c']), seg=6, noise_amt=0.14, freq=3.0)
-        B.cyl(0.3, 0.06, x, y, h + 0.03, '#ff7a22', seg=6, noise_amt=0.1, glow=0.35)   # さきが あかい
-    B.rbox(1.96, 1.96, 0.3, 0, 0, 0.15, '#2a2426', bev=0.06, noise_amt=0.1)
-    for k in range(8):   # われめの ひかり
-        a = random.uniform(0, 6.28); B.rbox(0.06, 0.5, 0.05, math.cos(a) * 0.8, math.sin(a) * 0.8, random.uniform(0.5, 2.0), '#ff8a2a', bev=0.0, rot=(0, 0, a), noise_amt=0.05, glow=0.4)
-
-@asset
-def gym_wall_ghost():   # はかばの へい(はかいしが うまっている)
+def gym_wall_ghost():   # ふんわり むらさきの へい(かわいい おばけが のぞいている)
     random.seed(4)
-    for k in range(4): B.rbox(1.96, 1.96, 0.6, 0, 0, 0.3 + k * 0.58, random.choice(['#55526e', '#4b4864', '#605c7c']), bev=0.06, jit=0.015, noise_amt=0.1, freq=2.0)
-    for s in (-1, 1):   # アーチの はかいし
-        for k, x in enumerate((-0.45, 0.45)):
-            B.rbox(0.62, 0.16, 1.1, x, s * 1.0, 1.45, '#7a7898', bev=0.07, noise_amt=0.08)
-            B.cyl(0.31, 0.16, x, s * 1.0, 2.0, '#7a7898', seg=14, rot=(1.5708, 0, 0), noise_amt=0.06)
-            B.rbox(0.08, 0.05, 0.5, x, s * 1.09, 1.55, '#4a4864', bev=0.0, noise_amt=0.03); B.rbox(0.36, 0.05, 0.08, x, s * 1.09, 1.7, '#4a4864', bev=0.0, noise_amt=0.03)
-    B.rbox(2.04, 2.04, 0.14, 0, 0, 2.66, '#3c3a52', bev=0.05, noise_amt=0.06)
-    for k in range(6):   # こけ・おにび
-        B.sph(random.uniform(0.1, 0.2), random.uniform(-0.8, 0.8), random.uniform(-0.8, 0.8), 2.75, '#9ad8ff', seg=8, ring=6, noise_amt=0.0, glow=0.25)
+    cols = ['#9a92d4', '#a89fe0', '#8f87c8']
+    for k in range(3): B.rbox(1.96, 1.96, 0.78, 0, 0, 0.4 + k * 0.76, cols[k], bev=0.2, bseg=3, noise_amt=0.05, freq=2.0, glow=0.04)
+    for s in (-1, 1):   # まるい はかいし
+        for x in (-0.45, 0.45):
+            B.rbox(0.6, 0.18, 0.9, x, s * 1.0, 1.3, '#c9c3ee', bev=0.1, bseg=3, noise_amt=0.03)
+            B.cyl(0.3, 0.18, x, s * 1.0, 1.75, '#c9c3ee', seg=20, rot=(1.5708, 0, 0), noise_amt=0.03, smooth=True)
+            B.rbox(0.08, 0.06, 0.4, x, s * 1.1, 1.4, '#8f87c8', bev=0.0, noise_amt=0.02); B.rbox(0.28, 0.06, 0.08, x, s * 1.1, 1.52, '#8f87c8', bev=0.0, noise_amt=0.02)
+    B.rbox(2.04, 2.04, 0.2, 0, 0, 2.68, '#cfc8f2', bev=0.1, bseg=3, noise_amt=0.03, glow=0.04)
+    # ちょこんと のっている ちいさな おばけ(しろい ふわふわ・ひとみ・ほっぺ)
+    B.sph(0.34, 0, 0, 3.0, '#ffffff', scale=(1, 1, 1.15), seg=16, ring=12, noise_amt=0.0, glow=0.04)
+    for sx in (-1, 1):
+        B.sph(0.05, sx * 0.12, -0.3, 3.06, '#3a3060', seg=8, ring=6, noise_amt=0.0); B.sph(0.06, sx * 0.2, -0.28, 2.93, '#ffc0d8', scale=(1, 0.5, 0.8), seg=8, ring=6, noise_amt=0.0)
+    for sx in (-1, 1): B.sph(0.12, sx * 0.3, 0, 2.78, '#ffffff', seg=10, ring=8, noise_amt=0.0)
+
+def cute_block(cols, h=2.5, bev=0.2, glow=0.03, n=3):   # ぷっくり まるい ブロックを n だん つむ(うえほど ほんの すこし ほそい)
+    z = 0; step = h / n
+    for k in range(n):
+        B.rbox(1.96 - k * 0.03, 1.96 - k * 0.03, step + 0.02, 0, 0, z + step / 2, cols[k % len(cols)], bev=bev, bseg=3, noise_amt=0.05, freq=2.0, glow=glow); z += step
+
+def star5(r, x, y, z, col, thick=0.1, **kw):   # ふっくらした 5かくの ほし(よこたわる)
+    B.cyl(r * 0.55, thick, x, y, z, col, seg=5, noise_amt=0.0, smooth=True, **kw)
+    for k in range(5):
+        a = k / 5 * 6.2832 + 1.5708; B.cyl(r * 0.3, thick, x + math.cos(a) * r * 0.55, y + math.sin(a) * r * 0.55, z, col, seg=10, r2=0.04, noise_amt=0.0, smooth=True, **kw)
 
 @asset
-def gym_wall_sky():   # くもの かべ
+def gym_wall_volcano():   # まるい けいしょく いわ(ぷっくり あかい あつい かざん)
+    random.seed(3)
+    cute_block(['#c98a72', '#d89a80', '#be7e68'], bev=0.22)
+    B.rbox(2.02, 2.02, 0.22, 0, 0, 2.6, '#ff9a4a', bev=0.1, bseg=3, noise_amt=0.04, glow=0.2)   # あつい ふた
+    for k in range(5):   # ぷくぷく マグマの あわ
+        B.sph(random.uniform(0.16, 0.3), random.uniform(-0.7, 0.7), random.uniform(-0.7, 0.7), 2.78, '#ffd06a', scale=(1, 1, 0.8), seg=10, ring=7, noise_amt=0.0, glow=0.25)
+    for k in range(6):   # わきから たれる マグマ
+        x, y = random.uniform(-0.8, 0.8), random.choice([-1, 1]) * 0.99; h = random.uniform(0.4, 1.0)
+        B.rbox(0.16, 0.06, h, x, y, 2.5 - h / 2, '#ff8a3a', bev=0.03, bseg=2, noise_amt=0.0, glow=0.25); B.sph(0.09, x, y, 2.5 - h, '#ffb050', seg=8, ring=6, noise_amt=0.0, glow=0.25)
+
+@asset
+def gym_wall_sky():   # もこもこの くも
     random.seed(5)
-    B.rbox(1.9, 1.9, 0.35, 0, 0, 0.18, '#f4f6ff', bev=0.1, noise_amt=0.05)
-    for k in range(30):
-        x, y = random.uniform(-0.75, 0.75), random.uniform(-0.75, 0.75); z = random.uniform(0.5, 2.4)
-        B.sph(random.uniform(0.33, 0.52), x, y, z, random.choice(['#ffffff', '#f2f6ff', '#e6eeff']), scale=(1, 1, 0.8), seg=10, ring=7, noise_amt=0.05, freq=2.5)
-    ring(0.95, 2.2, 0.06, '#ffe08a', seg=24, noise_amt=0.0, glow=0.1)   # きんの わっか
-    for sx in (-1, 1):
-        for sy in (-1, 1): B.sph(0.1, sx * 0.9, sy * 0.9, 2.65, '#ffe08a', seg=8, ring=6, noise_amt=0.0, glow=0.2)
+    B.rbox(1.9, 1.9, 0.5, 0, 0, 0.25, '#e4f2ff', bev=0.2, bseg=3, noise_amt=0.03)
+    for k in range(15):
+        a = k / 15 * 6.28; r = random.choice([0.0, 0.5, 0.65]) if k > 2 else 0.0; z = random.uniform(0.8, 2.2)
+        B.sph(random.uniform(0.42, 0.6), math.cos(a) * r * 1.2, math.sin(a) * r * 1.2, z, random.choice(['#ffffff', '#f4faff', '#e8f4ff']), scale=(1, 1, 0.9), seg=12, ring=8, noise_amt=0.03, glow=0.05)
+    star5(0.2, 0.0, -0.9, 2.4, '#ffe58a', thick=0.08, glow=0.1)   # ちいさな ほし
+    for k in range(4): B.sph(0.07, random.uniform(-0.8, 0.8), random.uniform(-0.8, 0.8), 2.7 + random.uniform(0, 0.2), '#fff6c8', seg=6, ring=4, noise_amt=0.0, glow=0.1)
 
 @asset
-def gym_wall_sun():   # さがんがんの いしづみ(たいようの レリーフ)
+def gym_wall_sun():   # たいようの ブロック(おひさま もよう)
     random.seed(6)
-    for k in range(5): B.rbox(1.96, 1.96, 0.5, 0, 0, 0.25 + k * 0.5, random.choice(['#d9ab62', '#e0b46e', '#cfa05a']), bev=0.06, jit=0.012, noise_amt=0.1, freq=2.0)
-    for s in (-1, 1):
-        B.cyl(0.5, 0.1, 0, s * 0.98, 1.4, '#ffd24f', seg=24, rot=(1.5708, 0, 0), noise_amt=0.03, glow=0.1)   # たいよう
-        B.cyl(0.32, 0.12, 0, s * 0.99, 1.4, '#e6a53a', seg=24, rot=(1.5708, 0, 0), noise_amt=0.03)
-        for k in range(12):
-            a = k / 12 * 6.28; B.rbox(0.28, 0.1, 0.07, math.cos(a) * 0.68, s * 0.99, 1.4 + math.sin(a) * 0.68, '#ffd24f', bev=0.01, rot=(0, -a, 0), noise_amt=0.0, glow=0.1)
-    B.rbox(2.06, 2.06, 0.14, 0, 0, 2.58, '#b88246', bev=0.05, noise_amt=0.06)
+    cute_block(['#ffd88a', '#ffe0a0', '#f7cc78'], bev=0.22)
+    B.cyl(0.55, 0.16, 0, 0, 2.58, '#ffb830', seg=28, noise_amt=0.02, glow=0.1, smooth=True)
+    B.cyl(0.42, 0.2, 0, 0, 2.62, '#ffe27a', seg=28, noise_amt=0.0, glow=0.12, smooth=True)
+    for k in range(10):   # おひさまの ひかり
+        a = k / 10 * 6.2832; B.cyl(0.09, 0.3, math.cos(a) * 0.78, math.sin(a) * 0.78, 2.6, '#ffb830', seg=8, r2=0.0, rot=(0, 1.5708, a), noise_amt=0.0, glow=0.08)
+    for sx in (-1, 1): B.sph(0.05, sx * 0.14, -0.32, 2.74, '#a0522d', seg=6, ring=4, noise_amt=0.0)   # おめめ
+    B.sph(0.06, 0, -0.38, 2.68, '#ff9a8a', scale=(2, 1, 0.6), seg=8, ring=6, noise_amt=0.0)
 
 @asset
-def gym_wall_cosmos():   # ほしの かけらを ふくむ くろい かべ
+def gym_wall_cosmos():   # ほしぞらの ブロック(ほしと わくせい)
     random.seed(7)
-    for k in range(4): B.rbox(1.96, 1.96, 0.6, 0, 0, 0.3 + k * 0.58, random.choice(['#2c3a78', '#34448a', '#26326c']), bev=0.07, jit=0.015, noise_amt=0.1, freq=2.0)
-    for k in range(18):   # けっしょう
-        a = random.uniform(0, 6.28); r = random.uniform(0.2, 1.0); B.cyl(random.uniform(0.07, 0.14), random.uniform(0.35, 0.9), math.cos(a) * r, math.sin(a) * r, 2.45, random.choice(['#8ad0ff', '#c0e4ff', '#a8b8ff']), seg=5, r2=0.0, rot=(random.uniform(-0.3, 0.3), random.uniform(-0.3, 0.3), 0), noise_amt=0.03, glow=0.25)
-    for k in range(10):
-        B.sph(0.05, random.uniform(-0.95, 0.95), random.choice([-1, 1]) * 0.99, random.uniform(0.5, 2.2), '#ffffff', seg=6, ring=4, noise_amt=0.0, glow=0.3)   # ほし
+    cute_block(['#7684d8', '#8896e4', '#6a78cc'], bev=0.22)
+    B.sph(0.38, 0, 0, 2.95, '#ffb4d8', seg=16, ring=12, noise_amt=0.03, glow=0.08)   # わくせい
+    ring_pts = [(math.cos(i / 24 * 6.2832) * 0.62, math.sin(i / 24 * 6.2832) * 0.62, 2.95 + math.sin(i / 24 * 6.2832) * 0.1) for i in range(25)]
+    B.tube(ring_pts, 0.05, 0.05, '#ffe58a', seg=6, noise_amt=0.0, glow=0.1)
+    for k in range(6): star5(0.13, random.uniform(-0.8, 0.8), random.uniform(-0.8, 0.8), 2.58, '#fff2a8', thick=0.06, glow=0.1)
 
 @asset
-def gym_wall_grove():   # こけむした いしと つた
+def gym_wall_grove():   # しんじゅの かい(ぱかっと ひらいた かいがらと まるい しんじゅ)
     random.seed(8)
-    for k in range(4): B.rbox(1.96, 1.96, 0.6, 0, 0, 0.3 + k * 0.58, random.choice(['#7a8a72', '#6c7c64', '#84947a']), bev=0.06, jit=0.015, noise_amt=0.12, freq=2.0, moss=('#3f8a3a', 2.3))
-    for k in range(7):   # つる
-        x = random.uniform(-0.9, 0.9); s = random.choice([-1, 1]); pts = [(x + 0.06 * math.sin(i), s * 1.0, 2.6 - i * 0.3) for i in range(8)]
-        B.tube(pts, 0.05, 0.03, '#2f7a30', seg=6, noise_amt=0.1)
-        for j in range(5): B.leaf(0.28, 0.16, x + 0.05 * j, s * 1.04, 2.5 - j * 0.4, '#4cae48', rot=(1.2, 0, random.uniform(-1, 1)), noise_amt=0.1)
-    B.rbox(2.04, 2.04, 0.14, 0, 0, 2.66, '#4f7a42', bev=0.05, noise_amt=0.1)
-    for k in range(5):
-        a = random.uniform(0, 6.28); B.cyl(0.05, 0.22, math.cos(a) * 0.8, math.sin(a) * 0.8, 2.78, '#f5ecd8', seg=8, noise_amt=0.03); B.sph(0.14, math.cos(a) * 0.8, math.sin(a) * 0.8, 2.95, random.choice(['#e2563e', '#f0a040']), scale=(1, 1, 0.55), seg=10, ring=6, noise_amt=0.05)
+    cute_block(['#7cc4a4', '#8fd0b2', '#6bb898'], bev=0.22)
+    for s in (-1, 1):   # かいがら(ホタテ)
+        B.cyl(0.62, 0.14, 0, s * 0.18, 2.95, '#ffd6e4', seg=20, rot=(1.5708 + s * 0.5, 0, 0), noise_amt=0.02, smooth=True, glow=0.06)
+        for k in range(-3, 4): B.rbox(0.05, 0.05, 0.55, k * 0.15, s * 0.3, 3.0, '#f0b4c8', bev=0.0, noise_amt=0.0)
+    B.sph(0.22, 0, 0, 2.7, '#ffffff', seg=14, ring=10, noise_amt=0.0, glow=0.14)   # しんじゅ
+    for k in range(5): B.sph(random.uniform(0.07, 0.12), random.uniform(-0.8, 0.8), random.uniform(-0.8, 0.8), 2.58, random.choice(['#ffffff', '#ffe8f0', '#e8fff4']), seg=8, ring=6, noise_amt=0.0, glow=0.08)
 
 @asset
-def gym_wall_castle():   # くろい じょうへき(さきの とがった とう)
+def gym_wall_castle():   # むらさきの おしろの へい(ぎざぎざの かざりと こうもり)
     random.seed(9)
-    for k in range(5): B.rbox(1.96, 1.96, 0.5, 0, 0, 0.25 + k * 0.5, random.choice(['#3e364e', '#463e58', '#352e44']), bev=0.05, jit=0.012, noise_amt=0.1, freq=2.0)
-    for sx in (-1, 0, 1):
-        for sy in (-1, 1): B.rbox(0.3, 0.3, 0.4, sx * 0.72, sy * 0.8, 2.7, '#2a243a', bev=0.04, noise_amt=0.06)   # ぎざぎざ
-    for sx in (-1, 1):
-        B.cyl(0.14, 0.7, sx * 0.9, 0.9, 3.0, '#7a6ca0', seg=6, r2=0.0, noise_amt=0.05)   # とがった さき
-    B.rbox(0.5, 0.04, 1.3, 0, 1.0, 1.4, '#7a2a6a', bev=0.0, noise_amt=0.05); B.rbox(0.5, 0.04, 1.3, 0, -1.0, 1.4, '#7a2a6a', bev=0.0, noise_amt=0.05)   # のぼり
-    for s in (-1, 1): B.cyl(0.1, 0.1, 0, s * 1.02, 1.0, '#c898ff', seg=10, rot=(1.5708, 0, 0), noise_amt=0.0, glow=0.3)
-
-@asset
-def gym_wall_temple():   # ほしの だいりせき(きんの ほし)
-    random.seed(10)
-    for k in range(4): B.rbox(1.96, 1.96, 0.62, 0, 0, 0.31 + k * 0.6, random.choice(['#c4c8e4', '#ced2ee', '#bac0de']), bev=0.06, jit=0.01, noise_amt=0.06, freq=1.6)
+    cute_block(['#9078b8', '#a088c8', '#8468ac'], bev=0.22)
+    for k in range(4):   # ぎざぎざ
+        B.rbox(0.38, 0.38, 0.4, -0.72 + k * 0.48, -0.78, 2.68, '#b8a0e0', bev=0.1, bseg=3, noise_amt=0.03)
+        B.rbox(0.38, 0.38, 0.4, -0.72 + k * 0.48, 0.78, 2.68, '#b8a0e0', bev=0.1, bseg=3, noise_amt=0.03)
+    B.sph(0.22, 0, 0, 2.85, '#4a3a6a', scale=(1, 0.9, 0.9), seg=12, ring=8, noise_amt=0.0)   # こうもり
     for s in (-1, 1):
-        for k in range(5):   # ほし
-            a = k * 1.2566 + 1.5708; b = a + 2.5133; x0, z0, x1, z1 = math.cos(a) * 0.5, 1.4 + math.sin(a) * 0.5, math.cos(b) * 0.5, 1.4 + math.sin(b) * 0.5
-            B.rbox(math.hypot(x1 - x0, z1 - z0), 0.05, 0.06, (x0 + x1) / 2, s * 0.99, (z0 + z1) / 2, '#ffd86a', bev=0.0, rot=(0, -math.atan2(z1 - z0, x1 - x0), 0), noise_amt=0.0, glow=0.15)
-    B.rbox(2.06, 2.06, 0.16, 0, 0, 2.62, '#8e96c4', bev=0.05, noise_amt=0.05)
-    for sx in (-1, 1):
-        for sy in (-1, 1): B.cyl(0.13, 2.5, sx * 0.9, sy * 0.9, 1.3, '#e0e4f6', seg=10, noise_amt=0.04)
+        B.sph(0.2, s * 0.3, 0, 2.88, '#4a3a6a', scale=(1.3, 0.35, 0.8), seg=10, ring=6, noise_amt=0.0)
+        B.cyl(0.06, 0.14, s * 0.1, -0.02, 3.08, '#4a3a6a', seg=6, r2=0.0, noise_amt=0.0)
+        B.sph(0.04, s * 0.08, -0.2, 2.9, '#ffe27a', seg=6, ring=4, noise_amt=0.0, glow=0.2)
 
 @asset
-def gym_wall_dragon():   # ひすいの うろこの かべ
+def gym_wall_temple():   # ほしの ブロック(きんの おおきな ほし)
+    random.seed(10)
+    cute_block(['#8a98e0', '#9aa8ec', '#7e8cd4'], bev=0.22)
+    star5(0.62, 0, 0, 2.62, '#ffdc6a', thick=0.18, glow=0.1)
+    for k in range(5): B.sph(random.uniform(0.06, 0.1), random.uniform(-0.85, 0.85), random.uniform(-0.85, 0.85), 2.55, '#fff4c0', seg=6, ring=4, noise_amt=0.0, glow=0.12)
+
+@asset
+def gym_wall_dragon():   # ひすいの うろこの ブロック(ちいさな つの)
     random.seed(11)
-    B.rbox(1.9, 1.9, 2.4, 0, 0, 1.2, '#2a6a64', bev=0.08, noise_amt=0.1)
-    for row in range(6):
-        for k in range(8):
-            for s in (-1, 1):
-                x = -0.85 + k * 0.24 + (0.12 if row % 2 else 0); z = 0.3 + row * 0.4
-                B.cyl(0.19, 0.08, x, s * 0.96, z, random.choice(['#3fa89c', '#4cbcae', '#35968a']), seg=12, rot=(1.5708, 0, 0), noise_amt=0.1, glow=0.04)
-    for k in range(5):
-        B.cyl(0.1, 0.5, -0.8 + k * 0.4, 0.8, 2.65, '#ffe08a', seg=6, r2=0.0, noise_amt=0.03, glow=0.1); B.cyl(0.1, 0.5, -0.8 + k * 0.4, -0.8, 2.65, '#ffe08a', seg=6, r2=0.0, noise_amt=0.03, glow=0.1)   # せびれの とげ
-    B.rbox(2.04, 2.04, 0.12, 0, 0, 2.46, '#1f4f4a', bev=0.05, noise_amt=0.06)
+    cute_block(['#5cc2b0', '#6ed0be', '#4eb4a2'], bev=0.22)
+    for r in range(3):   # うろこ
+        for c in range(4): B.cyl(0.26, 0.08, -0.7 + c * 0.47 + (r % 2) * 0.2, -0.99, 0.5 + r * 0.7, '#8ae0d0', seg=14, rot=(1.5708, 0, 0), noise_amt=0.02, smooth=True)
+    for s in (-1, 1): B.cyl(0.14, 0.55, s * 0.4, 0, 2.8, '#ffe6a0', seg=10, r2=0.02, rot=(0, s * 0.3, 0), noise_amt=0.0, smooth=True)
+    B.sph(0.2, 0, -0.1, 2.62, '#ff9aa8', scale=(1, 1, 0.6), seg=10, ring=8, noise_amt=0.0)   # ほっぺの ほうせき
 
 @asset
-def gym_wall_end():   # くろい ガラスの かべ(うかぶ かけら)
+def gym_wall_end():   # むらさきの すいしょうの ブロック(ぷっくり けっしょう)
     random.seed(12)
-    for k in range(4): B.rbox(1.96, 1.96, 0.62, 0, 0, 0.31 + k * 0.6, random.choice(['#4a2e78', '#3e2668', '#54388a']), bev=0.08, jit=0.02, noise_amt=0.12, freq=1.8, glow=0.02)
-    for k in range(14):   # ルーンと かけら
-        a = random.uniform(0, 6.28); B.rbox(0.07, 0.5, 0.06, math.cos(a) * 0.88, math.sin(a) * 0.88, random.uniform(0.4, 2.2), '#ff7aff', bev=0.0, rot=(0, 0, a), noise_amt=0.03, glow=0.45)
-    for k in range(7):
-        B.cyl(random.uniform(0.1, 0.18), random.uniform(0.5, 0.9), random.uniform(-0.7, 0.7), random.uniform(-0.7, 0.7), 2.9 + random.uniform(0, 0.3), random.choice(['#d8a8ff', '#ff9aff', '#a8c0ff']), seg=5, r2=0.0, rot=(random.uniform(-0.5, 0.5), random.uniform(-0.5, 0.5), 0), noise_amt=0.04, glow=0.3)
+    cute_block(['#9a78d4', '#aa88e0', '#8c6ac8'], bev=0.22)
+    for k in range(6):
+        x, y = random.uniform(-0.6, 0.6), random.uniform(-0.6, 0.6); h = random.uniform(0.5, 0.9)
+        B.cyl(random.uniform(0.14, 0.2), h, x, y, 2.6 + h / 2, random.choice(['#e8c8ff', '#ffd0ec', '#d4c0ff']), seg=6, r2=0.04, rot=(random.uniform(-0.2, 0.2), random.uniform(-0.2, 0.2), 0), noise_amt=0.03, glow=0.12, smooth=True)
+    for k in range(4): B.sph(0.06, random.uniform(-0.8, 0.8), random.uniform(-0.8, 0.8), 2.58, '#ffffff', seg=6, ring=4, noise_amt=0.0, glow=0.12)
 
 # =====================================================================  かざり
 @asset

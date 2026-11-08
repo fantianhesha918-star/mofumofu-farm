@@ -4,6 +4,7 @@
 //  i こおり(すべる)  r いわ(おせる)  o あな / l ようがん(おちると スタートへ。いわを おとすと うまる)
 //  a b c スイッチ(いわ か じぶんが のると オン)  A B C とびら(おなじ もじの スイッチが ぜんぶ オンで ひらく)
 //  = チェックポイント(おちたとき ここから やりなおし)
+//  Q クイズの とびら(ぶつかると もんだい。こたえの アイテムを わたすと ひらく。ソルバーは lv.free で いつでも ひらく あつかい)
 //  k かぎ  L かぎの とびら  > < ^ v ベルトコンベア  1〜9 ワープ(おなじ すうじと ペア)  x くずれる ゆか(はなれると あなに なる)
 export const DIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]];   // うえ みぎ した ひだり
 const ARROW = { '^': 0, '>': 1, 'v': 2, '<': 3 };
@@ -37,7 +38,7 @@ const isDoor = (c) => c === 'A' || c === 'B' || c === 'C';
 // そのマスに あるけるか(いわ・かべ・しまっている とびら・かんばん は だめ)
 function walkable(s, lv, x, y, rocks, px, py) {
   if (x < 0 || y < 0 || x >= lv.w || y >= lv.h) return false; const i = y * lv.w + x, c = s.cells[i];
-  if (c === '#' || c === ' ' || c === 's') return false; if (rocks.includes(i)) return false;
+  if (c === '#' || c === ' ' || c === 's' || c === 'Q') return false; if (rocks.includes(i)) return false;
   if (isDoor(c) && !plateOn(s, lv, c, px, py, rocks)) return false;
   return true;
 }
@@ -55,6 +56,7 @@ export function step(s0, lv, d) {
     if (rc === 'o' || rc === 'l') { s.cells[ri] = '.'; acts.push({ t: 'fill', from: ti, to: ri, kind: rc }); } else { s.rocks.push(ri); s.rocks.sort((a, b) => a - b); acts.push({ t: 'push', from: ti, to: ri }); }
     c = s.cells[ti];
   } else {
+    if (c === 'Q') { if (lv.free) { s.cells[ti] = '.'; c = '.'; } else return { state: s, acts: [{ t: 'turn', d }, { t: 'quiz', at: ti }], moved: false }; }
     if (c === 'L') { if (s.keys > 0) { s.keys--; s.cells[ti] = '.'; acts.push({ t: 'unlock', at: ti }); c = '.'; } else return { state: s, acts: [{ t: 'turn', d }], moved: false }; }
     else if (!walkable(s, lv, tx, ty, s.rocks, tx, ty)) return { state: s, acts: [{ t: 'turn', d }], moved: false };
   }

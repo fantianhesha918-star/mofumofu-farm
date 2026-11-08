@@ -9,7 +9,7 @@ import { lawnKit } from './world.js';
 import { BADGES, DAY_SECONDS, DROP_BY_ELEMENT, ITEMS, HEAL, EVO_STONES } from './data.js';
 import { playBgm, setFieldBgm } from './bgm.js';
 import { NEW_APPEAR } from './monsters_extra.js';
-import { runBattle, markCaught, giveStarter, giveMon, healParty, questData, assistOn } from './battle.js';
+import { runBattle, markCaught, giveStarter, giveMon, healParty, questData, assistOn, monStats } from './battle.js';
 
 const $ = (s) => document.querySelector(s);
 const V3 = THREE.Vector3;
@@ -348,6 +348,16 @@ async function bossScaled(o) {
   const hpK = 1.3 + Math.min(0.9, lv / 80 * 0.9);
   return { ...o, hp: Math.max(o.hp, Math.round(pc(s => s.maxHp, 0.9) * hpK)), atk: Math.max(o.atk, Math.round(pc(s => s.atk, 0.75) * 0.9)), def: Math.max(o.def, Math.round(pc(s => s.def, 0.75) * 0.9)) };
 }
+// してんのう・さいしゅうぬし: てもちの いちばん つよい なかまに あわせて ひきあげる(つよく そだてた なかまで 1げきに ならないように)
+// 目安: てもち さいきょうの こうげき(いりょく100)で 4かいで たおれる HP / ぬしの こうげき(いりょく60)が てもち さいだいHPの 3わり ちかく
+function adaptToParty(o) {
+  const ms = state.party.map(m => ({ lv: m.lv, ...monStats(m) })); if (!ms.length) return o;
+  const topAtk = Math.max(...ms.map(m => Math.max(m.atk, m.matk))), topDef = Math.max(...ms.map(m => m.def)), topHp = Math.max(...ms.map(m => m.maxHp)), topLv = Math.max(...ms.map(m => m.lv));
+  const level = Math.max(o.level, topLv - 3), def = Math.min(Math.max(o.def, Math.round(topAtk * 0.4)), o.def * 2);   // くわえて レベルさの ボーナスも けす
+  const hit = Math.max(1, topAtk * 100 / 20 - def * 0.4);
+  const hp = Math.min(Math.max(o.hp, Math.round(hit * 4)), o.hp * 5), atk = Math.min(Math.max(o.atk, Math.round((topHp * 0.3 + topDef * 0.4) * 20 / 60)), o.atk * 2);
+  return { ...o, level, hp, atk, def };
+}
 // ---- ジムリーダーふう: ぬしの まえに してんのう(てした)が なんたいか れんせんで たたかう ----
 async function gymTeam() {
   const GD = await questData(), k = F.scale || { lv: 0, hp: 1, atk: 1, def: 1, spd: 1, exp: 1, money: 1 }, n = FI < 4 ? 2 : FI === 11 ? 4 : 3;
@@ -370,7 +380,7 @@ async function hallOfFame() {
 }
 async function challengeBoss() {
   if (busy) return; busy = true; sfx('quest'); fade(true); await new Promise(r => setTimeout(r, 700));
-  const re = bossBeaten(), o = await bossScaled(BOSS.over), cap = ELITE ? { left: 3 } : null;   // してんのうは かいふくの たべものが 3かいまで
+  const re = bossBeaten(), o = ELITE ? adaptToParty(await bossScaled(BOSS.over)) : await bossScaled(BOSS.over), cap = ELITE ? { left: 3 } : null;   // してんのうは かいふくの たべものが 3かいまで
   if (cap) { ui.toast('してんのうの たたかい', 'かいふくの たべものは 3かいまで!', 'てしたも ぬしも れんせん。とちゅうで かいふくは できないよ', 3600); await new Promise(r => setTimeout(r, 1200)); }
   const over = re ? { ...o, level: o.level + 3, hp: Math.round(o.hp * 1.2), atk: Math.round(o.atk * 1.1), def: Math.round(o.def * 1.1), exp: Math.round(o.exp * 0.8), money: Math.round(o.money * 0.5) } : o;
   const team = re ? null : (await gymTeam()).map(u => ({ id: u.id, over: u.over })).concat([{ id: BOSS.id, over, isBoss: true }]);   // はじめては てしたを たおしてから ぬし(1つの たたかいで つづける)

@@ -201,7 +201,7 @@ const NEED = {   // さいたんの てじゅんの はんい / ひつような 
 
 const KEEP = fs.existsSync(OUT) ? (await import(OUT.href + '?t=' + Date.now())).GYM_MAPS : {};
 const names = process.argv.slice(2).length ? process.argv.slice(2) : [...Object.keys(NEED), 'end'];
-const maps = { ...KEEP };
+const maps = { ...KEEP }; let endPath = null;
 function pickOne(name, maxSeed = 3000) {
   for (let seed = 1; seed < maxSeed; seed++) {
     const r = GEN[name](seed); if (!r) continue; const lv = parseLevel(rows(r.g)); if (!lv.start || !lv.goal) continue;
@@ -233,10 +233,25 @@ for (const name of names) {
     let sx0 = 0, p = []; const secPaths = secs.map(s => s.path);
     for (let k = 0; k < secPaths.length; k++) { if (k > 0) p.push(0, 0); p.push(...secPaths[k]); }   // へやの さかいの ふたマスは うえへ あるく
     const full = analyze(lv, p); console.log('end replay solved', full.solved, 'steps', p.length); if (!full.solved) { console.log(comb.map(r => r.join('')).join(String.fromCharCode(10))); continue; }
-    maps.end = { rows: comb.map(r => r.join('')), hints: [HINT.end], steps: p.length, seed: 0 }; console.log('end ok steps', p.length); continue;
+    endPath = p; maps.end = { rows: comb.map(r => r.join('')), hints: [HINT.end], steps: p.length, seed: 0 }; console.log('end ok steps', p.length); continue;
   }
   if (!GEN[name]) { console.log('skip', name); continue; }
   const r = pickOne(name); if (!r) { console.log(name, 'FAILED'); continue; }
   maps[name] = { rows: r.rows, hints: [HINT[name]], steps: r.steps, seed: r.seed }; console.log(name, 'ok seed', r.seed, 'steps', r.steps);
 }
+// はじめに クイズの とびら(Q)を おく: スタートの したに ちいさな へやを たして、スタートと ほんたいの あいだの かべに Q を うめる(かならず とおる ばしょ)
+function addLobby(name, m, path) {
+  if (m.rows.some(r => r.includes('Q'))) return;
+  const R = m.rows.map(r => r.split('')), h = R.length; let sx = -1, sy = -1;
+  R.forEach((r, y) => r.forEach((c, x) => { if (c === 'S') { sx = x; sy = y; } }));
+  if (sy !== h - 2 || R[h - 1][sx] !== '#') { console.log(name, 'lobby: bad start'); return; }
+  R[sy][sx] = '.'; R[h - 1][sx] = 'Q';
+  const W = R[0].length, lob = Array(W).fill('#'); for (const dx of [-1, 0, 1]) lob[sx + dx] = '.'; lob[sx] = 'S';
+  R.push(lob, Array(W).fill('#'));
+  const rr = R.map(r => r.join('')), lv = parseLevel(rr); lv.free = true;
+  const ok = name === 'end' ? (() => { let st = newState(lv); for (const d of [0, 0, ...path]) { const r = step(st, lv, d); st = r.state; } return st.solved; })() : !!solve(lv, 400000);
+  if (!ok) { console.log(name, 'lobby: NOT SOLVABLE'); return; }
+  m.rows = rr; m.hints = [m.hints[0] + ' / はじめの とびらは もんだいに こたえて ひらく']; m.steps += 2; console.log(name, 'lobby ok');
+}
+for (const name of Object.keys(maps)) addLobby(name, maps[name], name === 'end' ? endPath : null);
 fs.writeFileSync(OUT, '// tools/gym_gen.mjs が つくった マップ(うで で かきなおさない)\nexport const GYM_MAPS = ' + JSON.stringify(maps, null, 1) + ';\n');

@@ -133,7 +133,7 @@ const GYM_KEYS = ['forest', 'lake', 'volcano', 'ghost', 'sky', 'sun', 'cosmos', 
 export const obeyCap = () => { const n = GYM_KEYS.filter(k => hasBadge(k)).length; return n >= GYM_KEYS.length ? 999 : Math.max(15, 10 + n * 10); };   // バッジ1こで Lv20、2こで Lv30 まで いうことを きく
 export const bondLv = (m) => Math.min(5, Math.floor((m.bond || 0) / 5));   // なかよしレベル(0〜5): すこしだけ つよくなる
 // まほう系のステータス: こうげき・ぼうぎょを もとに、タイプとなまえで すこしずつ ちがいを つける
-const MAGIC_PROFILE = { fire: [1.2, 0.8], water: [1.05, 1.15], grass: [0.9, 1.1], wind: [1.1, 0.9], earth: [0.75, 0.9], thunder: [1.2, 0.8], heaven: [1.1, 1.25], dark: [1.15, 1.0], magic: [1.3, 1.2], beast: [0.75, 0.8], kami: [1.25, 1.25] };
+const MAGIC_PROFILE = { fire: [1.2, 0.8], water: [1.05, 1.15], grass: [0.9, 1.1], wind: [1.1, 0.9], earth: [0.75, 0.9], thunder: [1.2, 0.8], heaven: [1.1, 1.25], dark: [1.15, 1.0], magic: [1.3, 1.2], beast: [0.75, 0.8], kami: [1.1, 1.1] };
 export const monName = (m) => (m && m.nick) || GD.MONSTERS[m.id].name;   // ニックネームが あれば それを つかう
 const hashId = (id) => [...String(id)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
 export function magicOf(id, element, atk, dfn) {

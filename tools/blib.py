@@ -35,11 +35,11 @@ def paint(o, col, noise_amt=0.12, freq=2.2, moss=None, top=None, glow=0.0, smoot
     if smooth: bpy.ops.object.shade_smooth()
     parts.append(o); return o
 
-def rbox(sx, sy, sz, x, y, z, col, bev=0.03, rot=(0, 0, 0), jit=0.0, **kw):
+def rbox(sx, sy, sz, x, y, z, col, bev=0.03, rot=(0, 0, 0), jit=0.0, bseg=2, **kw):
     bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0)); o = bpy.context.object; o.scale = (sx, sy, sz)
     bpy.ops.object.transform_apply(scale=True)
     if bev > 0:
-        m = o.modifiers.new('b', 'BEVEL'); m.width = min(bev, min(sx, sy, sz) * 0.45); m.segments = 2; m.limit_method = 'NONE'
+        m = o.modifiers.new('b', 'BEVEL'); m.width = min(bev, min(sx, sy, sz) * 0.45); m.segments = bseg; m.limit_method = 'NONE'
         bpy.ops.object.modifier_apply(modifier='b')
     if jit:
         bm = bmesh.new(); bm.from_mesh(o.data)

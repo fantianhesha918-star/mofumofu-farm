@@ -110,7 +110,7 @@
     shitennou_yeti_zero: { id: "shitennou_yeti_zero", name: "ぜったいれいど", power: 86, uses: 5, desc: "すべてを こおりつかせる", element: "water" },
     shitennou_oni_split: { id: "shitennou_oni_split", name: "だいちわり", power: 89, uses: 5, desc: "だいちを まっぷたつに わる", element: "earth" },
     shitennou_madoushi_ultima: { id: "shitennou_madoushi_ultima", name: "げんかいじゅもん", power: 92, uses: 5, desc: "げんかいを こえた だいじゅもん", element: "magic" },
-    kami_judgement: { id: "kami_judgement", name: "しんいのさばき", power: 116, uses: 5, desc: "かみの ちからで すべてを さばく", element: "kami" },
+    kami_judgement: { id: "kami_judgement", name: "しんいのさばき", power: 110, uses: 5, desc: "かみの ちからで すべてを さばく", element: "kami" },
 
     // ---- なかま用 汎用属性わざ(旧: ほのお/こおり。こおりはみず属性に統合) ----
     flame_burst: { id: "flame_burst", name: "ほのおのつぶて", power: 22, uses: 20, learnLevel: 5, desc: "ほのおの たまを なげつける", element: "fire" },
@@ -396,7 +396,7 @@
   };
   function getElementMatchup(atkElem, defElem) {
     if (!atkElem || atkElem === "none" || !defElem || defElem === "none") return { mult: 1, tier: "neutral" };
-    if (atkElem === "kami") return { mult: 2, tier: "strong" };
+    if (atkElem === "kami") return { mult: 1.3, tier: "strong" };   // 弱点なし。倍率は控えめ(他の属性の「ばつぐん」2倍より弱い。2026-11-08調整)
     var m = ELEMENT_MATCHUP[atkElem];
     if (!m) return { mult: 1, tier: "neutral" };
     if (m.strong === defElem) return { mult: 2, tier: "strong" };
